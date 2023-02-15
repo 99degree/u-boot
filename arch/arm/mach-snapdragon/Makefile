@@ -21,3 +21,4 @@ obj-y += pinctrl-sdm845.o
 obj-$(CONFIG_TARGET_QCS404EVB) += clock-qcs404.o
 obj-$(CONFIG_TARGET_QCS404EVB) += sysmap-qcs404.o
 obj-$(CONFIG_TARGET_QRB4210RB2) += clock-qrb4210-rb2.o
+obj-$(CONFIG_TARGET_QRB4210RB2) += sysmap-qrb4210-rb2.o

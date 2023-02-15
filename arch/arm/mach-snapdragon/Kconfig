@@ -77,6 +77,16 @@ config TARGET_QCS404EVB
 	  - 1GiB RAM
 	  - 8GiB eMMC, uSD slot
 
+config TARGET_QRB4210RB2
+	bool "Qualcomm Technologies, Inc. QRB4210 RB2"
+	select LINUX_KERNEL_IMAGE_HEADER
+	help
+	  Support for Qualcomm Technologies, Inc. QRB4210 RB2 board.
+	  Features:
+	  - Qualcomm Snapdragon SM6115 / SM4250 SoC
+	  - 2GiB RAM
+	  - 16GiB eMMC
+
 endchoice
 
 source "board/qualcomm/dragonboard410c/Kconfig"
@@ -84,5 +94,6 @@ source "board/qualcomm/dragonboard820c/Kconfig"
 source "board/qualcomm/dragonboard845c/Kconfig"
 source "board/samsung/starqltechn/Kconfig"
 source "board/qualcomm/qcs404-evb/Kconfig"
+source "board/qualcomm/qrb4210-rb2/Kconfig"
 
 endif

@@ -534,6 +534,7 @@ dtb-$(CONFIG_TARGET_DRAGONBOARD410C) += dragonboard410c.dtb
 dtb-$(CONFIG_TARGET_DRAGONBOARD820C) += dragonboard820c.dtb
 dtb-$(CONFIG_TARGET_STARQLTECHN) += starqltechn.dtb
 dtb-$(CONFIG_TARGET_QCS404EVB) += qcs404-evb.dtb
+dtb-$(CONFIG_TARGET_QRB4210RB2) += qrb4210-rb2.dtb
 
 dtb-$(CONFIG_TARGET_STEMMY) += ste-ux500-samsung-stemmy.dtb
 

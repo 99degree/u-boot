@@ -1,0 +1,79 @@
+.. SPDX-License-Identifier: GPL-2.0+
+.. sectionauthor:: Bhupesh Sharma <bhupesh.sharma@linaro.org>
+
+QRB4210 RB2
+===========
+
+About this
+----------
+This document describes the information about Qualcomm QRB4210 RB2 board
+and it's usage steps.
+
+U-Boot can be used as a replacement for Qualcomm's original ABL (UEFI) bootloader.
+It is loaded as an Android boot image through ABL.
+
+Installation
+------------
+Build
+^^^^^
+Setup ``CROSS_COMPILE`` for aarch64 and build U-Boot for your board::
+
+	$ export CROSS_COMPILE=<aarch64 toolchain prefix>
+	$ make qrb4210rb2_defconfig
+	$ make
+
+This will build ``u-boot.bin`` in the configured output directory.
+
+Generate FIT image
+^^^^^^^^^^^^^^^^^^
+A ``qrb4210-rb2.its`` file can be found in ``board/qualcomm/qrb4210-rb2/`` directory.
+It expects a folder as ``qrb4210rb2_imgs/`` in the main directory containing
+pre-built kernel, dts and ramdisk images. See ``qrb4210-rb2.its`` for full path to
+images.
+
+- Build FIT image::
+
+	mkimage -f qrb4210-rb2.its qrb4210-rb2.itb
+
+Pack android boot image
+^^^^^^^^^^^^^^^^^^^^^^^
+We'll assemble android boot image with ``u-boot.bin`` instead of linux kernel,
+and FIT image instead of ``initramfs``. Android bootloader expect gzipped kernel
+with appended dtb, so let's mimic linux to satisfy stock bootloader:
+
+- create dump dtb::
+
+	workdir=/tmp/prepare_payload
+	mkdir -p "$workdir"
+	cd "$workdir"
+	mock_dtb="$workdir"/payload_mock.dtb
+
+	dtc -I dts -O dtb -o "$mock_dtb" << EOF
+	/dts-v1/;
+	/ {
+		model = "Qualcomm Technologies, Inc. QRB4210 RB2";
+		compatible = "qcom,qrb4210-rb2", "qcom,sm6115";
+
+		#address-cells = <2>;
+		#size-cells = <2>;
+
+		memory@80000000 {
+			device_type = "memory";
+			/* We expect the bootloader to fill in the size */
+			reg = <0 0x80000000 0 0>;
+		};
+
+		chosen { };
+	};
+	EOF
+
+- gzip u-boot ``gzip u-boot.bin``
+- append dtb to gzipped u-boot: ``cat u-boot.bin.gz "$mock_dtb" > u-boot.bin.gz-dtb``
+
+Now we've got everything to build android boot image:::
+
+	mkbootimg --kernel u-boot.bin.gz-dtb \
+	--ramdisk qrb4210-rb2.itb --pagesize 4096 \
+	--base 0x80000000 --output boot.img
+
+Flash image on qrb4210 rb2 using fastboot method.

@@ -1,0 +1,15 @@
+if TARGET_QRB4210RB2
+
+config SYS_BOARD
+	default "qrb4210-rb2"
+
+config SYS_VENDOR
+	default "qualcomm"
+
+config SYS_SOC
+	default "sm6115"
+
+config SYS_CONFIG_NAME
+	default "qrb4210-rb2"
+
+endif
