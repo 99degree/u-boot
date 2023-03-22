@@ -1,0 +1,15 @@
+if TARGET_RB1
+
+config SYS_BOARD
+	default "rb1"
+
+config SYS_VENDOR
+	default "qualcomm"
+
+config SYS_SOC
+	default "qcm2290"
+
+config SYS_CONFIG_NAME
+	default "rb1"
+
+endif

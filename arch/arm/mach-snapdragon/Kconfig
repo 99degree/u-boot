@@ -86,6 +86,17 @@ config TARGET_QCS404EVB
 	  - 1GiB RAM
 	  - 8GiB eMMC, uSD slot
 
+config TARGET_RB1
+	bool "Qualcomm Technologies, Inc. QRB2210 RB1"
+	select QCOM_QCM2290
+	imply OF_HAS_PRIOR_STAGE
+	help
+	  Support for Qualcomm Technologies, Inc. QRB2210 RB1 board.
+	  Features:
+	  - Qualcomm Snapdragon QRB2210 (modified QCM2290) SoC
+	  - 2GiB LPDDR4X RAM
+	  - 16GiB eMMC
+
 endchoice
 
 if ARM64
@@ -94,6 +105,7 @@ if ARM64
 	source "board/qualcomm/dragonboard845c/Kconfig"
 	source "board/samsung/starqltechn/Kconfig"
 	source "board/qualcomm/qcs404-evb/Kconfig"
+	source "board/qualcomm/rb1/Kconfig"
 endif
 
 if CPU_V7A
