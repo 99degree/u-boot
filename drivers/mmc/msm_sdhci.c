@@ -11,6 +11,7 @@
 #include <clk.h>
 #include <dm.h>
 #include <malloc.h>
+#include <reset.h>
 #include <sdhci.h>
 #include <wait_bit.h>
 #include <asm/global_data.h>
@@ -44,6 +45,8 @@ struct msm_sdhc_plat {
 struct msm_sdhc {
 	struct sdhci_host host;
 	void *base;
+	struct reset_ctl reset;
+	bool has_reset;
 };
 
 struct msm_sdhc_variant_info {
@@ -126,6 +129,13 @@ static int msm_sdc_probe(struct udevice *dev)
 	u32 caps;
 	int ret;
 
+	if (prv->has_reset) {
+		reset_assert(&prv->reset);
+		udelay(500);
+		reset_deassert(&prv->reset);
+		udelay(500);
+	}
+
 	host->quirks = SDHCI_QUIRK_WAIT_SEND_CMD | SDHCI_QUIRK_BROKEN_R1B;
 
 	host->max_clk = 0;
@@ -204,8 +214,10 @@ static int msm_of_to_plat(struct udevice *dev)
 	host->index = fdtdec_get_uint(gd->fdt_blob, node, "index", 0);
 	priv->base = (void *)fdtdec_get_addr_size_auto_parent(gd->fdt_blob,
 			dev_of_offset(parent), node, "reg", 1, NULL, false);
-	if (priv->base == (void *)FDT_ADDR_T_NONE ||
-	    host->ioaddr == (void *)FDT_ADDR_T_NONE)
+
+	priv->has_reset = !reset_get_by_name(dev, "core", &priv->reset);
+
+	if (host->ioaddr == (void *)FDT_ADDR_T_NONE)
 		return -EINVAL;
 
 	return 0;
