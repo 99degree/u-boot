@@ -1,0 +1,127 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Qualcomm QRB4210-RB2 evaluation board device tree source
+ *
+ * (C) Copyright 2023 Bhupesh Sharma <bhupesh.sharma@linaro.org>
+ */
+
+/dts-v1/;
+
+#include "skeleton64.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/clock/qcom,gcc-sm6115.h>
+
+/ {
+	model = "Qualcomm Technologies, Inc. QRB4210 RB2";
+	compatible = "qcom,qrb4210-rb2", "qcom,sm6115";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	aliases {
+		serial0 = &debug_uart;
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0 0x80000000 0 0x40000000>;
+	};
+
+	soc {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges = <0 0 0 0xffffffff>;
+		compatible = "simple-bus";
+
+		gcc: clock-controller@1400000 {
+			compatible = "qcom,gcc-sm6115";
+			reg = <0x01400000 0x1f0000>;
+			#clock-cells = <1>;
+			#reset-cells = <1>;
+			#power-domain-cells = <1>;
+		};
+
+		tlmm: pinctrl_west@500000 {
+			compatible = "qcom,sm6115-pinctrl";
+			reg = <0x00500000 0x400000>;
+			gpio-count = <113>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&tlmm 0 0 113>;
+
+			/* DEBUG UART */
+			debug_uart_on: debug_uart-default {
+				pins = "GPIO_12", "GPIO_13";
+				function = "qup4";
+			};
+		};
+
+		debug_uart: serial@4a90000 {
+			compatible = "qcom,msm-geni-uart";
+			reg = <0x04a90000 0x4000>;
+			reg-names = "se_phys";
+			clock-names = "se-clk";
+			clocks = <&gcc GCC_QUPV3_WRAP0_S4_CLK>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&debug_uart_on>;
+		};
+
+
+		sdhc_1: mmc@4744000 {
+			compatible = "qcom,sdhci-msm-v5";
+			reg = <0x04744000 0x1000 0x04745000 0x1000>;
+			clock = <&gcc GCC_SDCC1_APPS_CLK>,
+				<&gcc GCC_SDCC1_AHB_CLK>;
+			bus-width = <8>;
+			//pinctrl-names = "default";
+			//pinctrl-0 = <&sdc1_state_on>;
+
+			no-sdio;
+			non-removable;
+		};
+
+		sdhc_2: mmc@4784000 {
+			compatible = "qcom,sdhci-msm-v5";
+			reg = <0x04784000 0x1000>;
+			clock = <&gcc GCC_SDCC2_APPS_CLK>,
+				<&gcc GCC_SDCC2_AHB_CLK>;
+			bus-width = <4>;
+			//pinctrl-names = "default";
+			//pinctrl-0 = <&sdc2_state_on>;
+
+			no-sdio;
+			non-emmc;
+		};
+
+		spmi@1c40000 {
+			compatible = "qcom,spmi-pmic-arb";
+			reg = <0x01c0a000 0x26000>,
+			      <0x01c40000 0x1100>,
+			      <0x03e00000 0x100000>;
+			reg-names = "cnfg", "core", "obsrvr";
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			pm6125: pm6125@0 {
+				compatible = "qcom,spmi-pmic";
+				reg = <0x0 0x1>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				pm6125_gpios: pm6125_gpios@c000 {
+					compatible = "qcom,pm6125-gpio";
+					reg = <0xc000>;
+					gpio-controller;
+					gpio-count = <9>;
+					#gpio-cells = <2>;
+					gpio-bank-name="pmic";
+				};
+			};
+		};
+	};
+};
+
+#include "qrb4210-rb2-uboot.dtsi"

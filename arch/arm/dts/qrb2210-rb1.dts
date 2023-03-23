@@ -1,0 +1,210 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * Copyright (c) 2023, Linaro Limited
+ */
+
+/dts-v1/;
+
+#include "skeleton64.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/clock/qcom,gcc-qcm2290.h>
+
+/ {
+	model = "Qualcomm Technologies, Inc. Robotics RB1";
+	compatible = "qcom,qrb2210-rb1", "qcom,qrb2210", "qcom,qcm2290";
+	#address-cells = <2>;
+	#size-cells = <2>;
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+	};
+
+	aliases {
+		serial0 = &debug_uart;
+	};
+
+	memory {
+		device_type = "memory";
+		reg = <0x0 0x40000000 0x0 0x80000000>;
+	};
+
+	reserved_memory: reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		hyp_mem: hyp@45700000 {
+			reg = <0x0 0x45700000 0x0 0x600000>;
+			no-map;
+		};
+
+		xbl_aop_mem: xbl-aop@45e00000 {
+			reg = <0x0 0x45e00000 0x0 0x140000>;
+			no-map;
+		};
+
+		sec_apps_mem: sec-apps@45fff000 {
+			reg = <0x0 0x45fff000 0x0 0x1000>;
+			no-map;
+		};
+
+		smem_mem: smem@46000000 {
+			compatible = "qcom,smem";
+			reg = <0x0 0x46000000 0x0 0x200000>;
+			no-map;
+		};
+
+		pil_modem_mem: modem@4ab00000 {
+			reg = <0x0 0x4ab00000 0x0 0x6900000>;
+			no-map;
+		};
+
+		pil_video_mem: video@51400000 {
+			reg = <0x0 0x51400000 0x0 0x500000>;
+			no-map;
+		};
+
+		wlan_msa_mem: wlan-msa@51900000 {
+			reg = <0x0 0x51900000 0x0 0x100000>;
+			no-map;
+		};
+
+		pil_adsp_mem: adsp@51a00000 {
+			reg = <0x0 0x51a00000 0x0 0x1c00000>;
+			no-map;
+		};
+
+		pil_ipa_fw_mem: ipa-fw@53600000 {
+			reg = <0x0 0x53600000 0x0 0x10000>;
+			no-map;
+		};
+
+		pil_ipa_gsi_mem: ipa-gsi@53610000 {
+			reg = <0x0 0x53610000 0x0 0x5000>;
+			no-map;
+		};
+
+		pil_gpu_mem: zap@53615000 {
+			compatible = "shared-dma-pool";
+			reg = <0x0 0x53615000 0x0 0x2000>;
+			no-map;
+		};
+
+		cont_splash_memory: framebuffer@5c000000 {
+			reg = <0x0 0x5c000000 0x0 0x00f00000>;
+			no-map;
+		};
+
+		dfps_data_memory: dpfs-data@5cf00000 {
+			reg = <0x0 0x5cf00000 0x0 0x0100000>;
+			no-map;
+		};
+
+		removed_mem: reserved@60000000 {
+			reg = <0x0 0x60000000 0x0 0x3900000>;
+			no-map;
+		};
+
+		rmtfs_mem: memory@89b01000 {
+			compatible = "qcom,rmtfs-mem";
+			reg = <0x0 0x89b01000 0x0 0x200000>;
+			no-map;
+		};
+	};
+
+
+	soc: soc {
+		compatible = "simple-bus";
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		tlmm: pinctrl_west@500000 {
+			compatible = "qcom,qcm2290-pinctrl";
+			reg = <0x0 0x00500000 0x0 0x300000>;
+			gpio-count = <127>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			gpio-ranges = <&tlmm 0 0 127>;
+
+			/* DEBUG UART */
+			debug_uart_on: debug_uart-default {
+				pins = "GPIO_12", "GPIO_13";
+				function = "qup4";
+			};
+		};
+
+		gcc: clock-controller@1400000 {
+			compatible = "qcom,gcc-qcm2290";
+			reg = <0x0 0x01400000 0x0 0x1f0000>;
+			#clock-cells = <1>;
+			#reset-cells = <1>;
+			#power-domain-cells = <1>;
+		};
+
+		debug_uart: serial@4a90000 {
+			compatible = "qcom,msm-geni-uart";
+			reg = <0x0 0x04a90000 0x0 0x4000>;
+			reg-names = "se_phys";
+			clock-names = "se-clk";
+			clocks = <&gcc GCC_QUPV3_WRAP0_S4_CLK>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&debug_uart_on>;
+		};
+
+
+		sdhc_1: mmc@4744000 {
+			compatible = "qcom,sdhci-msm-v5";
+			reg = <0x0 0x04744000 0x0 0x1000>,
+			      <0x0 0x04745000 0x0 0x1000>;
+			clock = <&gcc GCC_SDCC1_APPS_CLK>,
+				<&gcc GCC_SDCC1_AHB_CLK>;
+			bus-width = <8>;
+			//pinctrl-names = "default";
+			//pinctrl-0 = <&sdc1_state_on>;
+
+			no-sdio;
+			non-removable;
+		};
+
+		sdhc_2: mmc@4784000 {
+			compatible = "qcom,sdhci-msm-v5";
+			reg = <0x0 0x04784000 0x0 0x1000>;
+			clock = <&gcc GCC_SDCC2_APPS_CLK>,
+				<&gcc GCC_SDCC2_AHB_CLK>;
+			bus-width = <4>;
+			//pinctrl-names = "default";
+			//pinctrl-0 = <&sdc2_state_on>;
+
+			no-sdio;
+		};
+
+		spmi@1c40000 {
+			compatible = "qcom,spmi-pmic-arb";
+			reg = <0x0 0x01c0a000 0x0 0x26000>,
+			      <0x0 0x01c40000 0x0 0x1100>,
+			      <0x0 0x03e00000 0x0 0x100000>;
+			reg-names = "cnfg", "core", "obsrvr";
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			pm2250: pmic@0 {
+				compatible = "qcom,spmi-pmic";
+				reg = <0x0 0x1>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				pm6125_gpios: gpio@c000 {
+					compatible = "qcom,spmi-gpio";
+					reg = <0xc000>;
+					gpio-controller;
+					gpio-count = <9>;
+					#gpio-cells = <2>;
+					gpio-bank-name="pmic";
+				};
+			};
+		};
+	};
+};
+
+#include "qrb2210-rb1-uboot.dtsi"

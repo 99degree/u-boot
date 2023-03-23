@@ -1,0 +1,16 @@
+/dts-v1/;
+	/ {
+		model = "Qualcomm Technologies, Inc. QRB2210 RB1";
+		compatible = "qcom,qrb2210-rb1", "qcom,qrb2210", "qcom,qcm2290";
+
+		#address-cells = <2>;
+		#size-cells = <2>;
+
+		memory@40000000 {
+			device_type = "memory";
+			/* We expect the bootloader to fill in the size */
+			reg = <0 0x40000000 0 0>;
+		};
+
+		chosen { };
+	};

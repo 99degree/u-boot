@@ -1,0 +1,24 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * U-Boot addition to handle QRB4210-RB2 pre-relocation devices
+ *
+ * (C) Copyright 2023 Bhupesh Sharma <bhupesh.sharma@linaro.org>
+ */
+
+/ {
+	soc {
+		u-boot,dm-pre-reloc;
+
+		pinctrl_west@500000 {
+			u-boot,dm-pre-reloc;
+		};
+
+		clock-controller@1400000 {
+			u-boot,dm-pre-reloc;
+		};
+
+		serial@4a90000 {
+			u-boot,dm-pre-reloc;
+		};
+	};
+};

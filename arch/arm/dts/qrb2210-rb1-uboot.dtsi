@@ -1,0 +1,22 @@
+// SPDX-License-Identifier: GPL-2.0+
+/*
+ * U-Boot addition to handle QRB2210 RB1 pre-relocation devices
+ *
+ * Copyright (c) 2023, Linaro Limited
+ */
+
+&debug_uart {
+	u-boot,dm-pre-reloc;
+};
+
+&gcc {
+	u-boot,dm-pre-reloc;
+};
+
+&soc {
+	u-boot,dm-pre-reloc;
+};
+
+&tlmm {
+	u-boot,dm-pre-reloc;
+};
