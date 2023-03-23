@@ -151,6 +151,7 @@ static const struct udevice_id msm_pinctrl_ids[] = {
 	{ .compatible = "qcom,msm8916-pinctrl", .data = (ulong)&apq8016_data },
 	{ .compatible = "qcom,msm8996-pinctrl", .data = (ulong)&apq8096_data },
 	{ .compatible = "qcom,sdm845-pinctrl", .data = (ulong)&sdm845_data },
+	{ .compatible = "qcom,sm6115-pinctrl", .data = (ulong)&sm6115_data },
 	{ .compatible = "qcom,qcs404-pinctrl", .data = (ulong)&qcs404_data },
 	{ }
 };
