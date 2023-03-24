@@ -15,7 +15,7 @@
 #include <asm/system.h>
 #include <asm/armv8/mmu.h>
 
-static ulong reg0 __section(".data");
+ulong fw_dtb_pointer __section(".data");
 
 /**
  * Save x0 register value, assuming previous bootloader set it to
@@ -23,7 +23,7 @@ static ulong reg0 __section(".data");
  */
 void save_boot_params(ulong r0)
 {
-	reg0 = r0;
+	fw_dtb_pointer = r0;
 	save_boot_params_ret();
 }
 
@@ -51,24 +51,24 @@ int save_prev_bl_data(void)
 	int node;
 	u64 initrd_start_prop;
 
-	if (!is_addr_accessible((phys_addr_t)reg0))
+	if (!is_addr_accessible((phys_addr_t)fw_dtb_pointer))
 		return -ENODATA;
 
-	fdt_blob = (struct fdt_header *)reg0;
+	fdt_blob = (struct fdt_header *)fw_dtb_pointer;
 	if (!fdt_valid(&fdt_blob)) {
-		pr_warn("%s: address 0x%lx is not a valid fdt\n", __func__, reg0);
+		pr_warn("%s: address 0x%lx is not a valid fdt\n", __func__, fw_dtb_pointer);
 		return -ENODATA;
 	}
 
 	if (IS_ENABLED(CONFIG_SAVE_PREV_BL_FDT_ADDR))
-		env_set_addr("prevbl_fdt_addr", (void *)reg0);
+		env_set_addr("prevbl_fdt_addr", (void *)fw_dtb_pointer);
 	if (!IS_ENABLED(CONFIG_SAVE_PREV_BL_INITRAMFS_START_ADDR))
 		return 0;
 
 	node = fdt_path_offset(fdt_blob, "/chosen");
 	if (!node) {
 		pr_warn("%s: chosen node not found in device tree at addr: 0x%lx\n",
-					__func__, reg0);
+					__func__, fw_dtb_pointer);
 		return -ENODATA;
 	}
 	/*
