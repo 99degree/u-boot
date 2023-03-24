@@ -1,0 +1,6 @@
+Qualcomm Technologies, Inc. QRB4210-RB2 evaluation board
+M:	Bhupesh Sharma <bhupesh.sharma@linaro.org>
+S:	Maintained
+F:	board/qualcomm/qrb4210-rb2/
+F:	include/configs/qrb4210-rb2.h
+F:	configs/qrb4210rb2_defconfig

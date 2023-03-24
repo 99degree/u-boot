@@ -97,6 +97,17 @@ config TARGET_RB1
 	  - 2GiB LPDDR4X RAM
 	  - 16GiB eMMC
 
+config TARGET_QRB4210RB2
+	bool "Qualcomm Technologies, Inc. QRB4210 RB2"
+	select LINUX_KERNEL_IMAGE_HEADER
+	imply OF_HAS_PRIOR_STAGE
+	help
+	  Support for Qualcomm Technologies, Inc. QRB4210 RB2 board.
+	  Features:
+	  - Qualcomm Snapdragon SM6115 / SM4250 SoC
+	  - 2GiB RAM
+	  - 16GiB eMMC
+
 endchoice
 
 if ARM64
@@ -106,6 +117,7 @@ if ARM64
 	source "board/samsung/starqltechn/Kconfig"
 	source "board/qualcomm/qcs404-evb/Kconfig"
 	source "board/qualcomm/rb1/Kconfig"
+	source "board/qualcomm/qrb4210-rb2/Kconfig"
 endif
 
 if CPU_V7A

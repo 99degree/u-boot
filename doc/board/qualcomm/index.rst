@@ -9,3 +9,4 @@ Qualcomm
    dragonboard410c
    sdm845
    qcs404
+   qrb4210-rb2
