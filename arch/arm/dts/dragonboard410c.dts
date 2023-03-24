@@ -107,7 +107,7 @@
 			bus-width = <0x8>;
 			index = <0x0>;
 			non-removable;
-			clock = <&clkc 0>;
+			clocks = <&clkc 0>;
 			clock-frequency = <100000000>;
 		};
 
@@ -116,7 +116,7 @@
 			reg = <0x7864900 0x11c 0x7864000 0x800>;
 			index = <0x1>;
 			bus-width = <0x4>;
-			clock = <&clkc 1>;
+			clocks = <&clkc 1>;
 			clock-frequency = <200000000>;
 			cd-gpios = <&soc_gpios 38 GPIO_ACTIVE_LOW>;
 		};

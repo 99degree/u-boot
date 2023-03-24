@@ -88,7 +88,7 @@
 			reg = <0x74a4900 0x314>, <0x74a4000 0x800>;
 			index = <0x0>;
 			bus-width = <4>;
-			clock = <&gcc 0>;
+			clocks = <&gcc 0>;
 			clock-frequency = <200000000>;
 		 };
 
