@@ -166,8 +166,7 @@ static int msm_uart_clk_init(struct udevice *dev)
 	struct clk clk;
 	int ret;
 
-	ret = fdtdec_get_int_array(gd->fdt_blob, dev_of_offset(dev), "clock",
-				   clkd, 2);
+	ret = fdtdec_get_int_array(gd->fdt_blob, dev_of_offset(dev), "clocks", clkd, 2);
 	if (ret)
 		return ret;
 
