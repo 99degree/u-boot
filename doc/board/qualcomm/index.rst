@@ -10,3 +10,4 @@ Qualcomm
    sdm845
    qcs404
    qrb4210-rb2
+   qrb5165-rb5

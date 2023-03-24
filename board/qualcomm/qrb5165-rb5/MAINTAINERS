@@ -1,0 +1,6 @@
+Qualcomm Technologies, Inc. QRB5165-RB5 evaluation board
+M:	Bhupesh Sharma <bhupesh.sharma@linaro.org>
+S:	Maintained
+F:	board/qualcomm/qrb5165-rb5/
+F:	include/configs/qrb5165-rb5.h
+F:	configs/qrb5165rb5_defconfig

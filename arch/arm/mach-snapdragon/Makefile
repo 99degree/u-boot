@@ -29,3 +29,4 @@ obj-$(CONFIG_TARGET_QCS404EVB) += sysmap-qcs404.o
 obj-$(CONFIG_TARGET_QRB4210RB2) += clock-qrb4210-rb2.o
 obj-$(CONFIG_TARGET_QRB5165RB5) += clock-qrb5165-rb5.o
 obj-$(CONFIG_TARGET_QRB4210RB2) += sysmap-qrb4210-rb2.o
+obj-$(CONFIG_TARGET_QRB5165RB5) += sysmap-qrb5165-rb5.o

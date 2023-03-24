@@ -1,0 +1,15 @@
+if TARGET_QRB5165RB5
+
+config SYS_BOARD
+	default "qrb5165-rb5"
+
+config SYS_VENDOR
+	default "qualcomm"
+
+config SYS_SOC
+	default "sm8250"
+
+config SYS_CONFIG_NAME
+	default "qrb5165-rb5"
+
+endif
