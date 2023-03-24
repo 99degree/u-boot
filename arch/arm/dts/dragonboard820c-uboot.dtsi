@@ -12,14 +12,6 @@
 
 	soc {
 		u-boot,dm-pre-reloc;
-
-		pinctrl@1010000 {
-			u-boot,dm-pre-reloc;
-
-			uart {
-				u-boot,dm-pre-reloc;
-			};
-		};
 	};
 };
 

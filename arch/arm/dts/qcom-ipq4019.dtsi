@@ -80,7 +80,6 @@
 			gpio-count = <100>;
 			gpio-bank-name="soc";
 			#gpio-cells = <2>;
-			u-boot,dm-pre-reloc;
 		};
 
 		blsp1_uart1: serial@78af000 {

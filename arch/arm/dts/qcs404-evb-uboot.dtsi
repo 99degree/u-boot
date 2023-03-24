@@ -8,10 +8,6 @@
 / {
 	soc {
 		u-boot,dm-pre-reloc;
-
-		pinctrl_north@1300000 {
-			u-boot,dm-pre-reloc;
-		};
 	};
 };
 

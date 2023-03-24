@@ -16,12 +16,6 @@
 		serial@a84000 {
 			u-boot,dm-pre-reloc;
 		};
-		gpio_north@3900000 {
-			u-boot,dm-pre-reloc;
-		};
-		pinctrl_north@3900000 {
-			u-boot,dm-pre-reloc;
-		};
 	};
 };
 

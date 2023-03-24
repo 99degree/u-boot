@@ -163,4 +163,5 @@ U_BOOT_DRIVER(pinctrl_snapdraon) = {
 	.ops		= &msm_pinctrl_ops,
 	.probe		= msm_pinctrl_probe,
 	.bind		= msm_pinctrl_bind,
+	.flags		= DM_FLAG_PRE_RELOC,
 };
