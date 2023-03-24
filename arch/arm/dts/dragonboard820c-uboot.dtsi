@@ -20,10 +20,6 @@
 				u-boot,dm-pre-reloc;
 			};
 		};
-
-		clock-controller@300000 {
-			u-boot,dm-pre-reloc;
-		};
 	};
 };
 

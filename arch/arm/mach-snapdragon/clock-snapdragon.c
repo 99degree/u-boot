@@ -178,4 +178,5 @@ U_BOOT_DRIVER(clk_msm) = {
 	.ops		= &msm_clk_ops,
 	.priv_auto	= sizeof(struct msm_clk_priv),
 	.probe		= msm_clk_probe,
+	.flags		= DM_FLAG_PRE_RELOC,
 };

@@ -12,10 +12,6 @@
 		pinctrl_north@1300000 {
 			u-boot,dm-pre-reloc;
 		};
-
-		clock-controller@1800000 {
-			u-boot,dm-pre-reloc;
-		};
 	};
 };
 

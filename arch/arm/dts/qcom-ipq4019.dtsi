@@ -56,7 +56,6 @@
 			reg = <0x1800000 0x60000>;
 			#clock-cells = <1>;
 			#reset-cells = <1>;
-			u-boot,dm-pre-reloc;
 		};
 
 		rng: rng@22000 {
