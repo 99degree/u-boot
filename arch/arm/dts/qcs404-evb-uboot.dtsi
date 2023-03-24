@@ -16,10 +16,6 @@
 		clock-controller@1800000 {
 			u-boot,dm-pre-reloc;
 		};
-
-		serial@78b1000 {
-			u-boot,dm-pre-reloc;
-		};
 	};
 };
 
