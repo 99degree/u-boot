@@ -6,13 +6,6 @@
  * (C) Copyright 2022 Sumit Garg <sumit.garg@linaro.org>
  */
 
-/
-{
-	soc {
-		u-boot,dm-pre-reloc;
-	};
-};
-
 &pm8998_pon {
 	key_vol_down {
 		gpios = <&pm8998_pon 1 0>;

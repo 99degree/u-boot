@@ -11,9 +11,6 @@
 	framebuffer@9D400000 {
 		u-boot,dm-pre-reloc;
 	};
-	soc {
-		u-boot,dm-pre-reloc;
-	};
 };
 
 &pm8998_pon {

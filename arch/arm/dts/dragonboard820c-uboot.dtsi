@@ -9,10 +9,6 @@
 	smem {
 		u-boot,dm-pre-reloc;
 	};
-
-	soc {
-		u-boot,dm-pre-reloc;
-	};
 };
 
 &pm8994_pon {
