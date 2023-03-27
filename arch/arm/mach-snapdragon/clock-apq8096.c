@@ -41,7 +41,7 @@ static struct vote_clk gcc_blsp2_ahb_clk = {
 	.vote_bit = BIT(15),
 };
 
-static int clk_init_sdc(struct msm_clk_priv *priv, uint rate)
+static int clk_init_sdc(struct qcom_cc_priv *priv, uint rate)
 {
 	int div = 3;
 
@@ -62,7 +62,7 @@ static const struct bcr_regs uart2_regs = {
 	.D = BLSP2_UART2_APPS_D,
 };
 
-static int clk_init_uart(struct msm_clk_priv *priv)
+static int clk_init_uart(struct qcom_cc_priv *priv)
 {
 	/* Enable AHB clock */
 	clk_enable_vote_clk(priv->base, &gcc_blsp2_ahb_clk);
@@ -82,7 +82,7 @@ static int clk_init_uart(struct msm_clk_priv *priv)
 
 ulong msm_set_rate(struct clk *clk, ulong rate)
 {
-	struct msm_clk_priv *priv = dev_get_priv(clk->dev);
+	struct qcom_cc_priv *priv = dev_get_priv(clk->dev);
 
 	switch (clk->id) {
 	case 0: /* SDC1 */
@@ -99,3 +99,19 @@ int msm_enable(struct clk *clk)
 {
 	return 0;
 }
+
+static const struct udevice_id gcc_apq8096_of_match[] = {
+	{
+		.compatible = "qcom,gcc-apq8096",
+		/* TODO: add reset map */
+	},
+	{ }
+};
+
+U_BOOT_DRIVER(gcc_apq8096) = {
+	.name		= "gcc_apq8096",
+	.id		= UCLASS_NOP,
+	.of_match	= gcc_apq8096_of_match,
+	.bind		= qcom_cc_bind,
+	.flags		= DM_FLAG_PRE_RELOC,
+};

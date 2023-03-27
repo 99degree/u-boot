@@ -10,6 +10,8 @@
 #include <common.h>
 #include <clk-uclass.h>
 #include <dm.h>
+#include <dm/device-internal.h>
+#include <dm/lists.h>
 #include <errno.h>
 #include <asm/io.h>
 #include <linux/bitops.h>
@@ -138,11 +140,14 @@ void clk_rcg_set_rate(phys_addr_t base, const struct bcr_regs *regs, int div,
 
 static int msm_clk_probe(struct udevice *dev)
 {
-	struct msm_clk_priv *priv = dev_get_priv(dev);
+	struct qcom_cc_data *data = (struct qcom_cc_data *)dev_get_driver_data(dev);
+	struct qcom_cc_priv *priv = dev_get_priv(dev);
 
 	priv->base = dev_read_addr(dev);
 	if (priv->base == FDT_ADDR_T_NONE)
 		return -EINVAL;
+
+	priv->data = data;
 
 	return 0;
 }
@@ -162,23 +167,47 @@ static struct clk_ops msm_clk_ops = {
 	.enable = msm_clk_enable,
 };
 
-static const struct udevice_id msm_clk_ids[] = {
-	{ .compatible = "qcom,gcc-msm8916" },
-	{ .compatible = "qcom,gcc-apq8016" },
-	{ .compatible = "qcom,gcc-msm8996" },
-	{ .compatible = "qcom,gcc-apq8096" },
-	{ .compatible = "qcom,gcc-ipq4019" },
-	{ .compatible = "qcom,gcc-sdm845" },
-	{ .compatible = "qcom,gcc-qcs404" },
-	{ }
-};
-
-U_BOOT_DRIVER(clk_msm) = {
-	.name		= "clk_msm",
+U_BOOT_DRIVER(qcom_clk) = {
+	.name		= "qcom_clk",
 	.id		= UCLASS_CLK,
-	.of_match	= msm_clk_ids,
 	.ops		= &msm_clk_ops,
-	.priv_auto	= sizeof(struct msm_clk_priv),
+	.priv_auto	= sizeof(struct qcom_cc_priv),
 	.probe		= msm_clk_probe,
 	.flags		= DM_FLAG_PRE_RELOC,
 };
+
+int qcom_cc_bind(struct udevice *parent)
+{
+	struct qcom_cc_data *data = (struct qcom_cc_data *)dev_get_driver_data(parent);
+	struct udevice *clkdev, *rstdev;
+	struct driver *drv;
+	int ret;
+
+	/* Get a handle to the common clk handler */
+	drv = lists_driver_lookup_name("qcom_clk");
+	if (!drv)
+		return -ENOENT;
+
+	/* Register the clock controller */
+	ret = device_bind_with_driver_data(parent, drv, "qcom_clk", (ulong)data,
+					   dev_ofnode(parent), &clkdev);
+	if (ret)
+		return ret;
+
+	/* Bail out early if resets are not specified for this platform */
+	if (!data || !data->resets)
+		return ret;
+
+	/* Get a handle to the common reset handler */
+	drv = lists_driver_lookup_name("qcom_reset");
+	if (!drv)
+		return -ENOENT;
+
+	/* Register the reset controller */
+	ret = device_bind_with_driver_data(parent, drv, "qcom_reset", (ulong)clkdev,
+					   dev_ofnode(parent), &rstdev);
+	if (ret)
+		device_unbind(clkdev);
+
+	return ret;
+}

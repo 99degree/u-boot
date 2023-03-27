@@ -71,7 +71,7 @@ const struct freq_tbl *qcom_find_freq(const struct freq_tbl *f, uint rate)
 	return f - 1;
 }
 
-static int clk_init_uart(struct msm_clk_priv *priv, uint rate)
+static int clk_init_uart(struct qcom_cc_priv *priv, uint rate)
 {
 	const struct freq_tbl *freq = qcom_find_freq(ftbl_gcc_qupv3_wrap0_s0_clk_src, rate);
 
@@ -83,7 +83,7 @@ static int clk_init_uart(struct msm_clk_priv *priv, uint rate)
 
 ulong msm_set_rate(struct clk *clk, ulong rate)
 {
-	struct msm_clk_priv *priv = dev_get_priv(clk->dev);
+	struct qcom_cc_priv *priv = dev_get_priv(clk->dev);
 
 	switch (clk->id) {
 	case GCC_QUPV3_WRAP1_S1_CLK: /*UART2*/
@@ -97,3 +97,19 @@ int msm_enable(struct clk *clk)
 {
 	return 0;
 }
+
+static const struct udevice_id gcc_sdm845_of_match[] = {
+	{
+		.compatible = "qcom,gcc-sdm845",
+		/* TODO: add reset map */
+	},
+	{ }
+};
+
+U_BOOT_DRIVER(gcc_sdm845) = {
+	.name		= "gcc_sdm845",
+	.id		= UCLASS_NOP,
+	.of_match	= gcc_sdm845_of_match,
+	.bind		= qcom_cc_bind,
+	.flags		= DM_FLAG_PRE_RELOC,
+};
