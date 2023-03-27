@@ -1,11 +1,9 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * Qualcomm APQ8016, APQ8096, SDM845
- *
  * (C) Copyright 2017 Jorge Ramirez-Ortiz <jorge.ramirez-ortiz@linaro.org>
  */
-#ifndef _CLOCK_SNAPDRAGON_H
-#define _CLOCK_SNAPDRAGON_H
+#ifndef _CLOCK_QCOM_H
+#define _CLOCK_QCOM_H
 
 #define CFG_CLK_SRC_CXO   (0 << 8)
 #define CFG_CLK_SRC_GPLL0 (1 << 8)

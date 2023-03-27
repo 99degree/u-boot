@@ -11,8 +11,8 @@
 #include <errno.h>
 #include <asm/io.h>
 #include <linux/bitops.h>
-#include "clock-snapdragon.h"
 
+#include <clk/qcom.h>
 #include <dt-bindings/clock/qcom,gcc-qcs404.h>
 
 /* GPLL0 clock control registers */

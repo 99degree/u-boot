@@ -12,8 +12,8 @@
 #include <common.h>
 #include <dm.h>
 #include <errno.h>
-#include "clock-snapdragon.h"
 
+#include <clk/qcom.h>
 #include <dt-bindings/clock/qcom,ipq4019-gcc.h>
 
 ulong msm_set_rate(struct clk *clk, ulong rate)
