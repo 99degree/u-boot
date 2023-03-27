@@ -71,7 +71,7 @@ const struct freq_tbl *qcom_find_freq(const struct freq_tbl *f, uint rate)
 	return f - 1;
 }
 
-static int clk_init_uart(struct msm_clk_priv *priv, uint rate)
+static int clk_init_uart(struct qcom_cc_priv *priv, uint rate)
 {
 	const struct freq_tbl *freq = qcom_find_freq(ftbl_gcc_qupv3_wrap0_s0_clk_src, rate);
 
@@ -83,7 +83,7 @@ static int clk_init_uart(struct msm_clk_priv *priv, uint rate)
 
 ulong msm_set_rate(struct clk *clk, ulong rate)
 {
-	struct msm_clk_priv *priv = dev_get_priv(clk->dev);
+	struct qcom_cc_priv *priv = dev_get_priv(clk->dev);
 
 	switch (clk->id) {
 	case GCC_QUPV3_WRAP1_S1_CLK: /*UART2*/
@@ -97,3 +97,54 @@ int msm_enable(struct clk *clk)
 {
 	return 0;
 }
+
+static const struct qcom_reset_map sdm845_gcc_resets[] = {
+	[GCC_MMSS_BCR] = { 0xb000 },
+	[GCC_PCIE_0_BCR] = { 0x6b000 },
+	[GCC_PCIE_1_BCR] = { 0x8d000 },
+	[GCC_PCIE_PHY_BCR] = { 0x6f000 },
+	[GCC_PDM_BCR] = { 0x33000 },
+	[GCC_PRNG_BCR] = { 0x34000 },
+	[GCC_QUPV3_WRAPPER_0_BCR] = { 0x17000 },
+	[GCC_QUPV3_WRAPPER_1_BCR] = { 0x18000 },
+	[GCC_QUSB2PHY_PRIM_BCR] = { 0x12000 },
+	[GCC_QUSB2PHY_SEC_BCR] = { 0x12004 },
+	[GCC_SDCC2_BCR] = { 0x14000 },
+	[GCC_SDCC4_BCR] = { 0x16000 },
+	[GCC_TSIF_BCR] = { 0x36000 },
+	[GCC_UFS_CARD_BCR] = { 0x75000 },
+	[GCC_UFS_PHY_BCR] = { 0x77000 },
+	[GCC_USB30_PRIM_BCR] = { 0xf000 },
+	[GCC_USB30_SEC_BCR] = { 0x10000 },
+	[GCC_USB3_PHY_PRIM_BCR] = { 0x50000 },
+	[GCC_USB3PHY_PHY_PRIM_BCR] = { 0x50004 },
+	[GCC_USB3_DP_PHY_PRIM_BCR] = { 0x50008 },
+	[GCC_USB3_PHY_SEC_BCR] = { 0x5000c },
+	[GCC_USB3PHY_PHY_SEC_BCR] = { 0x50010 },
+	[GCC_USB3_DP_PHY_SEC_BCR] = { 0x50014 },
+	[GCC_USB_PHY_CFG_AHB2PHY_BCR] = { 0x6a000 },
+	[GCC_PCIE_0_PHY_BCR] = { 0x6c01c },
+	[GCC_PCIE_1_PHY_BCR] = { 0x8e01c },
+};
+
+static const struct qcom_cc_data qcs404_gcc_data = {
+	.resets = sdm845_gcc_resets,
+	.num_resets = ARRAY_SIZE(sdm845_gcc_resets),
+};
+
+
+static const struct udevice_id gcc_sdm845_of_match[] = {
+	{
+		.compatible = "qcom,gcc-sdm845",
+		.data = (ulong)&qcs404_gcc_data,
+	},
+	{ }
+};
+
+U_BOOT_DRIVER(gcc_sdm845) = {
+	.name		= "gcc_sdm845",
+	.id		= UCLASS_NOP,
+	.of_match	= gcc_sdm845_of_match,
+	.bind		= qcom_cc_bind,
+	.flags		= DM_FLAG_PRE_RELOC,
+};
