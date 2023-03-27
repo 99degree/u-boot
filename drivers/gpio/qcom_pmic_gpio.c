@@ -256,6 +256,7 @@ static int qcom_gpio_of_to_plat(struct udevice *dev)
 
 static const struct udevice_id qcom_gpio_ids[] = {
 	{ .compatible = "qcom,pm8916-gpio" },
+	{ .compatible = "qcom,pm8941-gpio" },
 	{ .compatible = "qcom,pm8994-gpio" },	/* 22 GPIO's */
 	{ .compatible = "qcom,pm8998-gpio" },
 	{ .compatible = "qcom,pms405-gpio" },
@@ -359,6 +360,7 @@ static int qcom_pwrkey_of_to_plat(struct udevice *dev)
 
 static const struct udevice_id qcom_pwrkey_ids[] = {
 	{ .compatible = "qcom,pm8916-pwrkey" },
+	{ .compatible = "qcom,pm8941-pwrkey" },
 	{ .compatible = "qcom,pm8994-pwrkey" },
 	{ .compatible = "qcom,pm8998-pwrkey" },
 	{ }
