@@ -13,7 +13,8 @@
 #include <errno.h>
 #include <asm/io.h>
 #include <linux/bitops.h>
-#include "clock-snapdragon.h"
+
+#include <clk/qcom.h>
 
 /* CBCR register fields */
 #define CBCR_BRANCH_ENABLE_BIT  BIT(0)
