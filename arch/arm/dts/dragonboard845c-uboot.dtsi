@@ -10,10 +10,6 @@
 {
 	soc {
 		u-boot,dm-pre-reloc;
-
-		serial@a84000 {
-			u-boot,dm-pre-reloc;
-		};
 	};
 };
 
