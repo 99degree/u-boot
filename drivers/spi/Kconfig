@@ -371,7 +371,7 @@ config PL022_SPI
 
 config SPI_QUP
 	bool "Qualcomm SPI controller with QUP interface"
-	depends on ARCH_IPQ40XX
+	depends on ARCH_SNAPDRAGON
 	help
 	  Qualcomm Universal Peripheral (QUP) core is an AHB slave that
 	  provides a common data path (an output FIFO and an input FIFO)

@@ -25,7 +25,7 @@ struct qcom_reset_map {
 	u8 bit;
 };
 
-#ifdef CONFIG_ARCH_IPQ40XX
+#ifdef CONFIG_QCOM_IPQ40XX
 #include <dt-bindings/reset/qcom,ipq4019-reset.h>
 static const struct qcom_reset_map gcc_qcom_resets[] = {
 	[WIFI0_CPU_INIT_RESET] = { 0x1f008, 5 },
@@ -100,8 +100,7 @@ static const struct qcom_reset_map gcc_qcom_resets[] = {
 	[GCC_MPM_BCR] = {0x24000, 0},
 	[GCC_SPDM_BCR] = {0x25000, 0},
 };
-#endif
-
+#else
 #ifdef CONFIG_TARGET_QCS404EVB
 #include <dt-bindings/clock/qcom,gcc-qcs404.h>
 static const struct qcom_reset_map gcc_qcom_resets[] = {
@@ -129,6 +128,9 @@ static const struct qcom_reset_map gcc_qcom_resets[] = {
 	[GCC_EMAC_BCR] = { 0x4e000 },
 	[GCC_WDSP_RESTART] = {0x19000},
 };
+#else
+static const struct qcom_reset_map gcc_qcom_resets[] = {};
+#endif
 #endif
 
 static int qcom_reset_assert(struct reset_ctl *rst)

@@ -9,6 +9,10 @@ config SYS_MALLOC_F_LEN
 config SPL_SYS_MALLOC_F_LEN
 	default 0x2000
 
+config QCOM_IPQ40XX
+	bool "Qualcomm IPQ40XX Family of SoCs"
+	default n
+
 config SDM845
 	bool "Qualcomm Snapdragon 845 SoC"
 	default n
@@ -79,10 +83,16 @@ config TARGET_QCS404EVB
 
 endchoice
 
-source "board/qualcomm/dragonboard410c/Kconfig"
-source "board/qualcomm/dragonboard820c/Kconfig"
-source "board/qualcomm/dragonboard845c/Kconfig"
-source "board/samsung/starqltechn/Kconfig"
-source "board/qualcomm/qcs404-evb/Kconfig"
+if ARM64
+	source "board/qualcomm/dragonboard410c/Kconfig"
+	source "board/qualcomm/dragonboard820c/Kconfig"
+	source "board/qualcomm/dragonboard845c/Kconfig"
+	source "board/samsung/starqltechn/Kconfig"
+	source "board/qualcomm/qcs404-evb/Kconfig"
+endif
+
+if CPU_V7A
+	# no arm32 boards as of now..
+endif
 
 endif

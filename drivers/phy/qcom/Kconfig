@@ -8,7 +8,7 @@ config MSM8916_USB_PHY
 
 config PHY_QCOM_IPQ4019_USB
 	tristate "Qualcomm IPQ4019 USB PHY driver"
-	depends on PHY && ARCH_IPQ40XX
+	depends on PHY && QCOM_IPQ40XX
 	help
 	  Support for the USB PHY-s on Qualcomm IPQ40xx SoC-s.
 
