@@ -20,7 +20,7 @@
 	};
 
 	aliases {
-		serial0 = &debug_uart;
+		serial0 = &uart4;
 	};
 
 	memory {
@@ -57,13 +57,21 @@
 			#power-domain-cells = <1>;
 		};
 
-		debug_uart: serial@4a90000 {
-			compatible = "qcom,msm-geni-uart";
-			reg = <0x04a90000 0x4000>;
-			clock-names = "se-clk";
-			clocks = <&gcc GCC_QUPV3_WRAP0_S4_CLK>;
-			pinctrl-names = "default";
-			pinctrl-0 = <&debug_uart_on>;
+		qupv3_id_0: geniqup@4ac0000 {
+			compatible = "qcom,geni-se-qup";
+			reg = <0x04ac0000 0x2000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+
+			uart4: serial@4a90000 {
+				compatible = "qcom,geni-debug-uart";
+				reg = <0x04a90000 0x4000>;
+				clock-names = "se";
+				clocks = <&gcc GCC_QUPV3_WRAP0_S4_CLK>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&debug_uart_on>;
+			};
 		};
 
 		sdhc_1: mmc@4744000 {
