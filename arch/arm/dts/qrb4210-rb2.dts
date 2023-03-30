@@ -40,7 +40,7 @@
 			gpio-count = <114>;
 			gpio-controller;
 			#gpio-cells = <2>;
-			gpio-ranges = <&tlmm_north 0 0 114>;
+			gpio-ranges = <&tlmm 0 0 114>;
 
 			/* DEBUG UART */
 			debug_uart_on: debug_uart-default {
