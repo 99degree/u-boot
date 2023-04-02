@@ -99,6 +99,56 @@
 			no-sdio;
 		};
 
+		usb_1_hsphy: phy@1613000 {
+			compatible = "qcom,sm6115-qusb2-phy";
+			reg = <0x01613000 0x180>;
+			#phy-cells = <0>;
+
+			clocks = <&gcc GCC_AHB2PHY_USB_CLK>;
+			clock-names = "cfg_ahb";
+
+			resets = <&gcc GCC_QUSB2PHY_PRIM_BCR>;
+			reset-names = "phy";
+		};
+
+		usb_1: usb@4ef8800 {
+			compatible = "qcom,sm6115-dwc3", "qcom,dwc3";
+			reg = <0x04ef8800 0x400>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges;
+
+			clocks = <&gcc GCC_CFG_NOC_USB3_PRIM_AXI_CLK>,
+				 <&gcc GCC_USB30_PRIM_MASTER_CLK>,
+				 <&gcc GCC_SYS_NOC_USB3_PRIM_AXI_CLK>,
+				 <&gcc GCC_USB30_PRIM_SLEEP_CLK>,
+				 <&gcc GCC_USB30_PRIM_MOCK_UTMI_CLK>,
+				 <&gcc GCC_USB3_PRIM_CLKREF_CLK>;
+			clock-names = "cfg_noc", "core", "iface", "sleep", "mock_utmi", "xo";
+
+			assigned-clocks = <&gcc GCC_USB30_PRIM_MOCK_UTMI_CLK>,
+					  <&gcc GCC_USB30_PRIM_MASTER_CLK>;
+			assigned-clock-rates = <19200000>, <66666667>;
+
+			resets = <&gcc GCC_USB30_PRIM_BCR>;
+			power-domains = <&gcc GCC_USB30_PRIM_GDSC>;
+			qcom,select-utmi-as-pipe-clk;
+
+			usb_1_dwc3: usb@4e00000 {
+				compatible = "snps,dwc3";
+				reg = <0x04e00000 0xcd00>;
+				phys = <&usb_1_hsphy>;
+				phy-names = "usb2-phy";
+				snps,dis_u2_susphy_quirk;
+				snps,dis_enblslpm_quirk;
+				snps,has-lpm-erratum;
+				snps,hird-threshold = /bits/ 8 <0x10>;
+				snps,usb3_lpm_capable;
+				maximum-speed = "high-speed";
+				dr_mode = "host";
+			};
+		};
+
 		spmi@1c40000 {
 			compatible = "qcom,spmi-pmic-arb";
 			reg = <0x01c0a000 0x26000>,
