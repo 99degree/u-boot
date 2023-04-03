@@ -23,6 +23,21 @@
 #define UART4_APPS_N		(0x1F614)
 #define UART4_APPS_D		(0x1F618)
 
+/* USB controller clock control registers */
+#define USB30_PRIM_MASTER_CBCR		(0x1A010)
+#define USB30_PRIM_SLEEP_CBCR		(0x1A014)
+#define USB30_PRIM_MOCK_UTMI_CBCR	(0x1A018)
+#define SYS_NOC_USB3_PRIM_AXI_CBCR	(0x1A080)
+#define CFG_NOC_USB3_PRIM_AXI_CBCR	(0x1A084)
+#define USB3_PRIM_CLKREF_EN		(0x9F000)
+#define AHB2PHY_USB_CBCR		(0x1D008)
+
+#define USB30_PRIM_MASTER_CMD_RCGR	(0x1A01C)
+#define USB30_PRIM_MASTER_CFG_RCGR	(0x1A020)
+#define USB30_PRIM_MASTER_M		(0x1A024)
+#define USB30_PRIM_MASTER_N		(0x1A028)
+#define USB30_PRIM_MASTER_D		(0x1A02C)
+
 /* SDCC1 controller clock control registers */
 #define SDCC1_BCR		(0x38000)
 #define SDCC1_APPS_CBCR		(0x38004)
