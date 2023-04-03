@@ -74,6 +74,14 @@ static struct vote_clk uart4_vote_clk = {
 	.vote_bit = BIT(14),
 };
 
+static const struct bcr_regs usb30_master_regs = {
+	.cfg_rcgr = USB30_PRIM_MASTER_CFG_RCGR,
+	.cmd_rcgr = USB30_PRIM_MASTER_CMD_RCGR,
+	.M = USB30_PRIM_MASTER_M,
+	.N = USB30_PRIM_MASTER_N,
+	.D = USB30_PRIM_MASTER_D,
+};
+
 const struct freq_tbl *qcom_find_freq(const struct freq_tbl *f, uint rate)
 {
 	if (!f)
@@ -123,6 +131,30 @@ ulong msm_set_rate(struct clk *clk, ulong rate)
 	struct qcom_cc_priv *priv = dev_get_priv(clk->dev);
 
 	switch (clk->id) {
+	case GCC_USB30_PRIM_MASTER_CLK:
+		writel(0xF8282000, 0x0141a004); //GDSC
+		clk_enable_cbc(priv->base + USB30_PRIM_MASTER_CBCR);
+		clk_rcg_set_rate_mnd(priv->base, &usb30_master_regs, 4, 0, 0,
+				     CFG_CLK_SRC_GPLL0);
+		break;
+	case GCC_CFG_NOC_USB3_PRIM_AXI_CLK:
+		clk_enable_cbc(priv->base + CFG_NOC_USB3_PRIM_AXI_CBCR);
+		break;
+	case GCC_SYS_NOC_USB3_PRIM_AXI_CLK:
+		clk_enable_cbc(priv->base + SYS_NOC_USB3_PRIM_AXI_CBCR);
+		break;
+	case GCC_USB30_PRIM_SLEEP_CLK:
+		clk_enable_cbc(priv->base + USB30_PRIM_SLEEP_CBCR);
+		break;
+	case GCC_USB30_PRIM_MOCK_UTMI_CLK:
+		clk_enable_cbc(priv->base + USB30_PRIM_MOCK_UTMI_CBCR);
+		break;
+	case GCC_USB3_PRIM_CLKREF_CLK:
+		clk_enable_cbc(priv->base + USB3_PRIM_CLKREF_EN);
+		break;
+	case GCC_AHB2PHY_USB_CLK:
+		clk_enable_cbc(priv->base + AHB2PHY_USB_CBCR);
+		break;
 	case GCC_QUPV3_WRAP0_S4_CLK: /* UART4 */
 		return clk_init_geni_uart(priv, rate);
 	default:
