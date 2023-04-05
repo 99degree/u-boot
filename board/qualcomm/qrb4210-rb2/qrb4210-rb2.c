@@ -27,6 +27,19 @@ int dram_init(void)
 	return fdtdec_setup_mem_size_base();
 }
 
+int dram_init_banksize(void)
+{
+	return fdtdec_setup_memory_banksize();
+}
+
+extern ulong fw_dtb_pointer;
+
+void *board_fdt_blob_setup(int *err)
+{
+	*err = 0;
+	return (void *)fw_dtb_pointer;
+}
+
 static void show_psci_version(void)
 {
 	struct arm_smccc_res res;
