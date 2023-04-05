@@ -4,6 +4,7 @@
 
 obj-$(CONFIG_QCOM_IPQ40XX) += clock-ipq4019.o
 obj-$(CONFIG_QCOM_QCM2290) += clock-qcm2290.o
+obj-$(CONFIG_QCOM_QCM2290) += sysmap-qcm2290.o
 obj-$(CONFIG_SDM845) += clock-sdm845.o
 obj-$(CONFIG_SDM845) += sysmap-sdm845.o
 obj-$(CONFIG_SDM845) += init_sdm845.o
