@@ -13,6 +13,11 @@ config QCOM_IPQ40XX
 	bool "Qualcomm IPQ40XX Family of SoCs"
 	default n
 
+config QCOM_QCM2290
+	bool "Qualcomm Snapdragon QCM2290 SoC"
+	default n
+	select LINUX_KERNEL_IMAGE_HEADER
+
 config SDM845
 	bool "Qualcomm Snapdragon 845 SoC"
 	default n
