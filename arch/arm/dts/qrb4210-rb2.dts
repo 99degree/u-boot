@@ -7,8 +7,6 @@
 
 /dts-v1/;
 
-#include "skeleton64.dtsi"
-#include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/clock/qcom,gcc-sm6115.h>
 
 / {
@@ -120,5 +118,3 @@
 		};
 	};
 };
-
-#include "qrb4210-rb2-uboot.dtsi"
