@@ -35,7 +35,7 @@
 		compatible = "simple-bus";
 
 		tlmm: pinctrl_west@500000 {
-			compatible = "qcom,sm6115-pinctrl";
+			compatible = "qcom,sm6115-tlmm";
 			reg = <0x00500000 0x400000>;
 			gpio-count = <114>;
 			gpio-controller;
