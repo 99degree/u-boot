@@ -71,10 +71,12 @@
 		sdhc_1: mmc@4744000 {
 			compatible = "qcom,sdhci-msm-v5";
 			reg = <0x04744000 0x1000 0x04745000 0x1000>;
-			clock = <&gcc GCC_SDCC1_APPS_CLK>,
-				<&gcc GCC_SDCC1_AHB_CLK>;
-			bus-width = <8>;
+			clocks = <&gcc GCC_SDCC1_APPS_CLK>,
+				 <&gcc GCC_SDCC1_AHB_CLK>;
+			resets = <&gcc GCC_SDCC1_BCR>;
 
+			bus-width = <8>;
+			no-sd;
 			no-sdio;
 			non-removable;
 		};
@@ -82,10 +84,12 @@
 		sdhc_2: mmc@4784000 {
 			compatible = "qcom,sdhci-msm-v5";
 			reg = <0x04784000 0x1000>;
-			clock = <&gcc GCC_SDCC2_APPS_CLK>,
-				<&gcc GCC_SDCC2_AHB_CLK>;
-			bus-width = <4>;
+			clocks = <&gcc GCC_SDCC2_APPS_CLK>,
+				 <&gcc GCC_SDCC2_AHB_CLK>;
+			resets = <&gcc GCC_SDCC2_BCR>;
 
+			bus-width = <4>;
+			no-mmc;
 			no-sdio;
 		};
 
