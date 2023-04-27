@@ -142,6 +142,18 @@ ulong msm_set_rate(struct clk *clk, ulong rate)
 	switch (clk->id) {
 	case GCC_QUPV3_WRAP0_S4_CLK: /* UART4 */
 		return clk_init_geni_uart(priv, rate);
+	default:
+		return 0;
+	}
+
+	return 0;
+}
+
+int msm_enable(struct clk *clk)
+{
+	struct qcom_cc_priv *priv = dev_get_priv(clk->dev);
+
+	switch (clk->id) {
 	case GCC_SDCC2_APPS_CLK:
 		/* SDCC2: 202MHz */
 		clk_rcg_set_rate_mnd(priv->base, &sdcc2_regs, 4, 0, 0,
@@ -156,11 +168,6 @@ ulong msm_set_rate(struct clk *clk, ulong rate)
 		return 0;
 	}
 
-	return 0;
-}
-
-int msm_enable(struct clk *clk)
-{
 	return 0;
 }
 
