@@ -245,7 +245,7 @@
 };
 
 &usb_dwc3 {
-	maximum-speed = "super-speed";
+	maximum-speed = "high-speed";
 
 	/*
 	 * There is only one USB DWC3 controller on QRB4210 board and it is connected
@@ -267,7 +267,7 @@
 	 * However since we want to use the EUD debug device, we set the mode as
 	 * 'otg' here.
 	 */
-	dr_mode = "otg";
+	dr_mode = "host";
 };
 
 &usb_hsphy {
