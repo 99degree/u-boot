@@ -236,7 +236,7 @@
 	vqmmc-supply = <&vreg_l5a_2p96>; /* IO line power */
 	bus-width = <4>;
 	no-sdio;
-	no-emmc;
+	no-mmc;
 };
 
 &usb {
