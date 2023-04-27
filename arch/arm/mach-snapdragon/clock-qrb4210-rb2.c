@@ -132,6 +132,28 @@ ulong msm_set_rate(struct clk *clk, ulong rate)
 
 	switch (clk->id) {
 	case GCC_USB30_PRIM_MASTER_CLK:
+		/*
+		writel(0xF8282000, 0x0141a004);
+		clk_enable_cbc(priv->base + USB30_PRIM_MASTER_CBCR);
+		*/
+		clk_rcg_set_rate_mnd(priv->base, &usb30_master_regs, 4, 0, 0,
+				     CFG_CLK_SRC_GPLL0);
+		break;
+	case GCC_QUPV3_WRAP0_S4_CLK: /* UART4 */
+		return clk_init_geni_uart(priv, rate);
+	default:
+		return 0;
+	}
+
+	return 0;
+}
+
+int msm_enable(struct clk *clk)
+{
+	struct qcom_cc_priv *priv = dev_get_priv(clk->dev);
+
+	switch (clk->id) {
+	case GCC_USB30_PRIM_MASTER_CLK:
 		writel(0xF8282000, 0x0141a004); //GDSC
 		clk_enable_cbc(priv->base + USB30_PRIM_MASTER_CBCR);
 		clk_rcg_set_rate_mnd(priv->base, &usb30_master_regs, 4, 0, 0,
@@ -155,17 +177,8 @@ ulong msm_set_rate(struct clk *clk, ulong rate)
 	case GCC_AHB2PHY_USB_CLK:
 		clk_enable_cbc(priv->base + AHB2PHY_USB_CBCR);
 		break;
-	case GCC_QUPV3_WRAP0_S4_CLK: /* UART4 */
-		return clk_init_geni_uart(priv, rate);
-	default:
-		return 0;
 	}
 
-	return 0;
-}
-
-int msm_enable(struct clk *clk)
-{
 	return 0;
 }
 
