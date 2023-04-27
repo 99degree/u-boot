@@ -237,6 +237,7 @@
 	bus-width = <4>;
 	no-sdio;
 	no-mmc;
+	non-removable;
 };
 
 &usb {
