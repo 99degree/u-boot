@@ -400,6 +400,9 @@
 };
 
 &usb_hsphy {
+	clocks = <&gcc GCC_AHB2PHY_USB_CLK>;
+	clock-names = "cfg_ahb";
+
 	vdd-supply = <&pm2250_l12>;
 	vdda-pll-supply = <&pm2250_l13>;
 	vdda-phy-dpdm-supply = <&pm2250_l21>;
