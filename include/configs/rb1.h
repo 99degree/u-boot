@@ -25,7 +25,7 @@
 	"setenv initrd_high 0xffffffffffffffff; "	\
 	"setenv ramdisk_addr_r 0x83000000; "	\
 	"ext4load mmc 0:0xe ${ramdisk_addr_r} /boot/initramfs-rbX.cpio.gz; "	\
-	"setenv bootargs console=ttyMSM0,115200n8 root=/dev/mmcblk1p2 rootwait rw ignore_loglevel earlycon; "	\
+	"setenv bootargs console=ttyMSM0,115200n8 root=/dev/mmcblk0p14 rootwait rw ignore_loglevel earlycon; "	\
 	"booti ${kernel_addr_r} ${ramdisk_addr_r}:${filesize} ${fdt_addr_r}\0"
 
 #endif
