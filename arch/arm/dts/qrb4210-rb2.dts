@@ -276,6 +276,9 @@
 	vdd-supply = <&vreg_l4a_0p9>;		   /* 0.9V regulator supply */
 	vdda-pll-supply = <&vreg_l12a_1p8>;	   /* 1.8V regulator supply */
 	vdda-phy-dpdm-supply = <&vreg_l15a_3p128>; /* 3.1V regulator supply (Dp/Dm) */
+
+	clocks = <&gcc GCC_AHB2PHY_USB_CLK>;
+	clock-names = "cfg_ahb";
 };
 
 &usb_qmpphy {
