@@ -53,6 +53,14 @@ static const struct freq_tbl ftbl_gcc_qupv3_wrap0_s0_clk_src[] = {
 	{ }
 };
 
+static const struct bcr_regs sdcc2_regs = {
+	.cfg_rcgr = SDCC2_AHB_CBCR,
+	.cmd_rcgr = SDCC2_CMD_RCGR,
+	.M = SDCC2_M,
+	.N = SDCC2_N,
+	.D = SDCC2_D,
+};
+
 static const struct bcr_regs uart4_regs = {
 	.cfg_rcgr = UART4_APPS_CFG_RCGR,
 	.cmd_rcgr = UART4_APPS_CMD_RCGR,
@@ -177,6 +185,18 @@ int msm_enable(struct clk *clk)
 	case GCC_AHB2PHY_USB_CLK:
 		clk_enable_cbc(priv->base + AHB2PHY_USB_CBCR);
 		break;
+	case GCC_SDCC2_APPS_CLK:
+		/* SDCC2: 202MHz */
+		clk_rcg_set_rate_mnd(priv->base, &sdcc2_regs, 4, 0, 0,
+				     CFG_CLK_SRC_GPLL0);
+		clk_enable_gpll0(priv->base, &gpll0_vote_clk);
+		clk_enable_cbc(priv->base + SDCC2_APPS_CBCR);
+		break;
+	case GCC_SDCC2_AHB_CLK:
+		clk_enable_cbc(priv->base + SDCC2_AHB_CBCR);
+                break;
+	default:
+		return 0;
 	}
 
 	return 0;
