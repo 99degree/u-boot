@@ -349,6 +349,7 @@
 	pinctrl-names = "default", "sleep";
 	no-sdio;
 	no-mmc;
+	non-removable;
 	status = "okay";
 };
 
