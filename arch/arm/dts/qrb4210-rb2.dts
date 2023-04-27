@@ -1,178 +1,285 @@
-// SPDX-License-Identifier: GPL-2.0+
+// SPDX-License-Identifier: BSD-3-Clause
 /*
- * Qualcomm QRB4210-RB2 evaluation board device tree source
- *
- * (C) Copyright 2023 Bhupesh Sharma <bhupesh.sharma@linaro.org>
+ * Copyright (c) 2022, Linaro Limited
  */
 
 /dts-v1/;
 
-#include <dt-bindings/clock/qcom,gcc-sm6115.h>
+#include <dt-bindings/regulator/qcom,rpmh-regulator.h>
+#include "sm4250.dtsi"
 
 / {
 	model = "Qualcomm Technologies, Inc. QRB4210 RB2";
-	compatible = "qcom,qrb4210-rb2", "qcom,qrb4210", "qcom,sm4250";
-	#address-cells = <2>;
-	#size-cells = <2>;
-
-	chosen {
-		stdout-path = "serial0:115200n8";
-	};
+	compatible = "qcom,qrb4210-rb2", "qcom,sm4250";
 
 	aliases {
 		serial0 = &uart4;
 	};
 
-	memory {
-		device_type = "memory";
-		reg = <0 0x80000000 0 0x40000000>;
+	chosen {
+		stdout-path = "serial0:115200n8";
 	};
 
-	soc {
-		#address-cells = <1>;
-		#size-cells = <1>;
-		ranges = <0 0 0 0xffffffff>;
-		compatible = "simple-bus";
+	vph_pwr: vph-pwr-regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "vph_pwr";
+		regulator-min-microvolt = <3700000>;
+		regulator-max-microvolt = <3700000>;
 
-		tlmm: pinctrl_west@500000 {
-			compatible = "qcom,sm6115-tlmm";
-			reg = <0x00500000 0x400000>;
-			gpio-count = <114>;
-			gpio-controller;
-			#gpio-cells = <2>;
-			gpio-ranges = <&tlmm 0 0 114>;
+		regulator-always-on;
+		regulator-boot-on;
+	};
+};
 
-			/* DEBUG UART */
-			debug_uart_on: debug_uart-default {
-				pins = "GPIO_12", "GPIO_13";
-				function = "qup4";
-			};
+&xo_board {
+	clock-frequency = <19200000>;
+};
+
+&sleep_clk {
+	clock-frequency = <32000>;
+};
+
+&qupv3_id_0 {
+	status = "okay";
+};
+
+&uart4 {
+	status = "okay";
+};
+
+&rpm_requests {
+	regulators-0 {
+		compatible = "qcom,rpm-pm6125-regulators";
+
+		vdd-s1-supply = <&vph_pwr>;
+		vdd-s2-supply = <&vph_pwr>;
+		vdd-s3-supply = <&vph_pwr>;
+		vdd-s4-supply = <&vph_pwr>;
+		vdd-s5-supply = <&vph_pwr>;
+		vdd-s6-supply = <&vph_pwr>;
+		vdd-s7-supply = <&vph_pwr>;
+		vdd-s8-supply = <&vph_pwr>;
+		vdd-s9-supply = <&vph_pwr>;
+		vdd-s10-supply = <&vph_pwr>;
+
+		vdd-l1-l7-l17-l18-supply = <&vreg_s6a_1p352>;
+		vdd-l2-l3-l4-supply = <&vreg_s6a_1p352>;
+		vdd-l5-l15-l19-l20-l21-l22-supply = <&vph_pwr>;
+		vdd-l6-l8-supply = <&vreg_s5a_0p848>;
+		vdd-l9-l11-supply = <&vreg_s7a_2p04>;
+		vdd-l10-l13-l14-supply = <&vreg_s7a_2p04>;
+		vdd-l12-l16-supply = <&vreg_s7a_2p04>;
+		vdd-l23-l24-supply = <&vph_pwr>;
+
+		vreg_s5a_0p848: s5 {
+			regulator-min-microvolt = <920000>;
+			regulator-max-microvolt = <1128000>;
 		};
 
-		gcc: clock-controller@1400000 {
-			compatible = "qcom,gcc-sm6115";
-			reg = <0x01400000 0x1f0000>;
-			#clock-cells = <1>;
-			#reset-cells = <1>;
-			#power-domain-cells = <1>;
+		vreg_s6a_1p352: s6 {
+			regulator-min-microvolt = <304000>;
+			regulator-max-microvolt = <1456000>;
 		};
 
-		qupv3_id_0: geniqup@4ac0000 {
-			compatible = "qcom,geni-se-qup";
-			reg = <0x04ac0000 0x2000>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-			ranges;
-
-			uart4: serial@4a90000 {
-				compatible = "qcom,geni-debug-uart";
-				reg = <0x04a90000 0x4000>;
-				clock-names = "se";
-				clocks = <&gcc GCC_QUPV3_WRAP0_S4_CLK>;
-				pinctrl-names = "default";
-				pinctrl-0 = <&debug_uart_on>;
-			};
+		vreg_s7a_2p04: s7 {
+			regulator-min-microvolt = <1280000>;
+			regulator-max-microvolt = <2080000>;
 		};
 
-		sdhc_1: mmc@4744000 {
-			compatible = "qcom,sdhci-msm-v5";
-			reg = <0x04744000 0x1000 0x04745000 0x1000>;
-			clocks = <&gcc GCC_SDCC1_APPS_CLK>,
-				 <&gcc GCC_SDCC1_AHB_CLK>;
-			resets = <&gcc GCC_SDCC1_BCR>;
-
-			bus-width = <8>;
-			no-sd;
-			no-sdio;
-			non-removable;
+		vreg_l1a_1p0: l1 {
+			regulator-min-microvolt = <952000>;
+			regulator-max-microvolt = <1152000>;
 		};
 
-		sdhc_2: mmc@4784000 {
-			compatible = "qcom,sdhci-msm-v5";
-			reg = <0x04784000 0x1000>;
-			clocks = <&gcc GCC_SDCC2_APPS_CLK>,
-				 <&gcc GCC_SDCC2_AHB_CLK>;
-			resets = <&gcc GCC_SDCC2_BCR>;
-
-			bus-width = <4>;
-			no-mmc;
-			no-sdio;
+		vreg_l4a_0p9: l4 {
+			regulator-min-microvolt = <488000>;
+			regulator-max-microvolt = <1000000>;
 		};
 
-		usb_1_hsphy: phy@1613000 {
-			compatible = "qcom,sm6115-qusb2-phy";
-			reg = <0x01613000 0x180>;
-			#phy-cells = <0>;
-
-			clocks = <&gcc GCC_AHB2PHY_USB_CLK>;
-			clock-names = "cfg_ahb";
-
-			resets = <&gcc GCC_QUSB2PHY_PRIM_BCR>;
-			reset-names = "phy";
+		vreg_l5a_2p96: l5 {
+			regulator-min-microvolt = <1648000>;
+			regulator-max-microvolt = <3056000>;
 		};
 
-		usb_1: usb@4ef8800 {
-			compatible = "qcom,sm6115-dwc3", "qcom,dwc3";
-			reg = <0x04ef8800 0x400>;
-			#address-cells = <1>;
-			#size-cells = <1>;
-			ranges;
-
-			clocks = <&gcc GCC_CFG_NOC_USB3_PRIM_AXI_CLK>,
-				 <&gcc GCC_USB30_PRIM_MASTER_CLK>,
-				 <&gcc GCC_SYS_NOC_USB3_PRIM_AXI_CLK>,
-				 <&gcc GCC_USB30_PRIM_SLEEP_CLK>,
-				 <&gcc GCC_USB30_PRIM_MOCK_UTMI_CLK>,
-				 <&gcc GCC_USB3_PRIM_CLKREF_CLK>;
-			clock-names = "cfg_noc", "core", "iface", "sleep", "mock_utmi", "xo";
-
-			assigned-clocks = <&gcc GCC_USB30_PRIM_MOCK_UTMI_CLK>,
-					  <&gcc GCC_USB30_PRIM_MASTER_CLK>;
-			assigned-clock-rates = <19200000>, <66666667>;
-
-			resets = <&gcc GCC_USB30_PRIM_BCR>;
-			power-domains = <&gcc GCC_USB30_PRIM_GDSC>;
-			qcom,select-utmi-as-pipe-clk;
-
-			usb_1_dwc3: usb@4e00000 {
-				compatible = "snps,dwc3";
-				reg = <0x04e00000 0xcd00>;
-				phys = <&usb_1_hsphy>;
-				phy-names = "usb2-phy";
-				snps,dis_u2_susphy_quirk;
-				snps,dis_enblslpm_quirk;
-				snps,has-lpm-erratum;
-				snps,hird-threshold = /bits/ 8 <0x10>;
-				snps,usb3_lpm_capable;
-				maximum-speed = "high-speed";
-				dr_mode = "host";
-			};
+		vreg_l6a_0p6: l6 {
+			regulator-min-microvolt = <576000>;
+			regulator-max-microvolt = <656000>;
 		};
 
-		spmi@1c40000 {
-			compatible = "qcom,spmi-pmic-arb";
-			reg = <0x01c0a000 0x26000>,
-			      <0x01c40000 0x1100>,
-			      <0x03e00000 0x100000>;
-			reg-names = "cnfg", "core", "obsrvr";
-			#address-cells = <1>;
-			#size-cells = <0>;
+		vreg_l7a_1p256: l7 {
+			regulator-min-microvolt = <1200000>;
+			regulator-max-microvolt = <1304000>;
+		};
 
-			pm6125: pm6125@0 {
-				compatible = "qcom,spmi-pmic";
-				reg = <0x0 0x1>;
-				#address-cells = <1>;
-				#size-cells = <0>;
+		vreg_l8a_0p664: l8 {
+			regulator-min-microvolt = <400000>;
+			regulator-max-microvolt = <728000>;
+		};
 
-				pm6125_gpios: pm6125_gpios@c000 {
-					compatible = "qcom,pm6125-gpio";
-					reg = <0xc000>;
-					gpio-controller;
-					gpio-count = <9>;
-					#gpio-cells = <2>;
-					gpio-bank-name="pmic";
-				};
-			};
+		vreg_l9a_1p8: l9 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <2000000>;
+		};
+
+		vreg_l10a_1p8: l10 {
+			regulator-min-microvolt = <1704000>;
+			regulator-max-microvolt = <1904000>;
+		};
+
+		vreg_l11a_1p8: l11 {
+			regulator-min-microvolt = <1704000>;
+			regulator-max-microvolt = <1952000>;
+		};
+
+		vreg_l12a_1p8: l12 {
+			regulator-min-microvolt = <1624000>;
+			regulator-max-microvolt = <1984000>;
+		};
+
+		vreg_l13a_1p8: l13 {
+			regulator-min-microvolt = <1504000>;
+			regulator-max-microvolt = <1952000>;
+		};
+
+		vreg_l14a_1p8: l14 {
+			regulator-min-microvolt = <1704000>;
+			regulator-max-microvolt = <1904000>;
+		};
+
+		vreg_l15a_3p128: l15 {
+			regulator-min-microvolt = <2920000>;
+			regulator-max-microvolt = <3232000>;
+		};
+
+		vreg_l16a_1p3: l16 {
+			regulator-min-microvolt = <1704000>;
+			regulator-max-microvolt = <1904000>;
+		};
+
+		vreg_l17a_1p3: l17 {
+			regulator-min-microvolt = <1152000>;
+			regulator-max-microvolt = <1384000>;
+		};
+
+		vreg_l18a_1p232: l18 {
+			regulator-min-microvolt = <1104000>;
+			regulator-max-microvolt = <1312000>;
+		};
+
+		vreg_l19a_1p8: l19 {
+			regulator-min-microvolt = <1624000>;
+			regulator-max-microvolt = <3304000>;
+		};
+
+		vreg_l20a_1p8: l20 {
+			regulator-min-microvolt = <2504000>;
+			regulator-max-microvolt = <2960000>;
+		};
+
+		vreg_l21a_2p704: l21 {
+			regulator-min-microvolt = <2504000>;
+			regulator-max-microvolt = <2960000>;
+		};
+
+		vreg_l22a_2p96: l22 {
+			regulator-min-microvolt = <2504000>;
+			regulator-max-microvolt = <2960000>;
+		};
+
+		vreg_l23a_3p3: l23 {
+			regulator-min-microvolt = <2504000>;
+			regulator-max-microvolt = <2960000>;
+		};
+
+		vreg_l24a_2p96: l24 {
+			regulator-min-microvolt = <2504000>;
+			regulator-max-microvolt = <2960000>;
 		};
 	};
+};
+
+&tlmm {
+	gpio-reserved-ranges = <37 5>, <43 2>, <47 1>,
+			       <49 1>, <52 1>, <54 1>,
+			       <56 3>, <61 2>, <64 1>, 
+			       <68 1>, <72 8>, <96 1>;
+
+	sdc2_card_det_n: sd-card-det-n-state {
+		pins = "gpio88";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-pull-up;
+	};
+};
+
+&sdhc_1 {
+	status = "okay";
+
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&sdc1_state_on>;
+	pinctrl-1 = <&sdc1_state_off>;
+	vmmc-supply = <&vreg_l24a_2p96>; /* emmc power line */
+	vqmmc-supply = <&vreg_l11a_1p8>; /* emmc vddq */
+	bus-width = <8>;
+	no-sdio;
+	non-removable;
+};
+
+&sdhc_2 {
+	status = "okay";
+
+	cd-gpios = <&tlmm 88 GPIO_ACTIVE_LOW>; /* card detect gpio */
+	pinctrl-names = "default", "sleep";
+	pinctrl-0 = <&sdc2_state_on &sdc2_card_det_n>;
+	pinctrl-1 = <&sdc2_state_off &sdc2_card_det_n>;
+	vmmc-supply = <&vreg_l22a_2p96>; /* Card power line */
+	vqmmc-supply = <&vreg_l5a_2p96>; /* IO line power */
+	bus-width = <4>;
+	no-sdio;
+	no-emmc;
+};
+
+&usb {
+	status = "okay";
+};
+
+&usb_dwc3 {
+	maximum-speed = "super-speed";
+
+	/*
+	 * There is only one USB DWC3 controller on QRB4210 board and it is connected
+	 * via a DIP Switch:
+	 * - to either an USB - C type connector or an USB - A type connector
+	 *   (via a GL3590-S hub), and
+	 * - to either an USB - A type connector (via a GL3590-S hub) or a connector
+	 *   for further connection with a mezzanine board.
+	 *
+	 * All of the above hardware muxes would allow us to hook things up in
+	 * different ways to some potential benefit for static configurations (for e.g.
+	 * on one hand we can have two USB - A type connectors and a USB - Ethernet
+	 * connection available and on the other we can use the USB - C type in
+	 * peripheral mode).
+	 *
+	 * Note that since the USB - C type can be used only in peripehral mode,
+	 * so hardcoding the mode to 'peripheral' here makes sense.
+	 *
+	 * However since we want to use the EUD debug device, we set the mode as
+	 * 'otg' here.
+	 */
+	dr_mode = "otg";
+};
+
+&usb_hsphy {
+	status = "okay";
+
+	vdd-supply = <&vreg_l4a_0p9>;		   /* 0.9V regulator supply */
+	vdda-pll-supply = <&vreg_l12a_1p8>;	   /* 1.8V regulator supply */
+	vdda-phy-dpdm-supply = <&vreg_l15a_3p128>; /* 3.1V regulator supply (Dp/Dm) */
+};
+
+&usb_qmpphy {
+	status = "okay";
+
+	vdda-phy-supply = <&vreg_l4a_0p9>;
+	vdda-pll-supply = <&vreg_l12a_1p8>; /* 1.8V regulator supply */
 };
