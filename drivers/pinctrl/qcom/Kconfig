@@ -1,0 +1,10 @@
+if ARCH_SNAPDRAGON
+
+config PINCTRL_SNAPDRAGON
+	bool "Qualcomm Snapdragon pin control drivers"
+	depends on ARCH_SNAPDRAGON && PINCTRL_GENERIC
+	default y
+	help
+	  Enable support pin control functions for Qualcomm SoCs.
+
+endif
