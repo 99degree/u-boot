@@ -14,6 +14,7 @@
 #include <dm/lists.h>
 #include <errno.h>
 #include <asm/io.h>
+#include <linux/ioport.h>
 #include <linux/bitops.h>
 
 #include <clk/qcom.h>
@@ -142,8 +143,16 @@ static int msm_clk_probe(struct udevice *dev)
 {
 	struct qcom_cc_data *data = (struct qcom_cc_data *)dev_get_driver_data(dev);
 	struct qcom_cc_priv *priv = dev_get_priv(dev);
+	struct resource res;
 
-	priv->base = dev_read_addr(dev);
+	if (dev_read_resource(dev, 0, &res)) {
+		debug("%s: can't get resource\n", __func__);
+		return -EINVAL;
+	}
+
+	printf("%s: base=%lx\n", __func__, (ulong)res.start);
+
+	priv->base = res.start;
 	if (priv->base == FDT_ADDR_T_NONE)
 		return -EINVAL;
 
