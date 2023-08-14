@@ -84,8 +84,7 @@ endchoice
 
 source "board/qualcomm/dragonboard410c/Kconfig"
 source "board/qualcomm/dragonboard820c/Kconfig"
-source "board/qualcomm/dragonboard845c/Kconfig"
-source "board/samsung/starqltechn/Kconfig"
+source "board/qualcomm/sdm845/Kconfig"
 source "board/qualcomm/qcs404-evb/Kconfig"
 
 endif
