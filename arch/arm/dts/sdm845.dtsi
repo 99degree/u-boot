@@ -26,6 +26,12 @@
 			#power-domain-cells = <1>;
 		};
 
+		reset: gcc-reset@100000 {
+			compatible = "qcom,gcc-reset-sdm845";
+			reg = <0x00100000 0x1f0000>;
+			#reset-cells = <1>;
+		};
+
 		gpio_north: gpio_north@3900000 {
 			#gpio-cells = <2>;
 			compatible = "qcom,sdm845-pinctrl";
