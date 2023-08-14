@@ -8,10 +8,14 @@
 #ifndef _PINCTRL_SNAPDRAGON_H
 #define _PINCTRL_SNAPDRAGON_H
 
+#include <asm/types.h>
+
 struct udevice;
 
 struct msm_pinctrl_data {
+	phys_addr_t base;
 	int pin_count;
+	const unsigned int *pin_offsets;
 	int functions_count;
 	const char *(*get_function_name)(struct udevice *dev,
 					 unsigned int selector);

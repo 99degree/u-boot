@@ -245,11 +245,38 @@ static int qcom_gpio_probe(struct udevice *dev)
 	return 0;
 }
 
+/*
+ * Parse basic GPIO count specified via the gpio-ranges property
+ * as specified in Linux devicetrees
+ * Returns < 0 on error, otherwise gpio count
+ */
+static int qcom_gpio_of_parse_ranges(struct udevice *dev)
+{
+	int ret;
+	struct ofnode_phandle_args args;
+
+	ret = ofnode_parse_phandle_with_args(dev_ofnode(dev), "gpio-ranges", 
+				     NULL, 3, 0, &args);
+	if (ret) {
+		return log_msg_ret("gpio-ranges", ret);
+	}
+
+	return args.args[2];
+}
+
 static int qcom_gpio_of_to_plat(struct udevice *dev)
 {
 	struct gpio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
+	int ret;
 
 	uc_priv->gpio_count = dev_read_u32_default(dev, "gpio-count", 0);
+	if (!uc_priv->gpio_count) {
+		ret = qcom_gpio_of_parse_ranges(dev);
+		if (ret > 0)
+			uc_priv->gpio_count = ret;
+		else
+			printf("gpio-ranges error: %d\n", ret);
+	}
 	uc_priv->bank_name = dev_read_string(dev, "gpio-bank-name");
 	if (uc_priv->bank_name == NULL)
 		uc_priv->bank_name = "qcom_pmic";
@@ -334,8 +361,12 @@ static int qcom_pwrkey_probe(struct udevice *dev)
 	uint64_t pid;
 
 	pid = dev_read_addr(dev);
-	if (pid == FDT_ADDR_T_NONE)
-		return log_msg_ret("bad address", -EINVAL);
+	if (pid == FDT_ADDR_T_NONE) {
+		/* Linux devicetrees don't specify an address in the pwrkey node */
+		pid = dev_read_addr(dev->parent);
+		if (pid == FDT_ADDR_T_NONE)
+			return log_msg_ret("bad address", -EINVAL);
+	}
 
 	priv->pid = pid;
 
