@@ -19,6 +19,11 @@ int dram_init(void)
 	return fdtdec_setup_mem_size_base();
 }
 
+int dram_init_banksize(void)
+{
+	return fdtdec_setup_memory_banksize();
+}
+
 void reset_cpu(void)
 {
 	psci_system_reset();
