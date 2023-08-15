@@ -8,7 +8,7 @@
 
 /
 {
-	soc {
+	soc@0 {
 		bootph-all;
 
 		serial@a84000 {
@@ -19,7 +19,7 @@
 			bootph-all;
 		};
 
-		pinctrl_north@3900000 {
+		pinctrl@3400000 {
 			bootph-all;
 		};
 	};

@@ -22,25 +22,17 @@
 	aliases {
 		serial0 = &uart9;
 	};
+
+	memory@80000000 {
+		device_type = "memory";
+		/* enchilada */
+		reg = <0 0x80000000 0 0xffffffff
+		       1 0x80000000 0 0xfc8a0000>;
+		/* db845c */
+		//reg = <0 0x80000000 0 0xfdfa0000>;
+	};
 };
 
 &uart9 {
 	status = "okay";
 };
-
-&pm8998_pon {
-	key_vol_down {
-		gpios = <&pm8998_pon 1 0>;
-		label = "key_vol_down";
-	};
-	key_power {
-		gpios = <&pm8998_pon 0 0>;
-		label = "key_power";
-	};
-};
-
-// &tlmm {
-// 	gpio-reserved-ranges = <0 4>, <81 4>;
-// };
-
-//#include "dragonboard845c-uboot.dtsi"
