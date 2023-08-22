@@ -12,10 +12,16 @@ config SPL_SYS_MALLOC_F
 config SPL_SYS_MALLOC_F_LEN
 	default 0x2000
 
+# Common snapdragon board init code
+config SNAPDRAGON_COMMON
+	bool
+	default n
+
 config SDM845
 	bool "Qualcomm Snapdragon 845 SoC"
 	default n
 	select LINUX_KERNEL_IMAGE_HEADER
+	select SNAPDRAGON_COMMON
 
 config LNX_KRNL_IMG_TEXT_OFFSET_BASE
 	default 0x80000000
@@ -73,6 +79,7 @@ config TARGET_STARQLTECHN
 config TARGET_QCS404EVB
 	bool "Qualcomm Technologies, Inc. QCS404 EVB"
 	select LINUX_KERNEL_IMAGE_HEADER
+	select SNAPDRAGON_COMMON
 	help
 	  Support for Qualcomm Technologies, Inc. QCS404 evaluation board.
 	  Features:

@@ -14,26 +14,6 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-int dram_init(void)
-{
-	return fdtdec_setup_mem_size_base();
-}
-
-int dram_init_banksize(void)
-{
-	return fdtdec_setup_memory_banksize();
-}
-
-void reset_cpu(void)
-{
-	psci_system_reset();
-}
-
-__weak int board_init(void)
-{
-	return 0;
-}
-
 /* Check for vol- and power buttons */
 __weak int misc_init_r(void)
 {
