@@ -17,12 +17,6 @@ config SNAPDRAGON_COMMON
 	bool
 	default n
 
-config SDM845
-	bool "Qualcomm Snapdragon 845 SoC"
-	default n
-	select LINUX_KERNEL_IMAGE_HEADER
-	select SNAPDRAGON_COMMON
-
 config LNX_KRNL_IMG_TEXT_OFFSET_BASE
 	default 0x80000000
 
@@ -53,28 +47,24 @@ config TARGET_DRAGONBOARD820C
 	  - 3GiB RAM
 	  - 32GiB UFS drive
 
-config TARGET_DRAGONBOARD845C
-	bool "96Boards Dragonboard 845C"
-	help
-	  Support for 96Boards Dragonboard 845C aka Robotics RB3 Development
-	  Platform. This board complies with 96Boards Open Platform
-	  Specifications. Features:
-	  - Qualcomm Snapdragon SDA845 SoC
-	  - 4GiB RAM
-	  - 64GiB UFS drive
+config TARGET_SDM845
+	bool "Qualcomm Snapdragon 845-based board"
+	select LINUX_KERNEL_IMAGE_HEADER
+	select SNAPDRAGON_COMMON
 	select MISC_INIT_R
-	select SDM845
+	help
+	  Support for boards based on the Qualcomm Snapdragon 845 SoC.
+	  These devices feature a Snapdragon 845 Soc, 4-8GiB of RAM, and
+	  64-512GiB of UFS storage.
 
-config TARGET_STARQLTECHN
-	bool "Samsung S9 SM-G9600(starqltechn)"
-	help
-	  Support for Samsung S9 SM-G9600(starqltechn) board.
-	  Features:
-	  - Qualcomm Snapdragon SDM845 SoC
-	  - 4GiB RAM
-	  - 64GiB UFS drive
-	select MISC_INIT_R
-	select SDM845
+	  The following boards are supported by this target:
+	  - 96Boards Dragonboard 845c
+	  - Samsung Galaxy S9 (starqltechn)
+	  - OnePlus 6/6T (enchilada/fajita)
+	  - SHIFT6mq (axolotl)
+
+	  However, most boards should work provided a fairly standard devicetree
+	  that is compatible with the upstream kernel is used.
 
 config TARGET_QCS404EVB
 	bool "Qualcomm Technologies, Inc. QCS404 EVB"

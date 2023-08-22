@@ -1,4 +1,4 @@
-if SDM845
+if TARGET_SDM845
 
 config SYS_BOARD
 	default "sdm845"
@@ -8,7 +8,6 @@ config SYS_VENDOR
 
 config SYS_CONFIG_NAME
 	string "Board configuration name"
-	default "dragonboard845c" if TARGET_DRAGONBOARD845C
 	default "sdm845"
 	help
 	  This option contains information about board configuration name.

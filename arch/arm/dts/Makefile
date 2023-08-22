@@ -598,7 +598,7 @@ dtb-$(CONFIG_TARGET_TEN64) += fsl-ls1088a-ten64.dtb
 
 dtb-$(CONFIG_TARGET_DRAGONBOARD410C) += dragonboard410c.dtb
 dtb-$(CONFIG_TARGET_DRAGONBOARD820C) += dragonboard820c.dtb
-dtb-$(CONFIG_SDM845) += axolotl.dtb \
+dtb-$(CONFIG_TARGET_SDM845) += axolotl.dtb \
 	enchilada.dtb \
 	fajita.dtb \
 	starqltechn.dtb \
