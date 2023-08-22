@@ -1599,6 +1599,16 @@ config SAVE_PREV_BL_INITRAMFS_START_ADDR
 	  If no initramfs was provided by previous bootloader, no env variables
 	  will be created.
 
+config USE_PREV_BL_FDT
+	depends on SAVE_PREV_BL_FDT_ADDR && !OF_BOARD
+	bool "Use the FDT provided by the previous stage bootloader"
+	help
+	  When u-boot is chain-loaded from a previous bootloader, enable this option
+	  to use the FDT provided by the previous bootloader instead of any built-in
+	  to u-boot.
+
+	  If no FDT was available, u-boot will fall back to its internal FDT.
+
 menu "Configuration editor"
 
 config CEDIT

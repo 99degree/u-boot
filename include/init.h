@@ -168,6 +168,18 @@ defined(CONFIG_SAVE_PREV_BL_FDT_ADDR)
  * Return: 0 if ok; -ENODATA on error
  */
 int save_prev_bl_data(void);
+
+/**
+ * get_prev_bl_fdt_addr - When u-boot is chainloaded, get the address
+ * of the FDT passed by the previous bootloader.
+ *
+ * Return: the address of the FDT passed by the previous bootloader
+ * or 0 if not found.
+ *
+ * Call this function from board_fdt_blob_setup() to make u-boot use
+ * the FDT passed by the previous bootloader.
+ */
+phys_addr_t get_prev_bl_fdt_addr(void);
 #endif
 
 /**

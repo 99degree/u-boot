@@ -1674,6 +1674,11 @@ int fdtdec_setup(void)
 		gd->fdt_src = FDTSRC_EMBED;
 	}
 
+	if (IS_ENABLED(CONFIG_USE_PREV_BL_FDT)) {
+		gd->fdt_blob = (void*)get_prev_bl_fdt_addr();
+		gd->fdt_src = FDTSRC_BOARD;
+	}
+
 	/* Allow the board to override the fdt address. */
 	if (IS_ENABLED(CONFIG_OF_BOARD)) {
 		gd->fdt_blob = board_fdt_blob_setup(&ret);
