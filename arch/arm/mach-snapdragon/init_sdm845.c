@@ -41,7 +41,7 @@ __weak int misc_init_r(void)
 	struct gpio_desc resin;
 	int node, ret;
 
-	ret = uclass_get_device_by_name(UCLASS_GPIO, "pm8998_pon@800", &pon);
+	ret = uclass_get_device_by_name(UCLASS_GPIO, "pwrkey", &pon);
 	if (ret < 0) {
 		printf("Failed to find PMIC pon node. Check device tree\n");
 		return 0;
