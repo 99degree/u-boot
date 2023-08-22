@@ -397,7 +397,7 @@ static int qcom_pwrkey_of_to_plat(struct udevice *dev)
 static const struct udevice_id qcom_pwrkey_ids[] = {
 	{ .compatible = "qcom,pm8916-pwrkey" },
 	{ .compatible = "qcom,pm8994-pwrkey" },
-	{ .compatible = "qcom,pm8998-pwrkey" },
+	{ .compatible = "qcom,pm8941-pwrkey" },
 	{ }
 };
 
