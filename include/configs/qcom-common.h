@@ -11,7 +11,7 @@
 
 #include <linux/sizes.h>
 
-#define CFG_SYS_BAUDRATE_TABLE	{ 115200, 230400, 460800, 921600 }
+#define CFG_SYS_BAUDRATE_TABLE	{ 115200, 230400, 460800, 921600, 3000000 }
 
 #define CFG_EXTRA_ENV_SETTINGS \
 	"bootdelay=3\0"		\
