@@ -26,6 +26,11 @@ static int qcom_reset_assert(struct reset_ctl *rst)
 
 	map = &priv->data->resets[rst->id];
 
+	if (map->name)
+		debug("  ASSERT reset %s\n", map->name);
+	else
+		debug("  ASSERT reset %lu\n", rst->id);
+
 	value = readl(priv->base + map->reg);
 	value |= BIT(map->bit);
 	writel(value, priv->base + map->reg);
@@ -41,6 +46,11 @@ static int qcom_reset_deassert(struct reset_ctl *rst)
 	u32 value;
 
 	map = &priv->data->resets[rst->id];
+
+	if (map->name)
+		debug("DEASSERT reset %s\n", map->name);
+	else
+		debug("DEASSERT reset %lu\n", rst->id);
 
 	value = readl(priv->base + map->reg);
 	value &= ~BIT(map->bit);

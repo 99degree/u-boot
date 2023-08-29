@@ -32,6 +32,7 @@ struct bcr_regs {
 
 struct qcom_reset_map {
 	unsigned int reg;
+	const char *name;
 	u8 bit;
 };
 
