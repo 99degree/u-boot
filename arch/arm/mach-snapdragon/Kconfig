@@ -16,6 +16,11 @@ config SPL_SYS_MALLOC_F_LEN
 config SNAPDRAGON_COMMON
 	bool
 	default n
+	select USB_HOST
+	select IOMMU
+	select ARM_SMMU
+	select DM_REGULATOR
+	select DM_REGULATOR_GPIO
 
 config LNX_KRNL_IMG_TEXT_OFFSET_BASE
 	default 0x80000000
