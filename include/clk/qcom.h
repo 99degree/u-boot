@@ -30,6 +30,18 @@ struct bcr_regs {
 	uintptr_t D;
 };
 
+struct simple_clk {
+	uintptr_t reg;
+	uint32_t en_val;
+	const char *name;
+};
+
+#ifdef DEBUG
+#define SIMPLE_CLK(reg, val, name) { reg, val, name}
+#else
+#define SIMPLE_CLK(reg, val, name) { reg, val, NULL}
+#endif
+
 struct qcom_reset_map {
 	unsigned int reg;
 	const char *name;
@@ -39,6 +51,8 @@ struct qcom_reset_map {
 struct qcom_cc_data {
 	const struct qcom_reset_map	*resets;
 	unsigned long			num_resets;
+	const struct simple_clk		*clks;
+	unsigned long			num_clks;
 };
 
 struct qcom_cc_priv {
@@ -55,5 +69,13 @@ void clk_rcg_set_rate_mnd(phys_addr_t base, const struct bcr_regs *regs,
 			  int div, int m, int n, int source);
 void clk_rcg_set_rate(phys_addr_t base, const struct bcr_regs *regs, int div,
 		      int source);
+
+static inline void clk_enable_simple(const struct qcom_cc_priv *priv, unsigned long id)
+{
+	if (id >= priv->data->num_clks || priv->data->clks[id].reg == 0)
+		return;
+
+	setbits_le32(priv->base + priv->data->clks[id].reg, priv->data->clks[id].en_val);
+}
 
 #endif
