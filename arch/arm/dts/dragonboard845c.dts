@@ -22,6 +22,18 @@
 	aliases {
 		serial0 = &uart9;
 	};
+
+	pcie_usb_dual_pwr: vldo-3v3-regulator {
+		compatible = "regulator-gpio";
+		regulator-name = "VLDO_3V3";
+
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+
+		enable-gpios = <&tlmm 90 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		states = <0 0>, <1800000 1>;
+	};
 };
 
 &uart9 {
@@ -39,8 +51,37 @@
 	};
 };
 
-// &tlmm {
-// 	gpio-reserved-ranges = <0 4>, <81 4>;
-// };
+&usb_2 {
+	status = "okay";
+	qcom,select-utmi-as-pipe-clk;
+};
 
-//#include "dragonboard845c-uboot.dtsi"
+&usb_2_dwc3 {
+	dr_mode = "host";
+
+	/* We don't support superspeed in u-boot so remove the SSPHY */
+	phys = <&usb_2_hsphy>;
+	phy-names = "usb2-phy";
+
+	/* fastest mode for USB 2 */
+	maximum-speed = "high-speed";
+
+	vbus-supply = <&pcie_usb_dual_pwr>;
+};
+
+&usb_2_hsphy {
+	/* Remove ref clk because rmphcc isn't available */
+	clocks = <&gcc GCC_USB_PHY_CFG_AHB2PHY_CLK>;
+	clock-names = "cfg_ahb";
+
+	status = "okay";
+};
+
+&tlmm {
+	// pcie0_pwren_state: pcie0-usb-pwr-en {
+	// 	pins = "gpio90";
+	// 	drive-strength = <2>;
+	// 	function = "gpio";
+	// 	bias-disable;
+	// };
+};
