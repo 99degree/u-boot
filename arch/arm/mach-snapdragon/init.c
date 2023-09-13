@@ -14,6 +14,8 @@
 #include <asm/psci.h>
 #include <linux/arm-smccc.h>
 #include <linux/psci.h>
+#include <asm/io.h>
+#include <mach/misc.h>
 
 int dram_init(void)
 {
@@ -45,4 +47,12 @@ __weak int board_init(void)
 {
 	show_psci_version();
 	return 0;
+}
+
+void enable_caches(void)
+{
+	build_mem_map();
+
+	icache_enable();
+	dcache_enable();
 }

@@ -52,24 +52,19 @@ config TARGET_DRAGONBOARD820C
 	  - 3GiB RAM
 	  - 32GiB UFS drive
 
-config TARGET_SDM845
-	bool "Qualcomm Snapdragon 845-based board"
+config TARGET_QCOM_RBX
+	bool "Qualcomm Robotics kits"
 	select LINUX_KERNEL_IMAGE_HEADER
 	select SNAPDRAGON_COMMON
-	select MISC_INIT_R
 	help
-	  Support for boards based on the Qualcomm Snapdragon 845 SoC.
-	  These devices feature a Snapdragon 845 Soc, 4-8GiB of RAM, and
-	  64-512GiB of UFS storage.
+	  Support for the Qualcomm RB1/2/3/5 and related boards.
 
 	  The following boards are supported by this target:
-	  - 96Boards Dragonboard 845c
+	  - 96Boards Dragonboard 845c (RB3)
+	  - QTI RB1, RB2, and RB5
 	  - Samsung Galaxy S9 (starqltechn)
 	  - OnePlus 6/6T (enchilada/fajita)
 	  - SHIFT6mq (axolotl)
-
-	  However, most boards should work provided a fairly standard devicetree
-	  that is compatible with the upstream kernel is used.
 
 config TARGET_QCS404EVB
 	bool "Qualcomm Technologies, Inc. QCS404 EVB"
@@ -86,7 +81,7 @@ endchoice
 
 source "board/qualcomm/dragonboard410c/Kconfig"
 source "board/qualcomm/dragonboard820c/Kconfig"
-source "board/qualcomm/sdm845/Kconfig"
+source "board/qualcomm/rbx/Kconfig"
 source "board/qualcomm/qcs404-evb/Kconfig"
 
 endif
