@@ -51,6 +51,17 @@
 	};
 };
 
+&sdhc_2 {
+	status = "okay";
+
+	clocks = <&gcc GCC_SDCC2_AHB_CLK>,
+		 <&gcc GCC_SDCC2_APPS_CLK>;
+	clock-names = "iface", "core";
+
+	bus-width = <4>;
+	cd-gpios = <&tlmm 126 GPIO_ACTIVE_LOW>;
+};
+
 &usb_2 {
 	status = "okay";
 	qcom,select-utmi-as-pipe-clk;
