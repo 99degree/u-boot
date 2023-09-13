@@ -1,14 +1,14 @@
-if TARGET_SDM845
+if TARGET_QCOM_RBX
 
 config SYS_BOARD
-	default "sdm845"
+	default "rbx"
 
 config SYS_VENDOR
 	default "qualcomm"
 
 config SYS_CONFIG_NAME
 	string "Board configuration name"
-	default "sdm845"
+	default "qcom-rbx"
 	help
 	  This option contains information about board configuration name.
 	  Based on this option include/configs/<CONFIG_SYS_CONFIG_NAME>.h header
