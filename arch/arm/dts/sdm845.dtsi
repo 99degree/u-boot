@@ -3899,6 +3899,7 @@
 			clock-names = "iface", "core", "xo";
 			iommus = <&apps_smmu 0xa0 0xf>;
 			power-domains = <&rpmhpd SDM845_CX>;
+			resets = <&gcc GCC_SDCC2_BCR>;
 			operating-points-v2 = <&sdhc2_opp_table>;
 
 			status = "disabled";
