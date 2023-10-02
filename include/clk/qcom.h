@@ -7,8 +7,18 @@
 
 #define CFG_CLK_SRC_CXO   (0 << 8)
 #define CFG_CLK_SRC_GPLL0 (1 << 8)
+#define CFG_CLK_SRC_GPLL9 (2 << 8)
+#define CFG_CLK_SRC_GPLL0_AUX2 (2 << 8)
+#define CFG_CLK_SRC_GPLL7 (3 << 8)
+#define CFG_CLK_SRC_GPLL6 (4 << 8)
 #define CFG_CLK_SRC_GPLL0_EVEN (6 << 8)
 #define CFG_CLK_SRC_MASK  (7 << 8)
+
+#define RCG_CMD_REG		0x0
+#define RCG_CFG_REG		0x4
+#define RCG_M_REG		0x8
+#define RCG_N_REG		0xc
+#define RCG_D_REG		0x10
 
 #define GDSC_PWR_ON		BIT(31)
 #define GDSC_SW_COLLAPSE	BIT(0)
