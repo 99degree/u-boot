@@ -50,11 +50,11 @@ static const struct freq_tbl ftbl_gcc_qupv3_wrap0_s0_clk_src[] = {
 };
 
 static const struct bcr_regs uart2_regs = {
-	.cfg_rcgr = SE9_UART_APPS_CFG_RCGR,
-	.cmd_rcgr = SE9_UART_APPS_CMD_RCGR,
-	.M = SE9_UART_APPS_M,
-	.N = SE9_UART_APPS_N,
-	.D = SE9_UART_APPS_D,
+	.cmd_rcgr = SE9_UART_APPS_RCGR,
+	.cfg_rcgr = SE9_UART_APPS_RCGR + RCG_CFG_REG,
+	.M = SE9_UART_APPS_RCGR + RCG_M_REG,
+	.N = SE9_UART_APPS_RCGR + RCG_N_REG,
+	.D = SE9_UART_APPS_RCGR + RCG_D_REG,
 };
 
 static const struct freq_tbl *qcom_find_freq(const struct freq_tbl *f, uint rate)
