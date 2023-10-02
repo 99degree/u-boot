@@ -60,7 +60,7 @@ static int clk_init_sdc(struct qcom_cc_priv *priv, int slot, uint rate)
 	clk_enable_cbc(priv->base + SDCC_AHB_CBCR(slot));
 	/* 800Mhz/div, gpll0 */
 	clk_rcg_set_rate_mnd(priv->base, &sdc_regs[slot], div, 0, 0,
-			     CFG_CLK_SRC_GPLL0);
+			     CFG_CLK_SRC_GPLL0, 0);
 	clk_enable_gpll0(priv->base, &gpll0_vote_clk);
 	clk_enable_cbc(priv->base + SDCC_APPS_CBCR(slot));
 
@@ -83,7 +83,7 @@ static int clk_init_uart(struct qcom_cc_priv *priv)
 
 	/* 7372800 uart block clock @ GPLL0 */
 	clk_rcg_set_rate_mnd(priv->base, &uart2_regs, 1, 144, 15625,
-			     CFG_CLK_SRC_GPLL0);
+			     CFG_CLK_SRC_GPLL0, 8);
 
 	/* Vote for gpll0 clock */
 	clk_enable_gpll0(priv->base, &gpll0_vote_clk);
