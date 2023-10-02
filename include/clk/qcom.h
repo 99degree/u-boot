@@ -10,6 +10,9 @@
 #define CFG_CLK_SRC_GPLL0_EVEN (6 << 8)
 #define CFG_CLK_SRC_MASK  (7 << 8)
 
+#define GDSC_PWR_ON		BIT(31)
+#define GDSC_SW_COLLAPSE	BIT(0)
+
 struct pll_vote_clk {
 	uintptr_t status;
 	int status_bit;
@@ -75,6 +78,7 @@ void clk_rcg_set_rate_mnd(phys_addr_t base, const struct bcr_regs *regs,
 void clk_rcg_set_rate(phys_addr_t base, const struct bcr_regs *regs, int div,
 		      int source);
 
+void gdsc_enable(phys_addr_t gdscr);
 static inline void clk_enable_simple(const struct qcom_cc_priv *priv, unsigned long id)
 {
 	if (id >= priv->data->num_clks || priv->data->clks[id].reg == 0)

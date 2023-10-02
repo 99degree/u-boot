@@ -89,15 +89,6 @@ static ulong sdm845_set_rate(struct clk *clk, ulong rate)
 	}
 }
 
-static void gdsc_enable(phys_addr_t gdscr)
-{
-	uint32_t val;
-
-	val = readl(gdscr);
-	writel(val & ~0x1, gdscr);
-	udelay(100);
-}
-
 static const struct simple_clk sdm845_clks[] = {
 	[GCC_AGGRE_NOC_PCIE_TBU_CLK]		= SIMPLE_CLK(0x90014, 0x00000001, "GCC_AGGRE_NOC_PCIE_TBU_CLK"),
 	[GCC_AGGRE_UFS_CARD_AXI_CLK]		= SIMPLE_CLK(0x82028, 0x00000001, "GCC_AGGRE_UFS_CARD_AXI_CLK"),
