@@ -156,7 +156,7 @@ ulong msm_set_rate(struct clk *clk, ulong rate)
 	return 0;
 }
 
-int msm_enable(struct clk *clk)
+static int qcs404_enable(struct clk *clk)
 {
 	struct qcom_cc_priv *priv = dev_get_priv(clk->dev);
 
@@ -265,6 +265,8 @@ static const struct qcom_reset_map qcs404_gcc_resets[] = {
 static const struct qcom_cc_data qcs404_gcc_data = {
 	.resets = qcs404_gcc_resets,
 	.num_resets = ARRAY_SIZE(qcs404_gcc_resets),
+	.enable = qcs404_enable,
+	.set_rate = qcs404_set_rate,
 };
 
 static const struct udevice_id gcc_qcs404_of_match[] = {

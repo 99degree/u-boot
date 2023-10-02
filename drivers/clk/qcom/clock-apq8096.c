@@ -80,7 +80,7 @@ static int clk_init_uart(struct qcom_cc_priv *priv)
 	return 0;
 }
 
-ulong msm_set_rate(struct clk *clk, ulong rate)
+static ulong apq8096_set_rate(struct clk *clk, ulong rate)
 {
 	struct qcom_cc_priv *priv = dev_get_priv(clk->dev);
 
@@ -95,15 +95,14 @@ ulong msm_set_rate(struct clk *clk, ulong rate)
 	}
 }
 
-int msm_enable(struct clk *clk)
-{
-	return 0;
-}
+static struct qcom_cc_data apq8096_data = {
+	.set_rate = apq8096_set_rate,
+};
 
 static const struct udevice_id gcc_apq8096_of_match[] = {
 	{
 		.compatible = "qcom,gcc-apq8096",
-		/* TODO: add reset map */
+		.data = (ulong)&apq8096_data,
 	},
 	{ }
 };

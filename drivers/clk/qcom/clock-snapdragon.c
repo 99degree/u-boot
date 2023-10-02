@@ -23,9 +23,6 @@
 #define CBCR_BRANCH_ENABLE_BIT  BIT(0)
 #define CBCR_BRANCH_OFF_BIT     BIT(31)
 
-extern ulong msm_set_rate(struct clk *clk, ulong rate);
-extern int msm_enable(struct clk *clk);
-
 /* Enable clock controlled by CBC soft macro */
 void clk_enable_cbc(phys_addr_t cbcr)
 {
@@ -163,12 +160,20 @@ static int msm_clk_probe(struct udevice *dev)
 
 static ulong msm_clk_set_rate(struct clk *clk, ulong rate)
 {
-	return msm_set_rate(clk, rate);
+	struct qcom_cc_data *data = (struct qcom_cc_data *)dev_get_driver_data(clk->dev);
+	if (data->set_rate)
+		return data->set_rate(clk, rate);
+
+	return 0;
 }
 
 static int msm_clk_enable(struct clk *clk)
 {
-	return msm_enable(clk);
+	struct qcom_cc_data *data = (struct qcom_cc_data *)dev_get_driver_data(clk->dev);
+	if (data->enable)
+		return data->enable(clk);
+
+	return 0;
 }
 
 static void dump_gplls(struct udevice *dev, phys_addr_t base) {

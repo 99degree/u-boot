@@ -72,7 +72,7 @@ const struct freq_tbl *qcom_find_freq(const struct freq_tbl *f, uint rate)
 	return f - 1;
 }
 
-ulong msm_set_rate(struct clk *clk, ulong rate)
+static ulong sdm845_set_rate(struct clk *clk, ulong rate)
 {
 	struct qcom_cc_priv *priv = dev_get_priv(clk->dev);
 	const struct freq_tbl *freq;
@@ -233,7 +233,7 @@ static const struct simple_clk sdm845_clks[] = {
 	[GCC_CPUSS_DVM_BUS_CLK]			= SIMPLE_CLK(0x48190, 0x00000001, "GCC_CPUSS_DVM_BUS_CLK"),
 };
 
-int msm_enable(struct clk *clk)
+static int sdm845_enable(struct clk *clk)
 {
 	struct qcom_cc_priv *priv = dev_get_priv(clk->dev);
 	debug("%s: clk %s\n", __func__, sdm845_clks[clk->id].name);
@@ -282,18 +282,21 @@ static const struct qcom_reset_map sdm845_gcc_resets[] = {
 	[GCC_PCIE_1_PHY_BCR] = { 0x8e01c, "GCC_PCIE_1_PHY_BCR" },
 };
 
-static const struct qcom_cc_data qcs404_gcc_data = {
+static struct qcom_cc_data sdm845_gcc_data = {
 	.resets = sdm845_gcc_resets,
 	.num_resets = ARRAY_SIZE(sdm845_gcc_resets),
 	.clks = sdm845_clks,
 	.num_clks = ARRAY_SIZE(sdm845_clks),
+
+	.enable = sdm845_enable,
+	.set_rate = sdm845_set_rate,
 };
 
 
 static const struct udevice_id gcc_sdm845_of_match[] = {
 	{
 		.compatible = "qcom,gcc-sdm845",
-		.data = (ulong)&qcs404_gcc_data,
+		.data = (ulong)&sdm845_gcc_data,
 	},
 	{ }
 };

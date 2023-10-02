@@ -48,11 +48,16 @@ struct qcom_reset_map {
 	u8 bit;
 };
 
+struct clk;
+
 struct qcom_cc_data {
 	const struct qcom_reset_map	*resets;
 	unsigned long			num_resets;
 	const struct simple_clk		*clks;
 	unsigned long			num_clks;
+
+	int (*enable)(struct clk *clk);
+	unsigned long (*set_rate)(struct clk *clk, unsigned long rate);
 };
 
 struct qcom_cc_priv {
