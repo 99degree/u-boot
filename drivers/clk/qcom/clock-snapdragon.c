@@ -361,8 +361,8 @@ int qcom_cc_bind(struct udevice *parent)
 	if (!drv)
 		return -ENOENT;
 
-	/* Register the reset controller */
-	ret = device_bind_with_driver_data(parent, drv, "qcom_reset", (ulong)clkdev,
+	/* Register the reset controller and pass in the driver data */
+	ret = device_bind_with_driver_data(parent, drv, "qcom_reset", (ulong)data,
 					   dev_ofnode(parent), &rstdev);
 	if (ret)
 		device_unbind(clkdev);
