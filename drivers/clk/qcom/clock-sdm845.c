@@ -56,7 +56,7 @@ static const struct bcr_regs uart2_regs = {
 	.D = SE9_UART_APPS_D,
 };
 
-const struct freq_tbl *qcom_find_freq(const struct freq_tbl *f, uint rate)
+static const struct freq_tbl *qcom_find_freq(const struct freq_tbl *f, uint rate)
 {
 	if (!f)
 		return NULL;
