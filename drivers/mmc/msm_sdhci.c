@@ -255,7 +255,6 @@ static int msm_sdc_probe(struct udevice *dev)
 	u32 host_version, core_version, core_minor, core_major;
 	u32 caps;
 	int ret;
-	u32 val;
 
 	printf("%s: Entering func..\n", __func__);
 
@@ -265,8 +264,8 @@ static int msm_sdc_probe(struct udevice *dev)
 		return ret;
 	}
 
-	if (prv->reset.dev) {
-		printf("%s: Entering func.. has_reset is true..\n", __func__);
+	if (!ret) {
+		printf("%s: Resetting controller\n", __func__);
 		reset_assert(&prv->reset);
 		udelay(500);
 		reset_deassert(&prv->reset);
