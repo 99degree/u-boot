@@ -632,7 +632,10 @@ dtb-$(CONFIG_ARCH_SNAPDRAGON) += apq8016-sbc.dtb \
 	apq8096-db820c.dtb \
 	sdm845-db845c.dtb \
 	sdm845-samsung-starqltechn.dtb \
-	qcs404-evb-4000.dtb
+	qcs404-evb-4000.dtb \
+	qrb2210-rb1.dtb \
+	qrb4210-rb2.dtb \
+	qrb5165-rb5.dtb
 
 dtb-$(CONFIG_TARGET_STEMMY) += ste-ux500-samsung-stemmy.dtb
 
