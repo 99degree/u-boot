@@ -253,8 +253,14 @@ static int msm_serial_setbrg(struct udevice *dev, int baud)
 	priv->baud = baud;
 
 	clk_rate = get_clk_div_rate(baud, priv->oversampling, &clk_div);
-	geni_serial_set_clock_rate(dev, clk_rate);
-	geni_serial_baud(priv->base, clk_div, baud);
+	printf("FIXME: %s clk_rate %llu clk_div %d SKIP\n", __func__, clk_rate, clk_div);
+	return 0;
+
+	/* Only update GENI if the clock rate change succeeded */
+	if (geni_serial_set_clock_rate(dev, clk_rate) > 0)
+		geni_serial_baud(priv->base, clk_div, baud);
+	else
+		printf("Failed to set clock rate\n");
 
 	return 0;
 }
@@ -509,6 +515,8 @@ static void geni_set_oversampling(struct udevice *dev)
 
 	if (geni_se_version >= QUP_SE_VERSION_2_5)
 		priv->oversampling /= 2;
+
+	printf("%s: %d\n", __func__, priv->oversampling);
 }
 
 static inline void geni_serial_init(struct udevice *dev)
