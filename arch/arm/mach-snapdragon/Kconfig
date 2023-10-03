@@ -56,6 +56,7 @@ config TARGET_QCOM_RBX
 	bool "Qualcomm Robotics kits"
 	select LINUX_KERNEL_IMAGE_HEADER
 	select SNAPDRAGON_COMMON
+	select BOARD_LATE_INIT
 	help
 	  Support for the Qualcomm RB1/2/3/5 and related boards.
 
