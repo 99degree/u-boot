@@ -66,6 +66,14 @@
 	cd-gpios = <&tlmm 126 GPIO_ACTIVE_LOW>;
 };
 
+&ufs_mem_hc {
+	status = "okay";
+};
+
+&ufs_mem_phy {
+	status = "okay";
+};
+
 &usb_2 {
 	status = "okay";
 	qcom,select-utmi-as-pipe-clk;
