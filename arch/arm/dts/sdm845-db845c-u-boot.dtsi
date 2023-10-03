@@ -1,5 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0
 
+{
+	/* When running as a first-stage bootloader or with embedded
+	 * DT we can't rely on this being populated for us.
+	 */
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0 0x80000000 0 0xfdfa0000>;
+	};
+};
+
 /* This GPIO must be turned on to enable the 5v VBUS
  * supply on the USB port.
  */
