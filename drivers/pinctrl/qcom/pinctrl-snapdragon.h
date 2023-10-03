@@ -35,5 +35,6 @@ extern struct msm_pinctrl_data sdm845_data;
 extern struct msm_pinctrl_data qcs404_data;
 extern struct msm_pinctrl_data qcm2290_data;
 extern struct msm_pinctrl_data sm6115_data;
+extern struct msm_pinctrl_data sm8250_data;
 
 #endif
