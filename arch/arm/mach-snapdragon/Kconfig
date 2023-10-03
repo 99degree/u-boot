@@ -93,6 +93,7 @@ config TARGET_QCS404EVB
 config TARGET_QCOM
 	bool "Qualcomm generic board support"
 	select LINUX_KERNEL_IMAGE_HEADER
+	select BOARD_LATE_INIT
 	imply BUTTON_QCOM_PMIC
 	help
 	  Stub target for generic Qualcomm board support. This target currently

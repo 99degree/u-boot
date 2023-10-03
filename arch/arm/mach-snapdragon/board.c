@@ -17,6 +17,7 @@
 #include <linux/arm-smccc.h>
 #include <linux/psci.h>
 #include <linux/sizes.h>
+#include <lmb.h>
 #include <malloc.h>
 
 DECLARE_GLOBAL_DATA_PTR;
@@ -61,6 +62,41 @@ void reset_cpu(void)
 __weak int board_init(void)
 {
 	show_psci_version();
+	return 0;
+}
+
+#define KERNEL_COMP_SIZE	SZ_64M
+
+#define addr_alloc(lmb, size) lmb_alloc_base(lmb, size, SZ_2M, max_addr)
+
+/* Stolen from arch/arm/mach-apple/board.c */
+int board_late_init(void)
+{
+	struct lmb lmb;
+	u32 status = 0;
+	phys_addr_t max_addr = 0;
+
+	lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
+
+	/* If we have more than 1 RAM bank, and the two RAM banks have a hole in the middle
+	 * then stop LMB using the second bank
+	 */
+	if (gd->bd->bi_dram[1].size)
+		max_addr = gd->bd->bi_dram[0].start + gd->bd->bi_dram[0].size;
+
+	/* We need to be fairly conservative here as we support boards with just 1G of TOTAL RAM */
+	status |= env_set_hex("kernel_addr_r", addr_alloc(&lmb, SZ_128M));
+	status |= env_set_hex("loadaddr", addr_alloc(&lmb, SZ_64M));
+	status |= env_set_hex("fdt_addr_r", addr_alloc(&lmb, SZ_2M));
+	status |= env_set_hex("ramdisk_addr_r", addr_alloc(&lmb, SZ_128M));
+	status |= env_set_hex("kernel_comp_addr_r", addr_alloc(&lmb, KERNEL_COMP_SIZE));
+	status |= env_set_hex("kernel_comp_size", KERNEL_COMP_SIZE);
+	status |= env_set_hex("scriptaddr", addr_alloc(&lmb, SZ_4M));
+	status |= env_set_hex("pxefile_addr_r", addr_alloc(&lmb, SZ_4M));
+
+	if (status)
+		log_warning("%s: Failed to set run time variables\n", __func__);
+
 	return 0;
 }
 
