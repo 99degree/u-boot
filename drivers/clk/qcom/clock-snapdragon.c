@@ -77,20 +77,27 @@ void clk_enable_vote_clk(phys_addr_t base, const struct vote_clk *vclk)
 /* Update clock command via CMD_RCGR */
 void clk_bcr_update(phys_addr_t apps_cmd_rcgr)
 {
+	uint32_t count;
 	setbits_le32(apps_cmd_rcgr, APPS_CMD_RCGR_UPDATE);
 
 	/* Wait for frequency to be updated. */
-	while (readl(apps_cmd_rcgr) & APPS_CMD_RCGR_UPDATE)
-		;
+	for (count = 0; count < 50000; count++) {
+		if (!(readl(apps_cmd_rcgr) & APPS_CMD_RCGR_UPDATE))
+			break;
+		udelay(1);
+	}
+	WARN(count == 50000, "WARNING: RCG @ %#llx [%#010x] stuck at off\n", apps_cmd_rcgr, readl(apps_cmd_rcgr));
 }
 
 #define CFG_MODE_DUAL_EDGE (0x2 << 12) /* Counter mode */
 
-#define CFG_MASK 0x3FFF
+// Disable the HW_CLK_CONTROL bit
+#define CFG_MASK (0x3FFF | (1<<20))
 
 #define CFG_DIVIDER_MASK (BIT(5)-1)
 
-/* root set rate for clocks with half integer and MND divider */
+/* root set rate for clocks with half integer and MND divider
+ * div should be pre-calculated ((div * 2) - 1) */
 void clk_rcg_set_rate_mnd(phys_addr_t base, const struct bcr_regs *regs,
 			  int div, int m, int n, int source, u8 mnd_width)
 {
@@ -108,17 +115,15 @@ void clk_rcg_set_rate_mnd(phys_addr_t base, const struct bcr_regs *regs,
 	/* Program MND values */
 	setbits_le32(base + regs->M, m_val & mask);
 	setbits_le32(base + regs->N, n_val & mask);
-	setbits_le32(base + regs->D, d_val & mask);
+	setbits_le32(base + regs->D, (d_val & mask) == mask ? 0 : (d_val & mask));
 
 	/* setup src select and divider */
 	cfg  = readl(base + regs->cfg_rcgr);
 	cfg &= ~CFG_MASK;
 	cfg |= source & CFG_CLK_SRC_MASK; /* Select clock source */
 
-	/* Set the divider; HW permits fraction dividers (+0.5), but
-	   for simplicity, we will support integers only */
 	if (div)
-		cfg |= (2 * div - 1) & CFG_DIVIDER_MASK;
+		cfg |= div & CFG_DIVIDER_MASK;
 
 	if (n_val & mask)
 		cfg |= CFG_MODE_DUAL_EDGE;
