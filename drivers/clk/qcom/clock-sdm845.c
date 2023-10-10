@@ -57,6 +57,30 @@ static const struct bcr_regs uart2_regs = {
 	.D = SE9_UART_APPS_RCGR + RCG_D_REG,
 };
 
+static const struct bcr_regs usb30_prim_master_clk_src_regs = {
+	.cmd_rcgr = 0xf018,
+	.cfg_rcgr = 0xf018 + RCG_CFG_REG,
+	.M = 0xf018 + RCG_M_REG,
+	.N = 0xf018 + RCG_N_REG,
+	.D = 0xf018 + RCG_D_REG,
+};
+
+static const struct bcr_regs usb30_prim_mock_utmi_clk_src_regs = {
+	.cmd_rcgr = 0xf030,
+	.cfg_rcgr = 0xf030 + RCG_CFG_REG,
+	.M = 0xf030 + RCG_M_REG,
+	.N = 0xf030 + RCG_N_REG,
+	.D = 0xf030 + RCG_D_REG,
+};
+
+static const struct bcr_regs usb3_prim_phy_aux_clk_src_regs = {
+	.cmd_rcgr = 0xf05c,
+	.cfg_rcgr = 0xf05c + RCG_CFG_REG,
+	.M = 0xf05c + RCG_M_REG,
+	.N = 0xf05c + RCG_N_REG,
+	.D = 0xf05c + RCG_D_REG,
+};
+
 static const struct freq_tbl *qcom_find_freq(const struct freq_tbl *f, uint rate)
 {
 	if (!f)
@@ -230,6 +254,12 @@ static int sdm845_enable(struct clk *clk)
 	debug("%s: clk %s\n", __func__, sdm845_clks[clk->id].name);
 
 	switch (clk->id) {
+	case GCC_USB30_PRIM_MASTER_CLK:
+		gdsc_enable(priv->base + USB30_PRIM_GDSCR);
+		clk_enable_simple(priv, GCC_USB_PHY_CFG_AHB2PHY_CLK);
+		clk_rcg_set_rate_mnd(priv->base, &usb30_prim_master_clk_src_regs, (4.5*2)-1, 0, 0, 1 << 8, 8);
+		clk_rcg_set_rate_mnd(priv->base, &usb30_prim_mock_utmi_clk_src_regs, 1, 0, 0, 0, 8);
+		clk_rcg_set_rate_mnd(priv->base, &usb3_prim_phy_aux_clk_src_regs, 1, 0, 0, 0, 8);
 	case GCC_USB30_SEC_MASTER_CLK:
 		gdsc_enable(priv->base + USB30_SEC_GDSCR);
 		clk_enable_simple(priv, GCC_USB3_SEC_PHY_AUX_CLK);
