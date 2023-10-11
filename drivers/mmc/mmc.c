@@ -7,6 +7,8 @@
  * Based vaguely on the Linux code
  */
 
+#define LOG_DEBUG
+
 #include <config.h>
 #include <common.h>
 #include <blk.h>
@@ -69,9 +71,45 @@ __weak int board_mmc_getcd(struct mmc *mmc)
 #endif
 
 #ifdef CONFIG_MMC_TRACE
+
+static const char * const mmc_cmd_names[] = {
+	[0] = "MMC_CMD_GO_IDLE_STATE",
+	[1] = "MMC_CMD_SEND_OP_COND",
+	[2] = "MMC_CMD_ALL_SEND_CID",
+	[3] = "MMC_CMD_SET_RELATIVE_ADDR",
+	[4] = "MMC_CMD_SET_DSR",
+	[6] = "MMC_CMD_SWITCH",
+	[7] = "MMC_CMD_SELECT_CARD",
+	[8] = "MMC_CMD_SEND_EXT_CSD | SD_CMD_SEND_IF_COND",
+	[9] = "MMC_CMD_SEND_CSD",
+	[10] = "MMC_CMD_SEND_CID",
+	[12] = "MMC_CMD_STOP_TRANSMISSION",
+	[13] = "MMC_CMD_SEND_STATUS",
+	[16] = "MMC_CMD_SET_BLOCKLEN",
+	[17] = "MMC_CMD_READ_SINGLE_BLOCK",
+	[18] = "MMC_CMD_READ_MULTIPLE_BLOCK",
+	[19] = "MMC_CMD_SEND_TUNING_BLOCK",
+	[21] = "MMC_CMD_SEND_TUNING_BLOCK_HS200",
+	[23] = "MMC_CMD_SET_BLOCK_COUNT",
+	[24] = "MMC_CMD_WRITE_SINGLE_BLOCK",
+	[25] = "MMC_CMD_WRITE_MULTIPLE_BLOCK",
+	[35] = "MMC_CMD_ERASE_GROUP_START",
+	[36] = "MMC_CMD_ERASE_GROUP_END",
+	[38] = "MMC_CMD_ERASE",
+	[55] = "MMC_CMD_APP_CMD",
+	[58] = "MMC_CMD_SPI_READ_OCR",
+	[59] = "MMC_CMD_SPI_CRC_ON_OFF",
+	[62] = "MMC_CMD_RES_MAN",
+};
+
 void mmmc_trace_before_send(struct mmc *mmc, struct mmc_cmd *cmd)
 {
-	printf("CMD_SEND:%d\n", cmd->cmdidx);
+	const char *name = NULL;
+	
+	if (cmd->cmdidx < ARRAY_SIZE(mmc_cmd_names))
+		name = mmc_cmd_names[cmd->cmdidx];
+
+	printf("CMD_SEND: %02d: %s\n", cmd->cmdidx, name ?: "UNKNOWN");
 	printf("\t\tARG\t\t\t 0x%08x\n", cmd->cmdarg);
 }
 
