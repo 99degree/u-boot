@@ -409,34 +409,56 @@ static inline u8 sdhci_readb(struct sdhci_host *host, int reg)
 
 #else
 
-static inline void sdhci_writel(struct sdhci_host *host, u32 val, int reg)
+static inline void _sdhci_writel(struct sdhci_host *host, const char *valname, const char *regname, u32 val, int reg, const char *func, ulong line)
 {
+	//printf("//%s\t\tSDHCI_WRITE %#010llx: %#010x %s: %s\n", func, (uint64_t)host->ioaddr + reg, val, regname, valname);
 	writel(val, host->ioaddr + reg);
 }
+#define sdhci_writel(host, val, reg) _sdhci_writel(host, #val, #reg, val, reg, __func__, __LINE__)
 
-static inline void sdhci_writew(struct sdhci_host *host, u16 val, int reg)
+static inline void _sdhci_writew(struct sdhci_host *host, const char *valname, const char *regname, u16 val, int reg, const char *func, ulong line)
 {
+	//printf("//%s\t\tSDHCI_WRITE %#010llx: %#010x %s: %s\n", func, (uint64_t)host->ioaddr + reg, val, regname, valname);
 	writew(val, host->ioaddr + reg);
 }
+#define sdhci_writew(host, val, reg) _sdhci_writew(host, #val, #reg, val, reg, __func__, __LINE__)
 
-static inline void sdhci_writeb(struct sdhci_host *host, u8 val, int reg)
+static inline void _sdhci_writeb(struct sdhci_host *host, const char *valname, const char *regname, u8 val, int reg, const char *func, ulong line)
 {
+	//printf("//%s\t\tSDHCI_WRITE %#010llx: %#010x %s: %s\n", func, (uint64_t)host->ioaddr + reg, val, regname, valname);
 	writeb(val, host->ioaddr + reg);
 }
-static inline u32 sdhci_readl(struct sdhci_host *host, int reg)
+#define sdhci_writeb(host, val, reg) _sdhci_writeb(host, #val, #reg, val, reg, __func__, __LINE__)
+static inline u32 _sdhci_readl(struct sdhci_host *host, const char *regname, int reg, const char *func, ulong line)
 {
-	return readl(host->ioaddr + reg);
+	u32 val = readl(host->ioaddr + reg);
+	static uint64_t last = 0;
+	static int count = 0;
+	if ((uint64_t)host->ioaddr + reg != last) {
+		//printf("//%s\t\tSDHCI_READL %#010llx: %#010x %s\n", func, (uint64_t)host->ioaddr + reg, val, regname);
+		last = (uint64_t)host->ioaddr + reg;
+	} else
+		count++;
+	
+	return val;
 }
+#define sdhci_readl(host, reg) _sdhci_readl(host, #reg, reg, __func__, __LINE__)
 
-static inline u16 sdhci_readw(struct sdhci_host *host, int reg)
+static inline u16 _sdhci_readw(struct sdhci_host *host, const char *regname, int reg, const char *func, ulong line)
 {
-	return readw(host->ioaddr + reg);
+	u16 val = readw(host->ioaddr + reg);
+	//printf("//%s\t\tSDHCI_READW %#010llx: %#010x %s\n", func, (uint64_t)host->ioaddr + reg, val, regname);
+	return val;
 }
+#define sdhci_readw(host, reg) _sdhci_readw(host, #reg, reg, __func__, __LINE__)
 
-static inline u8 sdhci_readb(struct sdhci_host *host, int reg)
+static inline u8 _sdhci_readb(struct sdhci_host *host, const char *regname, int reg, const char *func, ulong line)
 {
-	return readb(host->ioaddr + reg);
+	u8 val = readb(host->ioaddr + reg);
+	//printf("//%s\t\tSDHCI_READB %#010llx: %#010x %s\n", func, (uint64_t)host->ioaddr + reg, val, regname);
+	return val;
 }
+#define sdhci_readb(host, reg) _sdhci_readb(host, #reg, reg, __func__, __LINE__)
 #endif
 
 #ifdef CONFIG_BLK
