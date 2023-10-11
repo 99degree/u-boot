@@ -7,7 +7,7 @@
 #ifndef __USB_MASS_STORAGE_H__
 #define __USB_MASS_STORAGE_H__
 
-#define SECTOR_SIZE		0x200
+#define SECTOR_SIZE		0x1000
 #include <part.h>
 #include <linux/usb/composite.h>
 
