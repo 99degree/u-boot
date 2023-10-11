@@ -782,7 +782,7 @@ static int do_read(struct fsg_common *common)
 		} else if (nread < amount) {
 			LDBG(curlun, "partial file read: %d/%u\n",
 					(int) nread, amount);
-			nread -= (nread & 511);	/* Round down to a block */
+			nread -= (nread & (SECTOR_SIZE-1));	/* Round down to a block */
 		}
 		file_offset  += nread;
 		amount_left  -= nread;
@@ -888,7 +888,7 @@ static int do_write(struct fsg_common *common)
 				curlun->info_valid = 1;
 				continue;
 			}
-			amount -= (amount & 511);
+			amount -= (amount & (SECTOR_SIZE-1));
 			if (amount == 0) {
 
 				/* Why were we were asked to transfer a
@@ -955,7 +955,7 @@ static int do_write(struct fsg_common *common)
 			} else if (nwritten < amount) {
 				LDBG(curlun, "partial file write: %d/%u\n",
 						(int) nwritten, amount);
-				nwritten -= (nwritten & 511);
+				nwritten -= (nwritten & (SECTOR_SIZE-1));
 				/* Round down to a block */
 			}
 			file_offset += nwritten;
@@ -1070,7 +1070,7 @@ static int do_verify(struct fsg_common *common)
 		} else if (nread < amount) {
 			LDBG(curlun, "partial file verify: %d/%u\n",
 					(int) nread, amount);
-			nread -= (nread & 511);	/* Round down to a sector */
+			nread -= (nread & (SECTOR_SIZE-1));	/* Round down to a sector */
 		}
 		if (nread == 0) {
 			curlun->sense_data = SS_UNRECOVERED_READ_ERROR;
@@ -1178,7 +1178,7 @@ static int do_read_capacity(struct fsg_common *common, struct fsg_buffhd *bh)
 
 	put_unaligned_be32(curlun->num_sectors - 1, &buf[0]);
 						/* Max logical block */
-	put_unaligned_be32(512, &buf[4]);	/* Block length */
+	put_unaligned_be32(SECTOR_SIZE, &buf[4]);	/* Block length */
 	return 8;
 }
 
@@ -1363,7 +1363,7 @@ static int do_read_format_capacities(struct fsg_common *common,
 
 	put_unaligned_be32(curlun->num_sectors, &buf[0]);
 						/* Number of blocks */
-	put_unaligned_be32(512, &buf[4]);	/* Block length */
+	put_unaligned_be32(SECTOR_SIZE, &buf[4]);	/* Block length */
 	buf[4] = 0x02;				/* Current capacity */
 	return 12;
 }
