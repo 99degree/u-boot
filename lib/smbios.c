@@ -487,7 +487,11 @@ ulong write_smbios_table(ulong addr)
 	addr = ALIGN(addr, 16);
 	start_addr = addr;
 
-	addr += sizeof(struct smbios_entry);
+	/*
+	 * So far we don't know which struct will be used, but they both end
+	 * up using the same amount of 16-bit-aligned space
+	 */
+	addr += max(sizeof(struct smbios_entry), sizeof(struct smbios3_entry));
 	addr = ALIGN(addr, 16);
 	tables = addr;
 
@@ -512,14 +516,24 @@ ulong write_smbios_table(ulong addr)
 	 * sandbox's DRAM buffer.
 	 */
 	table_addr = (ulong)map_sysmem(tables, 0);
-	if (sizeof(table_addr) > sizeof(u32) && table_addr > (ulong)UINT_MAX) {
+	if (sizeof(table_addr) > sizeof(u32) && addr >= (ulong)UINT_MAX) {
+		struct smbios3_entry *se;
 		/*
 		 * We need to put this >32-bit pointer into the table but the
 		 * field is only 32 bits wide.
 		 */
-		printf("WARNING: SMBIOS table_address overflow %llx\n",
-		       (unsigned long long)table_addr);
-		addr = 0;
+		printf("WARNING: Using SMBIOS3.0 due to table-address overflow %lx\n",
+		       table_addr);
+		se = map_sysmem(start_addr, sizeof(struct smbios_entry));
+		memset(se, '\0', sizeof(struct smbios_entry));
+		memcpy(se->anchor, "_SM3_", 5);
+		se->length = sizeof(struct smbios3_entry);
+		se->major_ver = SMBIOS_MAJOR_VER;
+		se->minor_ver = SMBIOS_MINOR_VER;
+		se->docrev = 0;
+		se->entry_point_rev = 1;
+		se->max_struct_size = len;
+		se->struct_table_address = table_addr;
 	} else {
 		struct smbios_entry *se;
 
