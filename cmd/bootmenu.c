@@ -636,7 +636,9 @@ int do_bootmenu(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	if (delay_str)
 		delay = (int)simple_strtol(delay_str, NULL, 10);
 
-	bootmenu_show(delay);
+	while (IS_ENABLED(CONFIG_BOOTMENU_LOOP))
+		if (bootmenu_show(delay) != BOOTMENU_RET_SUCCESS)
+			break;
 	return 0;
 }
 
