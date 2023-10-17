@@ -74,7 +74,8 @@
 
 	cd-gpios = <&tlmm 88 GPIO_ACTIVE_LOW>;
 
-	status = "okay";
+	/* sdcard depends on regulators which we can't turn on from u-boot */
+	status = "disabled";
 };
 
 &sleep_clk {
