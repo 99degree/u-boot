@@ -14,12 +14,17 @@
 #define CFG_SYS_BAUDRATE_TABLE	{ 115200, 230400, 460800, 921600, 3000000 }
 
 #define CFG_EXTRA_ENV_SETTINGS \
-	"bootdelay=3\0"		\
+	"bootdelay=1\0" \
+	"bootmenu_delay=-1\0" \
 	"stdin=serial,button-kbd\0"	\
-	"stdout=serial,vidconsole\0"	\
-	"stderr=serial,vidconsole\0" \
-	"bootcmd=usb start; load usb 0:1 ${kernel_comp_addr_r} /EFI/Boot/bootaa64.efi; " \
-		"load usb 0:1 ${fdt_addr_r} /dtbs/${devicetree}; " \
-		"bootefi $kernel_comp_addr_r $fdt_addr_r\0"
+	"stdout=vidconsole,serial\0"	\
+	"stderr=vidconsole,serial\0" \
+	"preboot=bootflow scan -l\0" \
+	"bootmenu_0=Boot first available device=bootflow scan -b\0" \
+	"bootmenu_1=Enable USB mass storage=ums 0 scsi 0,1,2,3,4,5\0" \
+	"bootmenu_2=Enable fastboot mode=fastboot usb 0\0" \
+	"bootmenu_3=Reset device=reset\0" \
+	"menucmd=bootmenu\0" \
+	"bootcmd=bootflow scan -b\0" /* first entry is default */
 
 #endif
