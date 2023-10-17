@@ -5,8 +5,10 @@
  * (C) Copyright 2015 Mateusz Kulikowski <mateusz.kulikowski@gmail.com>
  */
 
+#include <button.h>
 #include <common.h>
 #include <dm.h>
+#include <dm/lists.h>
 #include <log.h>
 #include <power/pmic.h>
 #include <spmi/spmi.h>
@@ -318,111 +320,152 @@ U_BOOT_DRIVER(qcom_pmic_gpio) = {
 	.priv_auto	= sizeof(struct qcom_gpio_bank),
 };
 
+struct qcom_pmic_btn_priv {
+	uint32_t base;
+	uint32_t status_bit;
+	int code;
+	struct udevice *pmic;
+};
 
 /* Add pmic buttons as GPIO as well - there is no generic way for now */
 #define PON_INT_RT_STS                        0x10
 #define KPDPWR_ON_INT_BIT                     0
 #define RESIN_ON_INT_BIT                      1
 
-static int qcom_pwrkey_get_function(struct udevice *dev, unsigned offset)
+static enum button_state_t qcom_pwrkey_get_state(struct udevice *dev)
 {
-	return GPIOF_INPUT;
-}
+	struct qcom_pmic_btn_priv *priv = dev_get_priv(dev);
 
-static int qcom_pwrkey_get_value(struct udevice *dev, unsigned offset)
-{
-	struct qcom_gpio_bank *priv = dev_get_priv(dev);
-
-	int reg = pmic_reg_read(dev->parent, priv->pid + PON_INT_RT_STS);
+	int reg = pmic_reg_read(priv->pmic, priv->base + PON_INT_RT_STS);
 
 	if (reg < 0)
 		return 0;
 
-	switch (offset) {
-	case 0: /* Power button */
-		return (reg & BIT(KPDPWR_ON_INT_BIT)) != 0;
-		break;
-	case 1: /* Reset button */
-	default:
-		return (reg & BIT(RESIN_ON_INT_BIT)) != 0;
-		break;
-	}
+	return (reg & BIT(priv->status_bit)) != 0;
 }
 
-/*
- * Since pmic buttons modelled as GPIO, we need empty direction functions
- * to trick u-boot button driver
- */
-static int qcom_pwrkey_direction_input(struct udevice *dev, unsigned int offset)
+static int qcom_pwrkey_get_code(struct udevice *dev)
 {
-	return 0;
-}
+	struct qcom_pmic_btn_priv *priv = dev_get_priv(dev);
 
-static int qcom_pwrkey_direction_output(struct udevice *dev, unsigned int offset, int value)
-{
-	return -EOPNOTSUPP;
+	return priv->code;
 }
-
-static const struct dm_gpio_ops qcom_pwrkey_ops = {
-	.get_value		= qcom_pwrkey_get_value,
-	.get_function		= qcom_pwrkey_get_function,
-	.direction_input	= qcom_pwrkey_direction_input,
-	.direction_output	= qcom_pwrkey_direction_output,
-};
 
 static int qcom_pwrkey_probe(struct udevice *dev)
 {
-	struct qcom_gpio_bank *priv = dev_get_priv(dev);
-	int reg;
-	uint64_t pid;
+	struct button_uc_plat *uc_plat = dev_get_uclass_plat(dev);
+	struct qcom_pmic_btn_priv *priv = dev_get_priv(dev);
+	int ret;
+	uint64_t base;
 
-	pid = dev_read_addr(dev);
-	if (pid == FDT_ADDR_T_NONE) {
+	/* Ignore the top-level button node */
+	if (!uc_plat->label)
+		return 0;
+
+	/* the pwrkey and resin nodes are children of the "pon" node, get the
+	 * PMIC device to use in pmic_reg_* calls.
+	 */
+	priv->pmic = dev->parent->parent;
+
+	base = dev_read_addr(dev);
+	if (!base || base == FDT_ADDR_T_NONE) {
 		/* Linux devicetrees don't specify an address in the pwrkey node */
-		pid = dev_read_addr(dev->parent);
-		if (pid == FDT_ADDR_T_NONE)
-			return log_msg_ret("bad address", -EINVAL);
+		base = dev_read_addr(dev->parent);
+		if (base == FDT_ADDR_T_NONE) {
+			printf("%s: Can't find address\n", dev->name);
+			return -EINVAL;
+		}
 	}
 
-	priv->pid = pid;
+	priv->base = base;
 
 	/* Do a sanity check */
-	reg = pmic_reg_read(dev->parent, priv->pid + REG_TYPE);
-	if (reg != 0x1)
-		return log_msg_ret("bad type", -ENXIO);
+	ret = pmic_reg_read(priv->pmic, priv->base + REG_TYPE);
+	if (ret != 0x1 && ret != 0xb) {
+		printf("%s: unexpected PMIC function type %d\n", dev->name, ret);
+		return -ENXIO;
+	}
 
-	reg = pmic_reg_read(dev->parent, priv->pid + REG_SUBTYPE);
-	if ((reg & 0x5) == 0)
-		return log_msg_ret("bad subtype", -ENXIO);
+	ret = pmic_reg_read(priv->pmic, priv->base + REG_SUBTYPE);
+	if ((ret & 0x7) == 0) {
+		printf("%s: unexpected PMCI function subtype %d\n", dev->name, ret);
+		//return -ENXIO;
+	}
+
+	/* Bit of a hack, we use the interrupt number to derive if this is the pwrkey or resin node, it just
+	 * so happens to line up with the bit numbers in the interrupt status register
+	 */
+	ret = ofnode_read_u32_index(dev_ofnode(dev), "interrupts", 2, &priv->status_bit);
+	if (ret < 0) {
+		printf("%s: Couldn't read interrupts: %d\n", __func__, ret);
+		return ret;
+	}
+
+	ret = ofnode_read_u32(dev_ofnode(dev), "linux,code", &priv->code);
+	if (ret < 0) {
+		printf("%s: Couldn't read interrupts: %d\n", __func__, ret);
+		return ret;
+	}
 
 	return 0;
 }
 
-static int qcom_pwrkey_of_to_plat(struct udevice *dev)
+static int button_qcom_pmic_bind(struct udevice *parent)
 {
-	struct gpio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
+	struct udevice *dev;
+	ofnode node;
+	int ret;
 
-	uc_priv->gpio_count = 2;
-	uc_priv->bank_name = dev_read_string(dev, "gpio-bank-name");
-	if (uc_priv->bank_name == NULL)
-		uc_priv->bank_name = "pwkey_qcom";
+	dev_for_each_subnode(node, parent) {
+		struct button_uc_plat *uc_plat;
+		const char *label;
+
+		if (!ofnode_is_enabled(node))
+			continue;
+
+		label = ofnode_read_string(node, "label");
+		if (!label) {
+			printf("%s: node %s has no label\n", __func__,
+			      ofnode_get_name(node));
+			/* Don't break booting, just print a warning and continue */
+			continue;
+		}
+		printf("binding btn %s // %s\n", ofnode_get_name(node), label);
+		/* We need the PMIC device to be the parent, so flatten it out here */
+		ret = device_bind_driver_to_node(parent, "pwrkey_qcom",
+						 ofnode_get_name(node),
+						 node, &dev);
+		if (ret) {
+			printf("Failed to bind %s! %d\n", label, ret);
+			return ret;
+		}
+		uc_plat = dev_get_uclass_plat(dev);
+		uc_plat->label = label;
+	}
 
 	return 0;
 }
+
+static const struct button_ops button_qcom_pmic_ops = {
+	.get_state	= qcom_pwrkey_get_state,
+	.get_code	= qcom_pwrkey_get_code,
+};
+
 
 static const struct udevice_id qcom_pwrkey_ids[] = {
 	{ .compatible = "qcom,pm8916-pwrkey" },
 	{ .compatible = "qcom,pm8994-pwrkey" },
 	{ .compatible = "qcom,pm8941-pwrkey" },
+	{ .compatible = "qcom,pm8998-pon" },
 	{ }
 };
 
 U_BOOT_DRIVER(pwrkey_qcom) = {
 	.name	= "pwrkey_qcom",
-	.id	= UCLASS_GPIO,
+	.id	= UCLASS_BUTTON,
 	.of_match = qcom_pwrkey_ids,
-	.of_to_plat = qcom_pwrkey_of_to_plat,
+	.bind = button_qcom_pmic_bind,
 	.probe	= qcom_pwrkey_probe,
-	.ops	= &qcom_pwrkey_ops,
-	.priv_auto	= sizeof(struct qcom_gpio_bank),
+	.ops	= &button_qcom_pmic_ops,
+	.priv_auto	= sizeof(struct qcom_pmic_btn_priv),
 };
