@@ -31,7 +31,7 @@ struct freq_tbl {
 };
 
 static const struct freq_tbl ftbl_gcc_qupv3_wrap0_s0_clk_src[] = {
-	F(7372800, CFG_CLK_SRC_GPLL0_EVEN, 1, 384, 15625),
+	F(7372800, CFG_CLK_SRC_GPLL0, 0.5, 192, 15625),
 	F(14745600, CFG_CLK_SRC_GPLL0_EVEN, 1, 768, 15625),
 	F(19200000, CFG_CLK_SRC_CXO, 1, 0, 0),
 	F(29491200, CFG_CLK_SRC_GPLL0_EVEN, 1, 1536, 15625),
