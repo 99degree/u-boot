@@ -54,21 +54,31 @@
 		enable-active-high;
 		states = <0 0>, <1800000 1>;
 	};
+
+	gpio-keys {
+		compatible = "gpio-keys";
+
+		key-vol-up {
+			label = "Volume Up";
+			linux,code = <KEY_UP>;
+			gpios = <&pm8998_gpios 5 GPIO_ACTIVE_LOW>;
+		};
+	};
 };
 
 &uart9 {
 	status = "okay";
 };
 
-&pm8998_pon {
-	key_vol_down {
-		gpios = <&pm8998_pon 1 0>;
-		label = "key_vol_down";
-	};
-	key_power {
-		gpios = <&pm8998_pon 0 0>;
-		label = "key_power";
-	};
+&pm8998_pwrkey {
+	label = "Power";
+	linux,code = <KEY_ENTER>;
+};
+
+&pm8998_resin {
+	label = "Volume Down";
+	linux,code = <KEY_DOWN>;
+	status = "okay";
 };
 
 &sdhc_2 {
