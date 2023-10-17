@@ -53,27 +53,75 @@ __weak int board_init(void)
 	return 0;
 }
 
-static void set_devicetree(void) {
-	int i;
-	/* Pairs of compatible string -> DTB filename */
-	static const char * const dtb_map[] = {
-		"thundercomm,db845c",	"qcom/sdm845-db845c.dtb",
-		"qcom,qrb2210-rb1",		"qcom/qrb2210-rb1.dtb",
-		"qcom,qrb4210-rb2",		"qcom/qrb4210-rb2.dtb",
-		"qcom,qrb5165-rb5",		"qcom/qrb5165-rb5.dtb",
-		"shift,axolotl",		"qcom/sdm845-shift-axolotl.dtb",
-		NULL,
-	};
+/* Sets up the "board", "board_name", and "soc" environment variables as well as constructing
+ * the devicetree path, with a few quirks to handle non-standard dtb filenames.
+ */
+static void configure_env(void) {
+	const char *compat0, *compat1;
+	char *tmp;
+	char buf[32] = { 0 };
+	char dt_path[64] = { 0 }; /* qcom/<soc>-[vendor]-<board>.dtb */
+	int n_compat, ret;
+	ofnode root;
 
-	for (i = 0; dtb_map[i]; i += 2) {
-		if (of_machine_is_compatible(dtb_map[i])) {
-			printf("board is %s, dtb path %s\n", dtb_map[i], dtb_map[i + 1]);
-			env_set("devicetree", dtb_map[i + 1]);
+	root = ofnode_root();
+	n_compat = ofnode_read_string_count(root, "compatible");
+	if (n_compat < 2) {
+		log_warning("%s: only one root compatible bailing!\n", __func__);
+		return;
+	}
+
+	ret = ofnode_read_string_index(root, "compatible", 0, &compat0);
+	if (ret < 0) {
+		log_warning("Can't read first compatible\n");
+		return;
+	}
+
+	ret = ofnode_read_string_index(root, "compatible", 1, &compat1);
+	if (ret < 0) {
+		log_warning("Can't read second compatible\n");
+		return;
+	}
+
+	strncpy(buf, compat1, sizeof(buf) - 1);
+	tmp = buf;
+
+	if (!strsep(&tmp, ",")) {
+		log_warning("second compatible '%s' has no ','\n", buf);
+		return;
+	}
+
+	env_set("soc", tmp);
+
+	memset(buf, 0, sizeof(buf));
+	strncpy(buf, compat0, sizeof(buf) - 1);
+	tmp = buf;
+
+	if (!strncmp("qcom", buf, strlen("qcom"))) {
+		if (!strsep(&tmp, "-")) {
+			log_warning("compatible '%s' has no '-'\n", buf);
 			return;
+		}
+		env_set("board", tmp);
+	} else {
+		if (!strsep(&tmp, ",")) {
+			log_warning("compatible '%s' has no ','\n", buf);
+			return;
+		}
+		/* for thundercomm we just want the bit after the comma, for all other boards
+		 * we replace the comma with a '-' and take both */
+		if (!strncmp("thundercomm", buf, strlen("thundercomm"))) {
+			env_set("board", tmp);
+		} else {
+			*(tmp-1) = '-';
+			env_set("board", buf);
 		}
 	}
 
-	log_warning("%s: unknown board\n", __func__);
+	/* We use env_get() to avoid more allocations */
+	snprintf(dt_path, sizeof(dt_path), "qcom/%s-%s.dtb",
+		env_get("soc"), env_get("board"));
+	env_set("fdtfile", dt_path);
 }
 
 #define KERNEL_COMP_SIZE	SZ_64M
@@ -96,19 +144,19 @@ int board_late_init(void)
 		max_addr = gd->bd->bi_dram[0].start + gd->bd->bi_dram[0].size;
 
 	/* We need to be fairly conservative here as we support boards with just 1G of TOTAL RAM */
-	status |= env_set_hex("kernel_addr_r", _lmballoc(&lmb, SZ_128M));
-	status |= env_set_hex("loadaddr", _lmballoc(&lmb, SZ_64M));
-	status |= env_set_hex("fdt_addr_r", _lmballoc(&lmb, SZ_2M));
-	status |= env_set_hex("ramdisk_addr_r", _lmballoc(&lmb, SZ_128M));
 	status |= env_set_hex("kernel_comp_addr_r", _lmballoc(&lmb, KERNEL_COMP_SIZE));
 	status |= env_set_hex("kernel_comp_size", KERNEL_COMP_SIZE);
+	status |= env_set_hex("loadaddr", _lmballoc(&lmb, SZ_4M));
+	status |= env_set_hex("fdt_addr_r", _lmballoc(&lmb, SZ_4M));
+	status |= env_set_hex("ramdisk_addr_r", _lmballoc(&lmb, SZ_128M));
+	status |= env_set_hex("kernel_addr_r", _lmballoc(&lmb, SZ_128M));
 	status |= env_set_hex("scriptaddr", _lmballoc(&lmb, SZ_4M));
 	status |= env_set_hex("pxefile_addr_r", _lmballoc(&lmb, SZ_4M));
 
 	if (status)
 		log_warning("%s: Failed to set run time variables\n", __func__);
 
-	set_devicetree();
+	configure_env();
 
 	return 0;
 }
