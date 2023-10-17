@@ -250,6 +250,9 @@ static int msm_serial_setbrg(struct udevice *dev, int baud)
 	u64 clk_rate;
 	u32 clk_div;
 
+	if (baud && priv->baud == baud)
+		return 0;
+
 	priv->baud = baud;
 
 	clk_rate = get_clk_div_rate(baud, priv->oversampling, &clk_div);
@@ -489,9 +492,9 @@ static const struct dm_serial_ops msm_serial_ops = {
 static void geni_set_oversampling(struct udevice *dev)
 {
 	struct msm_serial_data *priv = dev_get_priv(dev);
-	struct udevice *parent_dev = dev_get_parent(dev);
+	ofnode parent_node = ofnode_get_parent(dev_ofnode(dev));
 	u32 geni_se_version;
-	int ret;
+	fdt_addr_t addr;
 
 	priv->oversampling = UART_OVERSAMPLING;
 
@@ -499,13 +502,12 @@ static void geni_set_oversampling(struct udevice *dev)
 	 * It could happen that GENI SE IP is missing in the board's device
 	 * tree or GENI UART node is a direct child of SoC device tree node.
 	 */
-	if (device_get_uclass_id(parent_dev) != UCLASS_MISC)
+	if (!ofnode_device_is_compatible(parent_node, "qcom,geni-se-qup"))
 		return;
 
-	ret = misc_read(parent_dev, QUP_HW_VER_REG,
-			&geni_se_version, sizeof(geni_se_version));
-	if (ret != sizeof(geni_se_version))
-		return;
+	/* Read the HW_VER register relative to the parents address space */
+	addr = ofnode_get_addr(parent_node);
+	geni_se_version = readl(addr + QUP_HW_VER_REG);
 
 	if (geni_se_version >= QUP_SE_VERSION_2_5)
 		priv->oversampling /= 2;
