@@ -1,0 +1,7 @@
+Qualcomm generic board support
+M:	Caleb Connolly <caleb.connolly@linaro.org>
+S:	Maintained
+F:	include/configs/qcom.h
+F:	configs/qcom_defconfig
+F:	arch/arm/mach-snapdragon/init.c
+F:	arch/arm/mach-snapdragon/sysmap-qcom.c

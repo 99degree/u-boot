@@ -90,6 +90,15 @@ config TARGET_QCS404EVB
 	  - 1GiB RAM
 	  - 8GiB eMMC, uSD slot
 
+config TARGET_QCOM
+	bool "Qualcomm generic board support"
+	select LINUX_KERNEL_IMAGE_HEADER
+	imply BUTTON_QCOM_PMIC
+	help
+	  Stub target for generic Qualcomm board support. This target currently
+	  support the Dragonboard845c and starqltechn boards, all new Qualcomm
+	  boards should use this target.
+
 endchoice
 
 source "board/qualcomm/dragonboard410c/Kconfig"
@@ -97,5 +106,6 @@ source "board/qualcomm/dragonboard820c/Kconfig"
 source "board/qualcomm/dragonboard845c/Kconfig"
 source "board/samsung/starqltechn/Kconfig"
 source "board/qualcomm/qcs404-evb/Kconfig"
+source "board/qualcomm/generic/Kconfig"
 
 endif
