@@ -108,15 +108,18 @@ static ulong sm8250_set_rate(struct clk *clk, ulong rate)
 						freq->pre_div, freq->m, freq->n, freq->src, 16);
 
 		return freq->freq;
+	/* Configure the RCG and actually enable the CBCR */
 	case GCC_SDCC2_APPS_CLK:
-		/* Enable GPLL9 so that we can point SDCC2_APPS_CLK_SRC at it */
-		clk_enable_gpll0(priv->base, &gpll9_vote_clk);
 		freq = qcom_find_freq(ftbl_gcc_sdcc2_apps_clk_src, rate);
 		printf("%s: got freq %u\n", __func__, freq->freq);
 		WARN(freq->src != CFG_CLK_SRC_GPLL9, "SDCC2_APPS_CLK_SRC not set to GPLL9, requested rate %lu\n", rate);
+		/* Enable GPLL9 so that we can point SDCC2_APPS_CLK_SRC at it */
+		clk_enable_gpll0(priv->base, &gpll9_vote_clk);
 		clk_rcg_set_rate_mnd(priv->base, &sdcc2_apps_clk_src,
-						freq->pre_div, freq->m, freq->n, CFG_CLK_SRC_GPLL9, 8);
-
+						freq->pre_div, freq->m, freq->n, freq->src, 8);
+		clk_enable_simple(priv, GCC_SDCC2_APPS_CLK);
+		clk_enable_simple(priv, GCC_SDCC2_AHB_CLK);
+		//clk_enable_gpll0(priv->base, &gpll9_vote_clk);
 		return rate;
 	default:
 		return 0;
@@ -219,7 +222,7 @@ static const struct simple_clk sm8250_clks[] = {
 	[GCC_QUPV3_WRAP_2_M_AHB_CLK]		= SIMPLE_CLK(0x52010, 0x00000004, "GCC_QUPV3_WRAP_2_M_AHB_CLK"),
 	[GCC_QUPV3_WRAP_2_S_AHB_CLK]		= SIMPLE_CLK(0x52010, 0x00000002, "GCC_QUPV3_WRAP_2_S_AHB_CLK"),
 	[GCC_SDCC2_AHB_CLK]			= SIMPLE_CLK(0x14008, 0x00000001, "GCC_SDCC2_AHB_CLK"),
-	[GCC_SDCC2_APPS_CLK]			= SIMPLE_CLK(0x14004, 0x00000001, "GCC_SDCC2_APPS_CLK"),
+	[GCC_SDCC2_APPS_CLK]			= SIMPLE_CLK(0x14004, 0x00004221, "GCC_SDCC2_APPS_CLK"), // set FORCE_MEM_CORE_ON, WAKUP, SLEEP, and CLK_ENABLE fields
 	[GCC_SDCC4_AHB_CLK]			= SIMPLE_CLK(0x16008, 0x00000001, "GCC_SDCC4_AHB_CLK"),
 	[GCC_SDCC4_APPS_CLK]			= SIMPLE_CLK(0x16004, 0x00000001, "GCC_SDCC4_APPS_CLK"),
 	[GCC_TSIF_AHB_CLK]			= SIMPLE_CLK(0x36004, 0x00000001, "GCC_TSIF_AHB_CLK"),
@@ -277,6 +280,10 @@ static int sm8250_enable(struct clk *clk)
 		clk_enable_simple(priv, GCC_USB3_SEC_PHY_AUX_CLK);
 		clk_enable_simple(priv, GCC_USB3_SEC_PHY_COM_AUX_CLK);
 		break;
+	/* We must delay enabling these clocks until after the RCG has been configured */
+	case GCC_SDCC2_APPS_CLK:
+	case GCC_SDCC2_AHB_CLK:
+		return 0;
 	}
 
 	clk_enable_simple(priv, clk->id);
