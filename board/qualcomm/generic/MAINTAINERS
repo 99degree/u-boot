@@ -1,5 +1,6 @@
 Qualcomm generic board support
 M:	Caleb Connolly <caleb.connolly@linaro.org>
+M:	Sumit Garg <sumit.garg@linaro.org>
 S:	Maintained
 F:	include/configs/qcom.h
 F:	configs/qcom_defconfig

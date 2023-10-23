@@ -10,8 +10,8 @@
 
 	images {
 		kernel-1 {
-			description = "5.15.0-qcomlt-arm64";
-			data = /incbin/("./db845c_imgs/Image.gz--5.15-r0-dragonboard-845c-20211218193034-511.bin");
+			description = "5.18.0-rc1";
+			data = /incbin/("./qcom_imgs/Image.gz");
 			type = "kernel";
 			arch = "arm64";
 			os = "linux";
@@ -24,8 +24,8 @@
 		};
 
 		ramdisk-1 {
-			description = "initramfs-test-full-image-dragonboard-845c";
-			data = /incbin/("./db845c_imgs/initramfs-test-full-image-dragonboard-845c-20211218193034-511.rootfs.cpio.gz");
+			description = "Initial ramdisk";
+			data = /incbin/("./qcom_imgs/initramfs-tiny-image-qemuarm64-20220618074058-1169.rootfs.cpio.gz");
 			type = "ramdisk";
 			arch = "arm64";
 			os = "linux";
@@ -38,11 +38,12 @@
 		};
 
 		fdt-1 {
-			description = "sdm845-db845c-fdt";
-			data = /incbin/("./db845c_imgs/sdm845-db845c--5.15-r0-dragonboard-845c-20211218193034.dtb");
+			description = "db845c-fdt";
+			data = /incbin/("./qcom_imgs/sdm845-db845c.dtb");
 			type = "flat_dt";
 			arch = "arm64";
 			compression = "none";
+			load = <0x83000000>;
 			hash-1 {
 				algo = "sha1";
 			};
@@ -54,10 +55,10 @@
 		default = "config-1";
 
 		config-1 {
-			description = "db845c kernel-5.15.0 configuration";
+			description = "db845c kernel-5.18.0-rc1 configuration";
 			kernel = "kernel-1";
 			ramdisk = "ramdisk-1";
-			fdt = "fdt-1";
+			fdt = "fdt-2";
 		};
 	};
 };
