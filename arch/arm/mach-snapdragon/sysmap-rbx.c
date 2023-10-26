@@ -14,10 +14,14 @@
 DECLARE_GLOBAL_DATA_PTR;
 
 static struct mm_region rbx_mem_map[] = {
+	/*
+	 * The first 0x1000 bytes are left so that the MMU will actually fault
+	 * on null pointers rather than just hanging
+	 */
 	{
-		.virt = 0x0UL, /* Peripheral block */
-		.phys = 0x0UL, /* Peripheral block */
-		.size = 0x80000000UL,
+		.virt = 0x1000UL, /* Peripheral block */
+		.phys = 0x1000UL, /* Peripheral block */
+		.size = 0x7ffff000UL,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
 			 PTE_BLOCK_NON_SHARE |
 			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
