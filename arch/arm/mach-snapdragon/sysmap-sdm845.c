@@ -10,9 +10,9 @@
 
 static struct mm_region sdm845_mem_map[] = {
 	{
-		.virt = 0x0UL, /* Peripheral block */
-		.phys = 0x0UL, /* Peripheral block */
-		.size = 0x10000000UL,
+		.virt = 0x1000UL, /* Peripheral block */
+		.phys = 0x1000UL, /* Peripheral block */
+		.size = 0x7ffff000UL,
 		.attrs = PTE_BLOCK_MEMTYPE(MT_DEVICE_NGNRNE) |
 			 PTE_BLOCK_NON_SHARE |
 			 PTE_BLOCK_PXN | PTE_BLOCK_UXN
