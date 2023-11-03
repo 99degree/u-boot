@@ -73,5 +73,5 @@ void build_mem_map(void)
 
 u64 get_page_table_size(void)
 {
-	return SZ_32K;
+	return SZ_64K;
 }
