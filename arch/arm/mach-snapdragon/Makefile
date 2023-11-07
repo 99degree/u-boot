@@ -5,4 +5,3 @@
 obj-$(CONFIG_TARGET_QCOM) += board.o
 obj-$(CONFIG_TARGET_DRAGONBOARD820C) += sysmap-apq8096.o
 obj-$(CONFIG_TARGET_DRAGONBOARD410C) += sysmap-apq8016.o
-obj-$(CONFIG_TARGET_QCS404EVB) += sysmap-qcs404.o

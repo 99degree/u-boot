@@ -5,5 +5,11 @@ M:	Dzmitry Sankouski <dsankouski@gmail.com>
 S:	Maintained
 F:	include/configs/qcom.h
 F:	configs/qcom_defconfig
-F:	arch/arm/mach-snapdragon/init.c
+F:	arch/arm/mach-snapdragon/board.c
 F:	arch/arm/mach-snapdragon/sysmap-qcom.c
+
+Qualcomm Technologies, Inc. QCS404 evaluation board
+M:	Sumit Garg <sumit.garg@linaro.org>
+S:	Maintained
+F:	include/configs/qcs404-evb.h
+F:	configs/qcs404evb_defconfig

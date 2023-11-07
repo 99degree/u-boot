@@ -61,6 +61,18 @@
 			};
 		};
 
+		fdt-3 {
+			description = "qcs404-evb-fdt";
+			data = /incbin/("./qcom_imgs/qcs404-evb-4000.dtb");
+			type = "flat_dt";
+			arch = "arm64";
+			compression = "none";
+			load = <0x83000000>;
+			hash-1 {
+				algo = "sha1";
+			};
+		};
+
 	};
 
 	configurations {
@@ -78,6 +90,13 @@
 			kernel = "kernel-1";
 			ramdisk = "ramdisk-1";
 			fdt = "fdt-3";
+		};
+
+		config-3 {
+			description = "qcs404-evb kernel-5.18.0-rc1 configuration";
+			kernel = "kernel-1";
+			ramdisk = "ramdisk-1";
+			fdt = "fdt-1";
 		};
 	};
 };

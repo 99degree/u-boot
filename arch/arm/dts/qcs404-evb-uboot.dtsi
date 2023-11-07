@@ -24,7 +24,7 @@
 };
 
 &pms405_gpios {
-	usb_vbus_boost_pin {
+	usb_vbus_boost_pin: usb-vbus-boost-pin {
 		gpios = <&pms405_gpios 2 0>;
 	};
 };

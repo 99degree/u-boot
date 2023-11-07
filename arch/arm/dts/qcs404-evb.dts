@@ -35,6 +35,21 @@
 		reg = <0 0x80000000 0 0x40000000>;
 	};
 
+	usb3_vbus_reg: regulator-usb3-vbus {
+		compatible = "regulator-gpio";
+		regulator-name = "VBUS_BOOST_5V";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		enable-gpios = <&pms405_gpios 3 GPIO_ACTIVE_HIGH>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&usb_vbus_boost_pin>;
+		enable-active-high;
+		states = <0 0>, <1800000 1>;
+
+		/* TODO: Drop this when introducing role switching */
+		regulator-always-on;
+	};
+
 	soc {
 		#address-cells = <0x1>;
 		#size-cells = <0x1>;
@@ -291,6 +306,8 @@
 				snps,hird-threshold = /bits/ 8 <0x10>;
 				snps,usb3_lpm_capable;
 				maximum-speed = "super-speed";
+
+				vbus-supply = <&usb3_vbus_reg>;
 			};
 		};
 
