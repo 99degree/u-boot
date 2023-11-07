@@ -3,3 +3,4 @@
 # (C) Copyright 2015 Mateusz Kulikowski <mateusz.kulikowski@gmail.com>
 
 obj-y	:= dragonboard410c.o
+obj-y	:= misc.o
