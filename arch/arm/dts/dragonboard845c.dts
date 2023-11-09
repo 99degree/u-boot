@@ -82,7 +82,7 @@
 };
 
 &sdhc_2 {
-	status = "okay";
+	status = "disabled";
 
 	clocks = <&gcc GCC_SDCC2_AHB_CLK>,
 		 <&gcc GCC_SDCC2_APPS_CLK>;

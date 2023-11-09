@@ -59,7 +59,7 @@
 };
 
 &sdhc_2 {
-	status = "okay";
+	status = "disabled";
 
 	/* We don't support rpmhcc in u-boot */
 	clocks = <&gcc GCC_SDCC2_AHB_CLK>,

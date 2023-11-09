@@ -69,7 +69,7 @@
 
 	no-sdio;
 	no-mmc;
-	status = "okay";
+	status = "disabled";
 };
 
 &qupv3_id_0 {
