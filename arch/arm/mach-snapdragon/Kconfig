@@ -3,6 +3,9 @@ if ARCH_SNAPDRAGON
 config SYS_SOC
 	default "snapdragon"
 
+config SYS_BOARD
+	string "Board name"
+
 config SYS_MALLOC_F_LEN
 	default 0x2000
 
@@ -21,7 +24,6 @@ choice
 config TARGET_DRAGONBOARD410C
 	bool "96Boards Dragonboard 410C"
 	select BOARD_LATE_INIT
-	select ENABLE_ARM_SOC_BOOT0_HOOK
 	imply CLK_QCOM_APQ8016
 	imply PINCTRL_QCOM_APQ8016
 	imply BUTTON_QCOM_PMIC
@@ -35,6 +37,10 @@ config TARGET_DRAGONBOARD410C
 	  - 2x Host, 1x Device USB port
 	  - HDMI
 	  - 20-pin low speed and 40-pin high speed expanders, 4 LED, 3 buttons
+
+	  Enable CONFIG_LINUX_KERNEL_IMAGE_HEADER to support running U-Boot as
+	  a chainloaded bootloader, or enable CONFIG_ENABLE_ARM_SOC_BOOT0_HOOK
+	  if you intend to run U-Boot as the primary bootloader.
 
 config TARGET_DRAGONBOARD820C
 	bool "96Boards Dragonboard 820C"
@@ -50,8 +56,10 @@ config TARGET_DRAGONBOARD820C
 
 config TARGET_QCOM
 	bool "Qualcomm generic board support"
-	select LINUX_KERNEL_IMAGE_HEADER
 	select BOARD_LATE_INIT
+	select SAVE_PREV_BL_FDT_ADDR
+	select OF_BOARD
+	imply LINUX_KERNEL_IMAGE_HEADER
 	imply BUTTON_QCOM_PMIC
 	help
 	  Stub target for generic Qualcomm board support. This target currently

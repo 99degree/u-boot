@@ -49,9 +49,24 @@ static void show_psci_version(void)
 
 void *board_fdt_blob_setup(int *err)
 {
+	phys_addr_t fdt;
 	/* Return DTB pointer passed by ABL */
 	*err = 0;
-	return (void *)get_prev_bl_fdt_addr();
+	fdt = get_prev_bl_fdt_addr();
+	
+	/*
+	 * If we bail then the board will simply not boot, instead let's
+	 * try and use the FDT built into U-Boot if there is one...
+	 * This avoids having a hard dependency on the previous stage bootloader
+	 */
+	if (IS_ENABLED(CONFIG_OF_SEPARATE) && (!fdt || fdt != ALIGN(fdt, SZ_4K))) {
+		printf("%s: Using built in FDT\n", __func__);
+		return (void*)gd->fdt_blob;
+	}
+
+	printf("dt: %p\n", (void*)fdt);
+
+	return (void*)fdt;
 }
 
 void reset_cpu(void)

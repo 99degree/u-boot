@@ -2,6 +2,6 @@
 #
 # (C) Copyright 2015 Mateusz Kulikowski <mateusz.kulikowski@gmail.com>
 
-obj-$(CONFIG_TARGET_QCOM) += board.o
-obj-$(CONFIG_TARGET_DRAGONBOARD820C) += sysmap-apq8096.o
-obj-$(CONFIG_TARGET_DRAGONBOARD410C) += sysmap-apq8016.o
+obj-y += board.o
+# obj-$(CONFIG_TARGET_DRAGONBOARD820C) += sysmap-apq8096.o
+# obj-$(CONFIG_TARGET_DRAGONBOARD410C) += sysmap-apq8016.o

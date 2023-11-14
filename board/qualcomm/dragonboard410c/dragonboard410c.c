@@ -17,26 +17,11 @@
 #include <asm/global_data.h>
 #include <asm/gpio.h>
 #include <fdt_support.h>
-#include <asm/arch/dram.h>
-#include <asm/arch/misc.h>
 #include <linux/delay.h>
 
+#include "misc.h"
+
 DECLARE_GLOBAL_DATA_PTR;
-
-int dram_init(void)
-{
-	gd->ram_size = PHYS_SDRAM_1_SIZE;
-
-	return 0;
-}
-
-int dram_init_banksize(void)
-{
-	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
-	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
-
-	return 0;
-}
 
 int board_usb_init(int index, enum usb_init_type init)
 {
@@ -112,6 +97,7 @@ int misc_init_r(void)
 	struct udevice *btn;
 	int ret;
 	enum button_state_t state;
+	char serial[16];
 
 	ret = button_get_by_label("vol_down", &btn);
 	if (ret < 0) {
@@ -125,21 +111,15 @@ int misc_init_r(void)
 		printf("vol_down pressed - Starting fastboot.\n");
 	}
 
+	memset(serial, 0, 16);
+	snprintf(serial, 13, "%x", msm_board_serial());
+	env_set("serial#", serial);
+
 	return 0;
 }
 
 int board_init(void)
 {
-	return 0;
-}
-
-int board_late_init(void)
-{
-	char serial[16];
-
-	memset(serial, 0, 16);
-	snprintf(serial, 13, "%x", msm_board_serial());
-	env_set("serial#", serial);
 	return 0;
 }
 
@@ -176,9 +156,4 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	do_fixup_by_compat(blob, "qcom,wcnss-bt",
 			   "local-bd-address", mac, ARP_HLEN, 1);
 	return 0;
-}
-
-void reset_cpu(void)
-{
-	psci_system_reset();
 }
