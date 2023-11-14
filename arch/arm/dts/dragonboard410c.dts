@@ -12,7 +12,7 @@
 
 / {
 	model = "Qualcomm Technologies, Inc. Dragonboard 410c";
-	compatible = "qcom,dragonboard", "qcom,apq8016-sbc";
+	compatible = "qcom,apq8016-sbc", "qcom,apq8016";
 	qcom,msm-id = <0xce 0x0 0xf8 0x0 0xf9 0x0 0xfa 0x0 0xf7 0x0>;
 	qcom,board-id = <0x10018 0x0>;
 	#address-cells = <0x2>;
