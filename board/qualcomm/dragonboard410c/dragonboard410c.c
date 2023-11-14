@@ -23,84 +23,35 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
-int dram_init(void)
-{
-	gd->ram_size = PHYS_SDRAM_1_SIZE;
-
-	return 0;
-}
-
-int dram_init_banksize(void)
-{
-	gd->bd->bi_dram[0].start = PHYS_SDRAM_1;
-	gd->bd->bi_dram[0].size = PHYS_SDRAM_1_SIZE;
-
-	return 0;
-}
+#define USB_HUB_RESET_GPIO 2
+#define USB_SW_SELECT_GPIO 3
 
 int board_usb_init(int index, enum usb_init_type init)
 {
-	static struct udevice *pmic_gpio;
-	static struct gpio_desc hub_reset, usb_sel;
-	int ret = 0, node;
+	struct udevice *pmic_gpio;
+	unsigned int offset, gpiop;
+	int ret = 0;
 
-	if (!pmic_gpio) {
-		ret = uclass_get_device_by_name(UCLASS_GPIO,
-						"pm8916_gpios@c000",
-						&pmic_gpio);
-		if (ret < 0) {
-			printf("Failed to find pm8916_gpios@c000 node.\n");
-			return ret;
-		}
+	/* Find the GPIO controller by looking up one of the GPIOs */
+	ret = gpio_lookup_name("pmic2", &pmic_gpio, &offset, &gpiop);
+	if (ret < 0) {
+		printf("Failed to find pmic2 gpio.\n");
+		return ret;
 	}
 
-	/* Try to request gpios needed to start usb host on dragonboard */
-	if (!dm_gpio_is_valid(&hub_reset)) {
-		node = fdt_subnode_offset(gd->fdt_blob,
-					  dev_of_offset(pmic_gpio),
-					  "usb_hub_reset_pm");
-		if (node < 0) {
-			printf("Failed to find usb_hub_reset_pm dt node.\n");
-			return node;
-		}
-		ret = gpio_request_by_name_nodev(offset_to_ofnode(node),
-						 "gpios", 0, &hub_reset, 0);
-		if (ret < 0) {
-			printf("Failed to request usb_hub_reset_pm gpio.\n");
-			return ret;
-		}
-	}
-
-	if (!dm_gpio_is_valid(&usb_sel)) {
-		node = fdt_subnode_offset(gd->fdt_blob,
-					  dev_of_offset(pmic_gpio),
-					  "usb_sw_sel_pm");
-		if (node < 0) {
-			printf("Failed to find usb_sw_sel_pm dt node.\n");
-			return 0;
-		}
-		ret = gpio_request_by_name_nodev(offset_to_ofnode(node),
-						 "gpios", 0, &usb_sel, 0);
-		if (ret < 0) {
-			printf("Failed to request usb_sw_sel_pm gpio.\n");
-			return ret;
-		}
-	}
-
+	/* GPIO numbers here index from 0, numbers in DT index from 1 */
 	if (init == USB_INIT_HOST) {
 		/* Start USB Hub */
-		dm_gpio_set_dir_flags(&hub_reset,
-				      GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+		gpio_set_value(gpiop + USB_HUB_RESET_GPIO, 1);
 		mdelay(100);
 		/* Switch usb to host connectors */
-		dm_gpio_set_dir_flags(&usb_sel,
-				      GPIOD_IS_OUT | GPIOD_IS_OUT_ACTIVE);
+		gpio_set_value(gpiop + USB_SW_SELECT_GPIO, 1);
 		mdelay(100);
 	} else { /* Device */
 		/* Disable hub */
-		dm_gpio_set_dir_flags(&hub_reset, GPIOD_IS_OUT);
+		gpio_set_value(gpiop + USB_HUB_RESET_GPIO, 0);
 		/* Switch back to device connector */
-		dm_gpio_set_dir_flags(&usb_sel, GPIOD_IS_OUT);
+		gpio_set_value(gpiop + USB_SW_SELECT_GPIO, 0);
 	}
 
 	return 0;
