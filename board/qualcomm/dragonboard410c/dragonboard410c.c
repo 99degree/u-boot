@@ -77,11 +77,6 @@ int misc_init_r(void)
 	return 0;
 }
 
-int board_init(void)
-{
-	return 0;
-}
-
 int board_late_init(void)
 {
 	char serial[16];
@@ -125,9 +120,4 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 	do_fixup_by_compat(blob, "qcom,wcnss-bt",
 			   "local-bd-address", mac, ARP_HLEN, 1);
 	return 0;
-}
-
-void reset_cpu(void)
-{
-	psci_system_reset();
 }
