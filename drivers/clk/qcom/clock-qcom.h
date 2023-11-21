@@ -12,6 +12,9 @@
 #define CFG_CLK_SRC_GPLL0_EVEN (6 << 8)
 #define CFG_CLK_SRC_MASK  (7 << 8)
 
+#define GDSC_PWR_ON		BIT(31)
+#define GDSC_SW_COLLAPSE	BIT(0)
+
 #define RCG_CFG_REG		0x4
 #define RCG_M_REG		0x8
 #define RCG_N_REG		0xc
@@ -78,6 +81,7 @@ int qcom_cc_bind(struct udevice *parent);
 void clk_enable_gpll0(phys_addr_t base, const struct pll_vote_clk *gpll0);
 void clk_bcr_update(phys_addr_t apps_cmd_rgcr);
 void clk_enable_cbc(phys_addr_t cbcr);
+void gdsc_enable(phys_addr_t gdscr);
 void clk_enable_vote_clk(phys_addr_t base, const struct vote_clk *vclk);
 const struct freq_tbl *qcom_find_freq(const struct freq_tbl *f, uint rate);
 void clk_rcg_set_rate_mnd(phys_addr_t base, uint32_t cmd_rcgr,
