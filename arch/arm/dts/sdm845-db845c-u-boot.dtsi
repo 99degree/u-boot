@@ -23,6 +23,22 @@
 	};
 };
 
+&sdhc_2 {
+	status = "okay";
+
+	/* Remove the RPMh clock reference */
+	clocks = <&gcc GCC_SDCC2_AHB_CLK>,
+		 <&gcc GCC_SDCC2_APPS_CLK>;
+	clock-names = "iface", "core";
+
+	/* U-Boot can't automatically set the clock frequency */
+	clock-frequency = <200000000>;
+
+	bus-width = <4>;
+	/* Hot plug is finnicky */
+	non-removable;
+};
+
 /*
  * We only support USB high-speed, disable SS capabilities
  * and configure the hardware for USB high-speed.
