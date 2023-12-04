@@ -16,6 +16,8 @@
 #include <jffs2/jffs2.h>
 #include <nand.h>
 
+#include "fb_backend.h"
+
 struct fb_nand_sparse {
 	struct mtd_info		*mtd;
 	struct part_info	*part;
@@ -162,6 +164,21 @@ int fastboot_nand_get_part_info(const char *part_name,
 	return fb_nand_lookup(part_name, &mtd, part_info, response);
 }
 
+int fastboot_nand_get_part_size(const char *part_name, size_t *size, char *response)
+{
+	struct part_info *part;
+	struct mtd_info *mtd = NULL;
+	int ret;
+
+	ret = fb_nand_lookup(part_name, &mtd, &part, response);
+	if (ret)
+		return ret;
+
+	*size = part->size;
+
+	return 0;
+}
+
 /**
  * fastboot_nand_flash_write() - Write image to NAND for fastboot
  *
@@ -261,3 +278,13 @@ void fastboot_nand_erase(const char *cmd, char *response)
 
 	fastboot_okay(NULL, response);
 }
+
+const struct fastboot_flash_backend nand_flash_backend = {
+	.get_part_size = fastboot_nand_get_part_size,
+	.flash_write = fastboot_nand_flash_write,
+	.flash_erase = fastboot_nand_erase,
+
+	.flash_device = -1,
+};
+
+const struct fastboot_flash_backend *flash_backend = &nand_flash_backend;

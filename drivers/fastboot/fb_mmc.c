@@ -10,6 +10,8 @@
 #include <fastboot.h>
 #include <fastboot-internal.h>
 #include <fb_mmc.h>
+#include <fb_backend.h>
+#include <fs.h>
 #include <image-sparse.h>
 #include <image.h>
 #include <log.h>
@@ -709,3 +711,82 @@ void fastboot_mmc_erase(const char *cmd, char *response)
 	       blks_size * info.blksz, cmd);
 	fastboot_okay(NULL, response);
 }
+
+int fastboot_mmc_get_part_size(const char *part_name, u64 *size, char *response)
+{
+	struct disk_partition info = { 0 };
+	struct blk_desc *dev_desc;
+	int ret;
+
+	if (!size) {
+		pr_err("%s: size was null", __func__);
+		fastboot_fail("Internal error", response);
+		return -EINVAL;
+	}
+
+	ret = fastboot_mmc_get_part_info(part_name, &dev_desc,
+					     &info, response);
+
+	*size = info.size * info.blksz;
+}
+
+const char *fastboot_mmc_get_part_type(const char *part_name, char *response)
+{
+	int ret;
+	struct blk_desc *dev_desc;
+	struct disk_partition part_info;
+
+	ret = fastboot_mmc_get_part_info(part_name, &dev_desc, &part_info,
+				       response);
+	if (ret < 0)
+		return NULL;
+
+	return fs_get_type_name();
+}
+
+static void mmc_oem_format(char *cmd_parameter, char *response)
+{
+	char cmdbuf[32];
+	const int mmc_dev = config_opt_enabled(CONFIG_FASTBOOT_FLASH_MMC,
+					       CONFIG_FASTBOOT_FLASH_MMC_DEV, -1);
+
+	if (!env_get("partitions")) {
+		fastboot_fail("partitions not set", response);
+	} else {
+		sprintf(cmdbuf, "gpt write mmc %x $partitions", mmc_dev);
+		if (run_command(cmdbuf, 0))
+			fastboot_fail("", response);
+		else
+			fastboot_okay(NULL, response);
+	}
+}
+
+static const struct fastboot_cmd mmc_commands[] = {
+	{
+		.command = "oem format",
+		.command_num = FASTBOOT_COMMAND_OEM_FORMAT,
+		.dispatch = CONFIG_IS_ENABLED(FASTBOOT_CMD_OEM_FORMAT, (mmc_oem_format), (NULL))
+	},
+	{
+		.command = "oem partconf",
+		.command_num = FASTBOOT_COMMAND_OEM_PARTCONF,
+		.dispatch = CONFIG_IS_ENABLED(FASTBOOT_CMD_OEM_PARTCONF, (mmc_oem_partconf), (NULL))
+	},
+	{
+		.command = "oem bootbus",
+		.command_num = FASTBOOT_COMMAND_OEM_BOOTBUS,
+		.dispatch = CONFIG_IS_ENABLED(FASTBOOT_CMD_OEM_BOOTBUS, (mmc_oem_bootbus), (NULL))
+	},
+};
+
+static const struct fastboot_flash_backend mmc_flash_backend = {
+	.get_part_size = fastboot_mmc_get_part_size,
+	.get_part_type = fastboot_mmc_get_part_type,
+	.flash_write = fastboot_mmc_flash_write,
+	.flash_erase = fastboot_mmc_erase,
+	.cmds = mmc_commands,
+
+	.flash_device = CONFIG_FASTBOOT_FLASH_MMC_DEV,
+};
+
+const struct fastboot_flash_backend *flash_backend = &mmc_flash_backend;

@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <linux/printk.h>
 
+#include "fb_backend.h"
+
 /**
  * image_size - final fastboot image size
  */
@@ -43,78 +45,78 @@ static void oem_bootbus(char *, char *);
 static void run_ucmd(char *, char *);
 static void run_acmd(char *, char *);
 
-static const struct {
-	const char *command;
-	void (*dispatch)(char *cmd_parameter, char *response);
-} commands[FASTBOOT_COMMAND_COUNT] = {
-	[FASTBOOT_COMMAND_GETVAR] = {
+static const struct fastboot_cmd commands[] = {
+	{
 		.command = "getvar",
+		.command_num = FASTBOOT_COMMAND_GETVAR,
 		.dispatch = getvar
 	},
-	[FASTBOOT_COMMAND_DOWNLOAD] = {
+	{
 		.command = "download",
+		.command_num = FASTBOOT_COMMAND_DOWNLOAD,
 		.dispatch = download
 	},
-	[FASTBOOT_COMMAND_FLASH] =  {
+	{
 		.command = "flash",
+		.command_num = FASTBOOT_COMMAND_FLASH,
 		.dispatch = CONFIG_IS_ENABLED(FASTBOOT_FLASH, (flash), (NULL))
 	},
-	[FASTBOOT_COMMAND_ERASE] =  {
+	{
 		.command = "erase",
+		.command_num = FASTBOOT_COMMAND_ERASE,
 		.dispatch = CONFIG_IS_ENABLED(FASTBOOT_FLASH, (erase), (NULL))
 	},
-	[FASTBOOT_COMMAND_BOOT] =  {
+	{
 		.command = "boot",
+		.command_num = FASTBOOT_COMMAND_BOOT,
 		.dispatch = okay
 	},
-	[FASTBOOT_COMMAND_CONTINUE] =  {
+	{
 		.command = "continue",
+		.command_num = FASTBOOT_COMMAND_CONTINUE,
 		.dispatch = okay
 	},
-	[FASTBOOT_COMMAND_REBOOT] =  {
+	{
 		.command = "reboot",
+		.command_num = FASTBOOT_COMMAND_REBOOT,
 		.dispatch = okay
 	},
-	[FASTBOOT_COMMAND_REBOOT_BOOTLOADER] =  {
+	{
 		.command = "reboot-bootloader",
+		.command_num = FASTBOOT_COMMAND_REBOOT_BOOTLOADER,
 		.dispatch = reboot_bootloader
 	},
-	[FASTBOOT_COMMAND_REBOOT_FASTBOOTD] =  {
+	{
 		.command = "reboot-fastboot",
+		.command_num = FASTBOOT_COMMAND_REBOOT_FASTBOOTD,
 		.dispatch = reboot_fastbootd
 	},
-	[FASTBOOT_COMMAND_REBOOT_RECOVERY] =  {
+	{
 		.command = "reboot-recovery",
+		.command_num = FASTBOOT_COMMAND_REBOOT_RECOVERY,
 		.dispatch = reboot_recovery
 	},
-	[FASTBOOT_COMMAND_SET_ACTIVE] =  {
+	{
 		.command = "set_active",
+		.command_num = FASTBOOT_COMMAND_SET_ACTIVE,
 		.dispatch = okay
 	},
-	[FASTBOOT_COMMAND_OEM_FORMAT] = {
-		.command = "oem format",
-		.dispatch = CONFIG_IS_ENABLED(FASTBOOT_CMD_OEM_FORMAT, (oem_format), (NULL))
-	},
-	[FASTBOOT_COMMAND_OEM_PARTCONF] = {
-		.command = "oem partconf",
-		.dispatch = CONFIG_IS_ENABLED(FASTBOOT_CMD_OEM_PARTCONF, (oem_partconf), (NULL))
-	},
-	[FASTBOOT_COMMAND_OEM_BOOTBUS] = {
-		.command = "oem bootbus",
-		.dispatch = CONFIG_IS_ENABLED(FASTBOOT_CMD_OEM_BOOTBUS, (oem_bootbus), (NULL))
-	},
-	[FASTBOOT_COMMAND_OEM_RUN] = {
+	{
 		.command = "oem run",
+		.command_num = FASTBOOT_COMMAND_OEM_RUN,
 		.dispatch = CONFIG_IS_ENABLED(FASTBOOT_OEM_RUN, (run_ucmd), (NULL))
 	},
-	[FASTBOOT_COMMAND_UCMD] = {
+	{
 		.command = "UCmd",
+		.command_num = FASTBOOT_COMMAND_UCMD,
 		.dispatch = CONFIG_IS_ENABLED(FASTBOOT_UUU_SUPPORT, (run_ucmd), (NULL))
 	},
-	[FASTBOOT_COMMAND_ACMD] = {
+	{
 		.command = "ACmd",
+		.command_num = FASTBOOT_COMMAND_ACMD,
 		.dispatch = CONFIG_IS_ENABLED(FASTBOOT_UUU_SUPPORT, (run_acmd), (NULL))
 	},
+	{ /* sentinel */ }
 };
 
 /**
@@ -132,13 +134,14 @@ int fastboot_handle_command(char *cmd_string, char *response)
 
 	cmd_parameter = cmd_string;
 	strsep(&cmd_parameter, ":");
+	printf("cmd str '%s', param '%s'\n", cmd_string, cmd_parameter);
 
-	for (i = 0; i < FASTBOOT_COMMAND_COUNT; i++) {
+	for (i = 0; commands[i].command; i++) {
 		if (!strcmp(commands[i].command, cmd_string)) {
 			if (commands[i].dispatch) {
 				commands[i].dispatch(cmd_parameter,
 							response);
-				return i;
+				return commands[i].command_num;
 			} else {
 				pr_err("command %s not supported.\n", cmd_string);
 				fastboot_fail("Unsupported command", response);
@@ -146,6 +149,22 @@ int fastboot_handle_command(char *cmd_string, char *response)
 			}
 		}
 	}
+
+	/* Handle backend specific commands */
+	if (flash_backend->cmds)
+		for (i = 0; flash_backend->cmds[i].command; i++) {
+			if (!strcmp(flash_backend->cmds[i].command, cmd_string)) {
+				if (flash_backend->cmds[i].dispatch) {
+					flash_backend->cmds[i].dispatch(cmd_parameter,
+								response);
+					return flash_backend->cmds[i].command_num;
+				} else {
+					pr_err("command %s not supported.\n", cmd_string);
+					fastboot_fail("Unsupported command", response);
+					return -1;
+				}
+			}
+		}
 
 	pr_err("command %s not recognized.\n", cmd_string);
 	fastboot_fail("unrecognized command", response);
@@ -296,13 +315,8 @@ void fastboot_data_complete(char *response)
  */
 static void __maybe_unused flash(char *cmd_parameter, char *response)
 {
-	if (IS_ENABLED(CONFIG_FASTBOOT_FLASH_MMC))
-		fastboot_mmc_flash_write(cmd_parameter, fastboot_buf_addr,
-					 image_size, response);
-
-	if (IS_ENABLED(CONFIG_FASTBOOT_FLASH_NAND))
-		fastboot_nand_flash_write(cmd_parameter, fastboot_buf_addr,
-					  image_size, response);
+	flash_backend->flash_write(cmd_parameter, fastboot_buf_addr,
+				 image_size, response);
 }
 
 /**
@@ -316,11 +330,7 @@ static void __maybe_unused flash(char *cmd_parameter, char *response)
  */
 static void __maybe_unused erase(char *cmd_parameter, char *response)
 {
-	if (IS_ENABLED(CONFIG_FASTBOOT_FLASH_MMC))
-		fastboot_mmc_erase(cmd_parameter, response);
-
-	if (IS_ENABLED(CONFIG_FASTBOOT_FLASH_NAND))
-		fastboot_nand_erase(cmd_parameter, response);
+	flash_backend->flash_erase(cmd_parameter, response);
 }
 
 /**
@@ -414,29 +424,6 @@ static void reboot_recovery(char *cmd_parameter, char *response)
 		fastboot_fail("Cannot set recovery flag", response);
 	else
 		fastboot_okay(NULL, response);
-}
-
-/**
- * oem_format() - Execute the OEM format command
- *
- * @cmd_parameter: Pointer to command parameter
- * @response: Pointer to fastboot response buffer
- */
-static void __maybe_unused oem_format(char *cmd_parameter, char *response)
-{
-	char cmdbuf[32];
-	const int mmc_dev = config_opt_enabled(CONFIG_FASTBOOT_FLASH_MMC,
-					       CONFIG_FASTBOOT_FLASH_MMC_DEV, -1);
-
-	if (!env_get("partitions")) {
-		fastboot_fail("partitions not set", response);
-	} else {
-		sprintf(cmdbuf, "gpt write mmc %x $partitions", mmc_dev);
-		if (run_command(cmdbuf, 0))
-			fastboot_fail("", response);
-		else
-			fastboot_okay(NULL, response);
-	}
 }
 
 /**

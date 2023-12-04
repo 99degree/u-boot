@@ -14,6 +14,10 @@
 #include <version.h>
 #include <linux/printk.h>
 
+#include "fb_backend.h"
+
+const struct fastboot_flash_backend *flash_backend;
+
 static void getvar_version(char *var_parameter, char *response);
 static void getvar_version_bootloader(char *var_parameter, char *response);
 static void getvar_downloadsize(char *var_parameter, char *response);
@@ -63,7 +67,7 @@ static const struct {
 		.variable = "has-slot",
 		.dispatch = getvar_has_slot
 #endif
-#if IS_ENABLED(CONFIG_FASTBOOT_FLASH_MMC)
+#if !IS_ENABLED(CONFIG_FASTBOOT_FLASH_NAND)
 	}, {
 		.variable = "partition-type",
 		.dispatch = getvar_partition_type
@@ -78,44 +82,6 @@ static const struct {
 		.dispatch = getvar_is_userspace
 	}
 };
-
-/**
- * Get partition number and size for any storage type.
- *
- * Can be used to check if partition with specified name exists.
- *
- * If error occurs, this function guarantees to fill @p response with fail
- * string. @p response can be rewritten in caller, if needed.
- *
- * @param[in] part_name Info for which partition name to look for
- * @param[in,out] response Pointer to fastboot response buffer
- * @param[out] size If not NULL, will contain partition size
- * Return: Partition number or negative value on error
- */
-static int getvar_get_part_info(const char *part_name, char *response,
-				size_t *size)
-{
-	int r;
-	struct blk_desc *dev_desc;
-	struct disk_partition disk_part;
-	struct part_info *part_info;
-
-	if (IS_ENABLED(CONFIG_FASTBOOT_FLASH_MMC)) {
-		r = fastboot_mmc_get_part_info(part_name, &dev_desc, &disk_part,
-					       response);
-		if (r >= 0 && size)
-			*size = disk_part.size * disk_part.blksz;
-	} else if (IS_ENABLED(CONFIG_FASTBOOT_FLASH_NAND)) {
-		r = fastboot_nand_get_part_info(part_name, &part_info, response);
-		if (r >= 0 && size)
-			*size = part_info->size;
-	} else {
-		fastboot_fail("this storage is not supported in bootloader", response);
-		r = -ENODEV;
-	}
-
-	return r;
-}
 
 static void getvar_version(char *var_parameter, char *response)
 {
@@ -188,13 +154,13 @@ static void __maybe_unused getvar_has_slot(char *part_name, char *response)
 		goto fail;
 	strcat(part_name_wslot, "_a");
 
-	r = getvar_get_part_info(part_name_wslot, response, NULL);
+	r = flash_backend->get_part_size(part_name_wslot, NULL, response);
 	if (r >= 0) {
 		fastboot_okay("yes", response); /* part exists and slotted */
 		return;
 	}
 
-	r = getvar_get_part_info(part_name, response, NULL);
+	r = flash_backend->get_part_size(part_name, NULL, response);
 	if (r >= 0)
 		fastboot_okay("no", response); /* part exists but not slotted */
 
@@ -207,19 +173,18 @@ fail:
 
 static void __maybe_unused getvar_partition_type(char *part_name, char *response)
 {
-	int r;
-	struct blk_desc *dev_desc;
-	struct disk_partition part_info;
+	const char *part_type;
 
-	r = fastboot_mmc_get_part_info(part_name, &dev_desc, &part_info,
-				       response);
-	if (r >= 0) {
-		r = fs_set_blk_dev_with_part(dev_desc, r);
-		if (r < 0)
-			fastboot_fail("failed to set partition", response);
-		else
-			fastboot_okay(fs_get_type_name(), response);
+	if (!flash_backend->get_part_type) {
+		fastboot_fail("not supported", response);
+		return;
 	}
+
+	part_type = flash_backend->get_part_type(part_name, response);
+	if (part_type)
+		fastboot_okay(part_type, response);
+	else
+		fastboot_fail("failed to get partition type", response);
 }
 
 static void __maybe_unused getvar_partition_size(char *part_name, char *response)
@@ -227,7 +192,7 @@ static void __maybe_unused getvar_partition_size(char *part_name, char *response
 	int r;
 	size_t size;
 
-	r = getvar_get_part_info(part_name, response, &size);
+	r = flash_backend->get_part_size(part_name, &size, response);
 	if (r >= 0)
 		fastboot_response("OKAY", response, "0x%016zx", size);
 }
