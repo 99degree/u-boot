@@ -27,6 +27,8 @@
 #include <usb.h>
 #include <sort.h>
 
+#include "qcom-priv.h"
+
 DECLARE_GLOBAL_DATA_PTR;
 
 static struct mm_region rbx_mem_map[CONFIG_NR_DRAM_BANKS + 2] = { { 0 } };
@@ -374,6 +376,9 @@ int board_late_init(void)
 
 	configure_env();
 	qcom_late_init();
+
+	/* Configure the dfu_string for capsule updates */
+	qcom_configure_capsule_updates();
 
 	return 0;
 }
