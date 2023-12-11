@@ -38,15 +38,12 @@ int dram_init(void)
 
 int dram_init_banksize(void)
 {
-	int ret;
+	int ret, i;
 	phys_addr_t start, size;
 
 	ret = fdtdec_setup_memory_banksize();
 	if (ret < 0)
 		return ret;
-
-	if (WARN(CONFIG_NR_DRAM_BANKS < 2, "CONFIG_NR_DRAM_BANKS should be at least 2"))
-		return 0;
 
 	/* Some bootloaders populate the RAM banks in the wrong order -_- */
 	start = gd->bd->bi_dram[1].start;
@@ -57,6 +54,17 @@ int dram_init_banksize(void)
 		gd->bd->bi_dram[1].size = gd->bd->bi_dram[0].size;
 		gd->bd->bi_dram[0].start = start;
 		gd->bd->bi_dram[0].size = size;
+	}
+
+	for (i = 0; gd->bd->bi_dram[i].size; i++) {
+		size = ALIGN(gd->bd->bi_dram[i].size, SZ_4K);
+		/* 
+		 * If you're filling out the /memory node manually, the size value should
+		 * end in 3 zeros. Better yet, let ABL populate it for you.
+		 */
+		WARN_ONCE(gd->bd->bi_dram[i].size != size,
+			  "\nDRAM bank %d size not aligned to 4K! Patching things up...\n", i);
+		gd->bd->bi_dram[i].size = size;
 	}
 
 	return 0;
