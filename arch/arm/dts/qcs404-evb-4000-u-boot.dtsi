@@ -1,0 +1,26 @@
+// SPDX-License-Identifier: GPL-2.0+
+
+#include <dt-bindings/gpio/gpio.h>
+
+/delete-node/ &usb3_vbus_reg;
+/delete-node/ &usb_vbus_boost_pin;
+
+/ {
+	/* U-Boot uses different bindings for GPIO regulators, this
+	 * one is required for USB
+	 */
+	usb3_vbus_reg: usb3_vbus_reg {
+		compatible = "regulator-gpio";
+		regulator-name = "usb3_vbus_reg";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		enable-gpios = <&pms405_gpios 3 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+		states = <0 0>, <5000000 1>;
+	};
+};
+
+&usb3_dwc3 {
+	/* Make sure the VBUS supply is switched on */
+	vbus-supply = <&usb3_vbus_reg>;
+};
