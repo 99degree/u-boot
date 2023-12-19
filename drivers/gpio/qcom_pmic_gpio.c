@@ -7,10 +7,14 @@
 
 #include <common.h>
 #include <dm.h>
+#include <dm/device-internal.h>
+#include <dm/lists.h>
+#include <dm/pinctrl.h>
 #include <log.h>
 #include <power/pmic.h>
 #include <spmi/spmi.h>
 #include <asm/io.h>
+#include <stdlib.h>
 #include <asm/gpio.h>
 #include <linux/bitops.h>
 
@@ -78,27 +82,22 @@ struct qcom_gpio_bank {
 	bool     lv_mv_type; /* If subtype is GPIO_LV(0x10) or GPIO_MV(0x11) */
 };
 
-static int qcom_gpio_set_direction(struct udevice *dev, unsigned offset,
-				   bool input, int value)
+struct qcom_pinctrl_data {
+	u32 pid;
+	bool     lv_mv_type; /* If subtype is GPIO_LV(0x10) or GPIO_MV(0x11) */
+	u32 pin_count;
+};
+
+/* dev can be the GPIO or pinctrl device */
+static int _qcom_gpio_set_direction(struct udevice *dev, u32 pid, bool lv_mv_type,
+				    u32 offset, bool input, int value)
 {
-	struct qcom_gpio_bank *priv = dev_get_priv(dev);
-	uint32_t gpio_base = priv->pid + REG_OFFSET(offset);
-	uint32_t reg_ctl_val;
-	ulong quirks = dev_get_driver_data(dev);
+	u32 gpio_base = pid + REG_OFFSET(offset);
+	u32 reg_ctl_val;
 	int ret = 0;
 
-	/* Some PMICs don't like their GPIOs being configured */
-	if (quirks & QCOM_PMIC_QUIRK_READONLY)
-		return 0;
-
-	/* Disable the GPIO */
-	ret = pmic_clrsetbits(dev->parent, gpio_base + REG_EN_CTL,
-			      REG_EN_CTL_ENABLE, 0);
-	if (ret < 0)
-		return ret;
-
 	/* Select the mode and output */
-	if (priv->lv_mv_type) {
+	if (lv_mv_type) {
 		if (input)
 			reg_ctl_val = REG_CTL_LV_MV_MODE_INPUT;
 		else
@@ -114,13 +113,36 @@ static int qcom_gpio_set_direction(struct udevice *dev, unsigned offset,
 	if (ret < 0)
 		return ret;
 
-	if (priv->lv_mv_type && !input) {
+	if (lv_mv_type && !input) {
 		ret = pmic_reg_write(dev->parent,
 				     gpio_base + REG_LV_MV_OUTPUT_CTL,
 				     !!value << REG_LV_MV_OUTPUT_CTL_SHIFT);
 		if (ret < 0)
 			return ret;
 	}
+
+	return 0;
+}
+
+static int qcom_gpio_set_direction(struct udevice *dev, unsigned int offset,
+				   bool input, int value)
+{
+	struct qcom_gpio_bank *priv = dev_get_priv(dev);
+	uint32_t gpio_base = priv->pid + REG_OFFSET(offset);
+	ulong quirks = dev_get_driver_data(dev);
+	int ret = 0;
+
+	/* Some PMICs don't like their GPIOs being configured */
+	if (quirks & QCOM_PMIC_QUIRK_READONLY)
+		return 0;
+
+	/* Disable the GPIO */
+	ret = pmic_clrsetbits(dev->parent, gpio_base + REG_EN_CTL,
+			      REG_EN_CTL_ENABLE, 0);
+	if (ret < 0)
+		return ret;
+
+	_qcom_gpio_set_direction(dev, priv->pid, priv->lv_mv_type, offset, input, value);
 
 	/* Set the right pull (no pull) */
 	ret = pmic_reg_write(dev->parent, gpio_base + REG_DIG_PULL_CTL,
@@ -315,6 +337,127 @@ static int qcom_gpio_of_to_plat(struct udevice *dev)
 	return 0;
 }
 
+U_BOOT_DRIVER(qcom_pmic_gpio) = {
+	.name	= "qcom_pmic_gpio",
+	.id	= UCLASS_GPIO,
+	.of_to_plat = qcom_gpio_of_to_plat,
+	.probe	= qcom_gpio_probe,
+	.ops	= &qcom_gpio_ops,
+	.priv_auto	= sizeof(struct qcom_gpio_bank),
+};
+
+static const struct pinconf_param qcom_pmic_pinctrl_conf_params[] = {
+	{ "output-high", PIN_CONFIG_OUTPUT_ENABLE, 1 },
+	{ "output-low", PIN_CONFIG_OUTPUT, 0 },
+};
+
+static int qcom_pmic_pinctrl_get_pins_count(struct udevice *dev)
+{
+	struct qcom_pinctrl_data *priv = dev_get_priv(dev);
+
+	return priv->pin_count;
+}
+
+static const char *qcom_pmic_pinctrl_get_pin_name(struct udevice *dev, unsigned int selector)
+{
+	static char name[8];
+
+	/* DT indexes from 1 */
+	snprintf(name, sizeof(name), "gpio%u", selector + 1);
+
+	return name;
+}
+
+static int qcom_pmic_pinctrl_pinconf_set(struct udevice *dev, unsigned int selector,
+					 unsigned int param, unsigned int arg)
+{
+	struct qcom_pinctrl_data *priv = dev_get_priv(dev);
+
+	/* We only support configuring the pin as an output, either low or high */
+	return _qcom_gpio_set_direction(dev, priv->pid,
+					priv->lv_mv_type,
+					selector, false,
+					param == PIN_CONFIG_OUTPUT_ENABLE);
+}
+
+static const char *qcom_pmic_pinctrl_get_function_name(struct udevice *dev, unsigned int selector)
+{
+	if (!selector)
+		return "normal";
+	return NULL;
+}
+
+static int qcom_pmic_pinctrl_generic_get_functions_count(struct udevice *dev)
+{
+	return 1;
+}
+
+static int qcom_pmic_pinctrl_generic_pinmux_set_mux(struct udevice *dev, unsigned int selector,
+						    unsigned int func_selector)
+{
+	return 0;
+}
+
+struct pinctrl_ops qcom_pmic_pinctrl_ops = {
+	.get_pins_count = qcom_pmic_pinctrl_get_pins_count,
+	.get_pin_name = qcom_pmic_pinctrl_get_pin_name,
+	.set_state = pinctrl_generic_set_state,
+	.pinconf_num_params = ARRAY_SIZE(qcom_pmic_pinctrl_conf_params),
+	.pinconf_params = qcom_pmic_pinctrl_conf_params,
+	.pinconf_set = qcom_pmic_pinctrl_pinconf_set,
+	.get_function_name = qcom_pmic_pinctrl_get_function_name,
+	.get_functions_count = qcom_pmic_pinctrl_generic_get_functions_count,
+	.pinmux_set = qcom_pmic_pinctrl_generic_pinmux_set_mux,
+};
+
+static int qcom_pmic_pinctrl_bind(struct udevice *dev)
+{
+	struct udevice *gpio;
+	struct qcom_pinctrl_data *priv;
+	struct qcom_gpio_bank *gpio_priv;
+	struct gpio_dev_priv *uc_priv;
+	struct driver *drv;
+	int ret;
+
+	drv = lists_driver_lookup_name("qcom_pmic_gpio");
+	if (!drv) {
+		debug("Cannot find driver '%s'\n", "qcom_pmic_gpio");
+		return -ENOENT;
+	}
+
+	ret = device_bind_with_driver_data(dev->parent, drv,
+					   ofnode_get_name(dev_ofnode(dev)),
+					   dev_get_driver_data(dev), dev_ofnode(dev), &gpio);
+	if (ret)
+		return log_msg_ret("gpio", ret);
+
+	/* Always probe the GPIO device first */
+	device_probe(gpio);
+	gpio_priv = dev_get_priv(gpio);
+	uc_priv = dev_get_uclass_priv(gpio);
+
+	/* Copy GPIO private data to pinctrl.
+	 * the device model doesn't allocate priv_auto yet so we just manage
+	 * priv ourselves.
+	 */
+	priv = malloc(sizeof(*priv));
+	priv->pid = gpio_priv->pid;
+	priv->lv_mv_type = gpio_priv->lv_mv_type;
+	priv->pin_count = uc_priv->gpio_count;
+	dev_set_priv(dev, priv);
+
+	return 0;
+}
+
+static int qcom_pmic_pinctrl_remove(struct udevice *dev)
+{
+	struct qcom_gpio_bank *priv = dev_get_priv(dev);
+
+	free(priv);
+
+	return 0;
+}
+
 static const struct udevice_id qcom_gpio_ids[] = {
 	{ .compatible = "qcom,pm8916-gpio" },
 	{ .compatible = "qcom,pm8994-gpio" },	/* 22 GPIO's */
@@ -323,13 +466,12 @@ static const struct udevice_id qcom_gpio_ids[] = {
 	{ }
 };
 
-U_BOOT_DRIVER(qcom_pmic_gpio) = {
-	.name	= "qcom_pmic_gpio",
-	.id	= UCLASS_GPIO,
-	.of_match = qcom_gpio_ids,
-	.of_to_plat = qcom_gpio_of_to_plat,
-	.probe	= qcom_gpio_probe,
-	.ops	= &qcom_gpio_ops,
-	.priv_auto	= sizeof(struct qcom_gpio_bank),
-};
 
+U_BOOT_DRIVER(qcom_pmic_pinctrl) = {
+	.name	= "qcom_pmic_pinctrl",
+	.id	= UCLASS_PINCTRL,
+	.of_match = qcom_gpio_ids,
+	.ops	= &qcom_pmic_pinctrl_ops,
+	.bind	= qcom_pmic_pinctrl_bind,
+	.remove = qcom_pmic_pinctrl_remove,
+};
