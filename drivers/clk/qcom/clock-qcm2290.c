@@ -81,6 +81,9 @@ static ulong qcm2290_set_rate(struct clk *clk, ulong rate)
 		clk_rcg_set_rate_mnd(priv->base, SDCC2_APPS_CLK_CMD_RCGR,
 						freq->pre_div, freq->m, freq->n, freq->src, 8);
 		return freq->freq;
+	case GCC_SDCC1_APPS_CLK:
+		/* XBL turns MMC on for us */
+		return rate;
 	default:
 		return 0;
 	}
