@@ -15,6 +15,8 @@
 #define NORTH	0x00500000
 #define SOUTH	0x00900000
 #define EAST	0x00100000
+#define UFS	0x0099f000
+#define QDSD	0x0099a000
 
 #define MAX_PIN_NAME_LEN 32
 static char pin_name[MAX_PIN_NAME_LEN] __section(".data");
@@ -55,6 +57,7 @@ static const unsigned int sdm845_pin_offsets[] = {
 	[135] = NORTH, [136] = NORTH, [137] = NORTH, [138] = NORTH, [139] = NORTH,
 	[140] = NORTH, [141] = NORTH, [142] = NORTH, [143] = NORTH, [144] = NORTH,
 	[145] = NORTH, [146] = NORTH, [147] = NORTH, [148] = NORTH, [149] = NORTH,
+	[150] = UFS,   [151] = QDSD,  [152] = QDSD,  [153] = QDSD,
 };
 
 static const char *sdm845_get_function_name(struct udevice *dev,
@@ -66,7 +69,24 @@ static const char *sdm845_get_function_name(struct udevice *dev,
 static const char *sdm845_get_pin_name(struct udevice *dev,
 					unsigned int selector)
 {
-	snprintf(pin_name, MAX_PIN_NAME_LEN, "gpio%u", selector);
+	switch (selector) {
+	case 150:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "ufs_reset");
+		break;
+	case 151:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "sdc2_clk");
+		break;
+	case 152:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "sdc2_cmd");
+		break;
+	case 153:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "sdc2_data");
+		break;
+	default:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "gpio%u", selector);
+		break;
+	}
+
 	return pin_name;
 }
 
@@ -80,6 +100,7 @@ static struct msm_pinctrl_data sdm845_data = {
 		.pin_offsets = sdm845_pin_offsets,
 		.pin_count = ARRAY_SIZE(sdm845_pin_offsets),
 	},
+	.special_pins_start = 150,
 	.functions_count = ARRAY_SIZE(msm_pinctrl_functions),
 	.get_function_name = sdm845_get_function_name,
 	.get_function_mux = sdm845_get_function_mux,
