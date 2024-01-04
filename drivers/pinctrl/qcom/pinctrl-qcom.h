@@ -21,6 +21,8 @@ struct msm_pinctrl_data {
 	unsigned int (*get_function_mux)(unsigned int selector);
 	const char *(*get_pin_name)(struct udevice *dev,
 				    unsigned int selector);
+	/* Index of first special pin, these are ignored for now */
+	unsigned int special_pins_start;
 };
 
 struct pinctrl_function {
