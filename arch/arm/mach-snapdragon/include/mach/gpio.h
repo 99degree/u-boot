@@ -13,6 +13,8 @@
 struct msm_pin_data {
 	int pin_count;
 	const unsigned int *pin_offsets;
+	/* Index of first special pin, these are ignored for now */
+	unsigned int special_pins_start;
 };
 
 static inline u32 qcom_pin_offset(const unsigned int *offs, unsigned int selector)
