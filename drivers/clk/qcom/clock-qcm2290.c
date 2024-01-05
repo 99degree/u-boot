@@ -8,6 +8,8 @@
  * Based on Little Kernel driver, simplified
  */
 
+#define LOG_DEBUG
+
 #include <common.h>
 #include <clk-uclass.h>
 #include <dm.h>
@@ -67,6 +69,8 @@ static ulong qcm2290_set_rate(struct clk *clk, ulong rate)
 	struct msm_clk_priv *priv = dev_get_priv(clk->dev);
 	const struct freq_tbl *freq;
 
+	printf("%s: clk %s rate %lu\n", __func__, clk->dev->name, rate);
+
 	switch (clk->id) {
 	case GCC_QUPV3_WRAP0_S4_CLK: /*UART2*/
 		freq = qcom_find_freq(ftbl_gcc_qupv3_wrap0_s0_clk_src, rate);
@@ -110,7 +114,6 @@ static int clk_rcg2_is_enabled(phys_addr_t cmd_rcgr)
 /* Hardcoded RCG2 clock registers */
 static void init_rcg2_clk(phys_addr_t base, u32 cfg) {
 	int count = 0;
-	printf("%s: base = %#llx\n", __func__, base);
 	setbits_le32(base + CFG_REG, cfg); 
 	/* Leave M/N/D all 0 */
 	/* Enable clock! */
