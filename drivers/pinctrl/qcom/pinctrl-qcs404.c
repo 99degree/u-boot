@@ -17,13 +17,13 @@
 #define MAX_PIN_NAME_LEN 32
 static char pin_name[MAX_PIN_NAME_LEN] __section(".data");
 static const char * const msm_pinctrl_pins[] = {
-	"SDC1_RCLK",
-	"SDC1_CLK",
-	"SDC1_CMD",
-	"SDC1_DATA",
-	"SDC2_CLK",
-	"SDC2_CMD",
-	"SDC2_DATA",
+	"sdc1_rclk",
+	"sdc1_clk",
+	"sdc1_cmd",
+	"sdc1_data",
+	"sdc2_clk",
+	"sdc2_cmd",
+	"sdc2_data",
 };
 
 static const struct pinctrl_function msm_pinctrl_functions[] = {
@@ -85,7 +85,7 @@ static const char *qcs404_get_pin_name(struct udevice *dev,
 				       unsigned int selector)
 {
 	if (selector < 120) {
-		snprintf(pin_name, MAX_PIN_NAME_LEN, "GPIO_%u", selector);
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "gpio%u", selector);
 		return pin_name;
 	} else {
 		return msm_pinctrl_pins[selector - 120];
