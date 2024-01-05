@@ -137,7 +137,15 @@ static const unsigned int sm6115_pin_offsets[] = {
 	[110] = SOUTH,
 	[111] = SOUTH,
 	[112] = SOUTH,
-	[113] = SOUTH, // Not a real pin?
+	/* Special pins */
+	[113] = 0,
+	[114] = 0,
+	[115] = 0,
+	[116] = 0,
+	[117] = 0,
+	[118] = 0,
+	[119] = 0,
+	[120] = 0,
 };
 
 static const char *sm6115_get_function_name(struct udevice *dev,
@@ -149,7 +157,35 @@ static const char *sm6115_get_function_name(struct udevice *dev,
 static const char *sm6115_get_pin_name(struct udevice *dev,
 					unsigned int selector)
 {
-	snprintf(pin_name, MAX_PIN_NAME_LEN, "gpio%u", selector);
+	switch (selector) {
+	case 113:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "ufs_reset");
+		break;
+	case 114:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "sdc1_rclk");
+		break;
+	case 115:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "sdc1_clk");
+		break;
+	case 116:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "sdc1_cmd");
+		break;
+	case 117:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "sdc1_data");
+		break;
+	case 118:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "sdc2_clk");
+		break;
+	case 119:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "sdc2_cmd");
+		break;
+	case 120:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "sdc2_data");
+		break;
+	default:
+		snprintf(pin_name, MAX_PIN_NAME_LEN, "gpio%u", selector);
+		break;
+	}
 	return pin_name;
 }
 
@@ -161,7 +197,8 @@ static unsigned int sm6115_get_function_mux(unsigned int selector)
 struct msm_pinctrl_data sm6115_data = {
 	.pin_data = {
 		.pin_offsets = sm6115_pin_offsets,
-		.pin_count = ARRAY_SIZE(sm6115_pin_offsets)
+		.pin_count = ARRAY_SIZE(sm6115_pin_offsets),
+		.special_pins_start = 113,
 	},
 	.functions_count = ARRAY_SIZE(msm_pinctrl_functions),
 	.get_function_name = sm6115_get_function_name,
@@ -170,7 +207,7 @@ struct msm_pinctrl_data sm6115_data = {
 };
 
 static const struct udevice_id msm_pinctrl_ids[] = {
-	{ .compatible = "com,sm6115-tlmm", .data = (ulong)&sm6115_data },
+	{ .compatible = "qcom,sm6115-tlmm", .data = (ulong)&sm6115_data },
 	{ /* Sentinal */ }
 };
 
