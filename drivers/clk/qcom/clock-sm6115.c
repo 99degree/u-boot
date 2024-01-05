@@ -68,7 +68,6 @@ static ulong sm6115_set_rate(struct clk *clk, ulong rate)
 
 	switch (clk->id) {
 	case GCC_QUPV3_WRAP0_S4_CLK: /*UART2*/
-		printf("Before set UART clock...\n");
 		freq = qcom_find_freq(ftbl_gcc_qupv3_wrap0_s0_clk_src, rate);
 		clk_rcg_set_rate_mnd(priv->base, QUPV3_WRAP0_S4_CMD_RCGR,
 						freq->pre_div, freq->m, freq->n, freq->src, 16);
@@ -81,6 +80,9 @@ static ulong sm6115_set_rate(struct clk *clk, ulong rate)
 		clk_rcg_set_rate_mnd(priv->base, SDCC2_APPS_CLK_CMD_RCGR,
 						freq->pre_div, freq->m, freq->n, freq->src, 8);
 		return freq->freq;
+	case GCC_SDCC1_APPS_CLK:
+		/* XBL turns MMC on for us */
+		return rate;
 	default:
 		return 0;
 	}
