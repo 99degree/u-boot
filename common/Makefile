@@ -10,6 +10,7 @@ obj-y += main.o
 obj-y += exports.o
 obj-$(CONFIG_HUSH_PARSER) += cli_hush.o
 obj-$(CONFIG_AUTOBOOT) += autoboot.o
+obj-$(CONFIG_BUTTON_CMD) += button_cmd.o
 
 # # boards
 obj-y += board_f.o
