@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: BSD-3-Clause
 /*
- * Clock drivers for Qualcomm sm6115
+ * Clock drivers for Qualcomm sm6115 (and sm4250/qrb4210)
  *
- * (C) Copyright 2017 Jorge Ramirez Ortiz <jorge.ramirez-ortiz@linaro.org>
- * (C) Copyright 2021 Dzmitry Sankouski <dsankouski@gmail.com>
+ * Copyright (c) 2024 Linaro Ltd.
  *
- * Based on Little Kernel driver, simplified
  */
 
 #include <common.h>
@@ -21,6 +19,7 @@
 #include "clock-qcom.h"
 
 #define QUPV3_WRAP0_S4_CMD_RCGR 0x1f608
+#define SDCC1_APPS_CLK_CMD_RCGR 0x38028
 #define SDCC2_APPS_CLK_CMD_RCGR 0x1e00c
 #define USB30_PRIM_GDSCR 0x1a004
 
@@ -61,32 +60,8 @@ static const struct pll_vote_clk gpll0_clk = {
 	.vote_bit = BIT(0),
 };
 
-static ulong sm6115_set_rate(struct clk *clk, ulong rate)
-{
-	struct msm_clk_priv *priv = dev_get_priv(clk->dev);
-	const struct freq_tbl *freq;
-
-	switch (clk->id) {
-	case GCC_QUPV3_WRAP0_S4_CLK: /*UART2*/
-		printf("Before set UART clock...\n");
-		freq = qcom_find_freq(ftbl_gcc_qupv3_wrap0_s0_clk_src, rate);
-		clk_rcg_set_rate_mnd(priv->base, QUPV3_WRAP0_S4_CMD_RCGR,
-						freq->pre_div, freq->m, freq->n, freq->src, 16);
-		return 0;
-	case GCC_SDCC2_APPS_CLK:
-		/* Enable GPLL7 so we can point SDCC2_APPS_CLK_SRC RCG at it */
-		clk_enable_gpll0(priv->base, &gpll0_clk);
-		freq = qcom_find_freq(ftbl_gcc_sdcc2_apps_clk_src, rate);
-		WARN(freq->src != CFG_CLK_SRC_GPLL0, "SDCC2_APPS_CLK_SRC not set to GPLL0, requested rate %lu\n", rate);
-		clk_rcg_set_rate_mnd(priv->base, SDCC2_APPS_CLK_CMD_RCGR,
-						freq->pre_div, freq->m, freq->n, freq->src, 8);
-		return freq->freq;
-	default:
-		return 0;
-	}
-}
-
 static const struct gate_clk sm6115_clks[] = {
+	GATE_CLK(GCC_CFG_NOC_USB3_PRIM_AXI_CLK, 0x1a084, 0x00000001),
 	GATE_CLK(GCC_QUPV3_WRAP0_CORE_2X_CLK, 0x7900c, 0x00000200),
 	GATE_CLK(GCC_QUPV3_WRAP0_CORE_CLK, 0x7900c, 0x00000100),
 	GATE_CLK(GCC_QUPV3_WRAP0_S0_CLK, 0x7900c, 0x00000400),
@@ -121,6 +96,35 @@ static const struct gate_clk sm6115_clks[] = {
 	GATE_CLK(GCC_AHB2PHY_USB_CLK, 0x1d008, 0x00000001),
 	GATE_CLK(GCC_UFS_CLKREF_CLK, 0x8c000, 0x00000001),
 };
+
+static ulong sm6115_set_rate(struct clk *clk, ulong rate)
+{
+	struct msm_clk_priv *priv = dev_get_priv(clk->dev);
+	const struct freq_tbl *freq;
+
+	debug("%s: clk %s rate %lu\n", __func__, sm6115_clks[clk->id].name, rate);
+
+	switch (clk->id) {
+	case GCC_QUPV3_WRAP0_S4_CLK: /*UART2*/
+		freq = qcom_find_freq(ftbl_gcc_qupv3_wrap0_s0_clk_src, rate);
+		clk_rcg_set_rate_mnd(priv->base, QUPV3_WRAP0_S4_CMD_RCGR,
+						freq->pre_div, freq->m, freq->n, freq->src, 16);
+		return 0;
+	case GCC_SDCC2_APPS_CLK:
+		/* Enable GPLL7 so we can point SDCC2_APPS_CLK_SRC RCG at it */
+		clk_enable_gpll0(priv->base, &gpll0_clk);
+		freq = qcom_find_freq(ftbl_gcc_sdcc2_apps_clk_src, rate);
+		WARN(freq->src != CFG_CLK_SRC_GPLL0, "SDCC2_APPS_CLK_SRC not set to GPLL0, requested rate %lu\n", rate);
+		clk_rcg_set_rate_mnd(priv->base, SDCC2_APPS_CLK_CMD_RCGR,
+						freq->pre_div, freq->m, freq->n, freq->src, 8);
+		return freq->freq;
+	case GCC_SDCC1_APPS_CLK:
+		/* The firmware turns this on for us and always sets it to this rate */
+		return 200000000;
+	default:
+		return 0;
+	}
+}
 
 static int sm6115_enable(struct clk *clk)
 {
@@ -162,6 +166,63 @@ static const struct qcom_reset_map sm6115_gcc_resets[] = {
 	[GCC_VIDEO_INTERFACE_BCR] = { 0x6e000 },
 };
 
+static const phys_addr_t sm6115_gpll_addrs[] = {
+	0x01400000, // GCC_GPLL0_MODE
+	0x01401000, // GCC_GPLL1_MODE
+	0x01402000, // GCC_GPLL2_MODE
+	0x01403000, // GCC_GPLL3_MODE
+	0x01404000, // GCC_GPLL4_MODE
+	0x01405000, // GCC_GPLL5_MODE
+	0x01406000, // GCC_GPLL6_MODE
+	0x01407000, // GCC_GPLL7_MODE
+	0x01408000, // GCC_GPLL8_MODE
+	0x01409000, // GCC_GPLL9_MODE
+	0x0140a000, // GCC_GPLL10_MODE
+	0x0140b000, // GCC_GPLL11_MODE
+};
+
+static const phys_addr_t sm6115_rcg_addrs[] = {
+	0x0141a01c, // GCC_USB30_PRIM_MASTER_CMD_RCGR
+	0x0141a034, // GCC_USB30_PRIM_MOCK_UTMI_CMD_RCGR
+	0x0141a060, // GCC_USB3_PRIM_PHY_AUX_CMD_RCGR
+	0x01438028, // GCC_SDCC1_APPS_CMD_RCGR
+	0x0141e00c, // GCC_SDCC2_APPS_CMD_RCGR
+	0x0141f018, // GCC_QUPV3_WRAP0_CORE_2X_CMD_RCGR
+	0x0141f148, // GCC_QUPV3_WRAP0_S0_CMD_RCGR
+	0x0141f278, // GCC_QUPV3_WRAP0_S1_CMD_RCGR
+	0x0141f3a8, // GCC_QUPV3_WRAP0_S2_CMD_RCGR
+	0x0141f4d8, // GCC_QUPV3_WRAP0_S3_CMD_RCGR
+	0x0141f608, // GCC_QUPV3_WRAP0_S4_CMD_RCGR
+	0x0141f738, // GCC_QUPV3_WRAP0_S5_CMD_RCGR
+	0x01428014, // GCC_SLEEP_CMD_RCGR
+	0x0142802c, // GCC_XO_CMD_RCGR
+	0x01445020, // GCC_UFS_PHY_AXI_CMD_RCGR
+	0x01445048, // GCC_UFS_PHY_ICE_CORE_CMD_RCGR
+	0x01445060, // GCC_UFS_PHY_UNIPRO_CORE_CMD_RCGR
+	0x0144507c, // GCC_UFS_PHY_PHY_AUX_CMD_RCGR
+};
+
+static const char *const sm6115_rcg_names[] = {
+	"GCC_USB30_PRIM_MASTER_CMD_RCGR",
+	"GCC_USB30_PRIM_MOCK_UTMI_CMD_RCGR",
+	"GCC_USB3_PRIM_PHY_AUX_CMD_RCGR",
+	"GCC_SDCC1_APPS_CMD_RCGR",
+	"GCC_SDCC2_APPS_CMD_RCGR",
+	"GCC_QUPV3_WRAP0_CORE_2X_CMD_RCGR",
+	"GCC_QUPV3_WRAP0_S0_CMD_RCGR",
+	"GCC_QUPV3_WRAP0_S1_CMD_RCGR",
+	"GCC_QUPV3_WRAP0_S2_CMD_RCGR",
+	"GCC_QUPV3_WRAP0_S3_CMD_RCGR",
+	"GCC_QUPV3_WRAP0_S4_CMD_RCGR",
+	"GCC_QUPV3_WRAP0_S5_CMD_RCGR",
+	"GCC_SLEEP_CMD_RCGR",
+	"GCC_XO_CMD_RCGR",
+	"GCC_UFS_PHY_AXI_CMD_RCGR",
+	"GCC_UFS_PHY_ICE_CORE_CMD_RCGR",
+	"GCC_UFS_PHY_UNIPRO_CORE_CMD_RCGR",
+	"GCC_UFS_PHY_PHY_AUX_CMD_RCGR",
+};
+
 static struct msm_clk_data sm6115_gcc_data = {
 	.resets = sm6115_gcc_resets,
 	.num_resets = ARRAY_SIZE(sm6115_gcc_resets),
@@ -170,6 +231,12 @@ static struct msm_clk_data sm6115_gcc_data = {
 
 	.enable = sm6115_enable,
 	.set_rate = sm6115_set_rate,
+
+	.dbg_pll_addrs = sm6115_gpll_addrs,
+	.num_plls = ARRAY_SIZE(sm6115_gpll_addrs),
+	.dbg_rcg_addrs = sm6115_rcg_addrs,
+	.num_rcgs = ARRAY_SIZE(sm6115_rcg_addrs),
+	.dbg_rcg_names = sm6115_rcg_names,
 };
 
 
