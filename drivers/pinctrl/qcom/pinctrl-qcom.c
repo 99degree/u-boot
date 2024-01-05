@@ -84,8 +84,10 @@ static int msm_pinmux_set(struct udevice *dev, unsigned int pin_selector,
 	struct msm_pinctrl_priv *priv = dev_get_priv(dev);
 
 	/* Always NOP for special pins, assume they're in the correct state */
-	if (pin_selector >= priv->data->special_pins_start)
+	if (pin_selector >= priv->data->special_pins_start) {
+		printf("pinctrl-qcom: NOP for special pin %u\n", pin_selector);
 		return 0;
+	}
 
 	clrsetbits_le32(priv->base + GPIO_CONFIG_REG(priv, pin_selector),
 			TLMM_FUNC_SEL_MASK | TLMM_GPIO_DISABLE,
@@ -99,8 +101,10 @@ static int msm_pinconf_set(struct udevice *dev, unsigned int pin_selector,
 	struct msm_pinctrl_priv *priv = dev_get_priv(dev);
 
 	/* Always NOP for special pins */
-	if (pin_selector >= priv->data->special_pins_start)
+	if (pin_selector >= priv->data->special_pins_start) {
+		printf("pinctrl-qcom: NOP for special pin %u\n", pin_selector);
 		return 0;
+	}
 
 	switch (param) {
 	case PIN_CONFIG_DRIVE_STRENGTH:
