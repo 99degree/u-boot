@@ -293,8 +293,7 @@ static void dump_rcgs(struct udevice *dev) {
 
 		div = ((cfg & 0b11111) + 1) / 2;
 		d_odd = ((cfg & 0b11111) + 1) % 2 == 1;
-		//printf("%#010x %#010x %#010x %#010x %#010x\n", cmd, cfg, m, not_n_minus_m, readl(data->dbg_rcg_addrs[i] + 0x10));
-		printf("%-32s | %-2s | %3d | input_freq * (%4d/%5d) * (1/%1d%-2s)   | [%#010x]\n",
+		printf("%-34s | %-2s | %3d | input_freq * (%4d/%5d) * (1/%1d%-2s)   | [%#010x]\n",
 			data->dbg_rcg_names[i], root_on ? "X" : "", src, m ?: 1, n ?: 1, div, d_odd ? ".5" : "", cmd);
 	}
 
