@@ -286,10 +286,16 @@ static void dump_rcgs(struct udevice *dev) {
 		root_on = !(cmd & BIT(31)); // ROOT_OFF
 		src = (cfg >> 8) & 7;
 
-		if (not_n_minus_m)
-			n = (~not_n_minus_m & 0xffff) + m;
-		else
-			n = 0;
+		if (not_n_minus_m) {
+			n = (~not_n_minus_m & 0xffff);
+
+			/* A clumsy assumption that this is an 8-bit MND RCG */
+			if ((n & 0xff00) == 0xff00) {
+				n = n & 0xff;
+			}
+
+			n += m;
+		}
 
 		div = ((cfg & 0b11111) + 1) / 2;
 		d_odd = ((cfg & 0b11111) + 1) % 2 == 1;
