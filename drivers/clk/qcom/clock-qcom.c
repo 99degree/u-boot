@@ -274,8 +274,8 @@ static void dump_rcgs(struct udevice *dev) {
 	 * outputs from a single GPLL where one is actually half the rate of the other (_EVEN).
 	 * intput_freq = associated GPLL output freq (potentially divided depending on SRC).
 	 */
-	printf("| NAME                           | ON | SRC | OUT_FREQ = input_freq * (m/n) * (1/d) | [CMD REG   ] |\n");
-	printf("+--------------------------------+----+-----+---------------------------------------+--------------+\n");
+	printf("| NAME                             | ON | SRC | OUT_FREQ = input_freq * (m/n) * (1/d) | [CMD REG   ] |\n");
+	printf("+----------------------------------+----+-----+---------------------------------------+--------------+\n");
 	for (i = 0; i < data->num_rcgs; i++) {
 		cmd = readl(data->dbg_rcg_addrs[i]);
 		cfg = readl(data->dbg_rcg_addrs[i] + 0x4);
