@@ -237,10 +237,13 @@ static void dump_gplls(struct udevice *dev, phys_addr_t base) {
 		}
 	}
 
-	if (clk)
-		/* Somewhere there's a divide by two, not sure if sdm845 specific */
-		xo_rate = clk_get_rate(clk) / 2;
-	else
+	if (clk) {
+		xo_rate = clk_get_rate(clk);
+
+		/* On SDM845 this needs to be divided by 2 for some reason */
+		if (xo_rate && of_machine_is_compatible("qcom,sdm845"))
+			xo_rate /= 2;
+	} else {
 		printf("Can't find XO clock, XO_BOARD rate may be wrong\n");
 
 	printf("| GPLL   | LOCKED | XO_BOARD  |  PLL_L     | ALPHA          |\n");
