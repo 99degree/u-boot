@@ -311,7 +311,6 @@ static void msm_dump_clks(struct udevice *dev)
 	struct msm_clk_data *data = (struct msm_clk_data *)dev_get_driver_data(dev);
 	struct msm_clk_priv *priv = dev_get_priv(dev);
 	const struct gate_clk *sclk;
-	const struct qcom_reset_map *rst;
 	int val, i;
 
 	if (!data->clks) {
