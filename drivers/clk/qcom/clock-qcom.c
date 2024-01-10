@@ -280,6 +280,7 @@ static void dump_rcgs(struct udevice *dev) {
 		cmd = readl(data->dbg_rcg_addrs[i]);
 		cfg = readl(data->dbg_rcg_addrs[i] + 0x4);
 		m = readl(data->dbg_rcg_addrs[i] + 0x8);
+		n = 0;
 		not_n_minus_m = readl(data->dbg_rcg_addrs[i] + 0xc);
 
 		root_on = !(cmd & BIT(31)); // ROOT_OFF
