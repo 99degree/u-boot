@@ -245,6 +245,7 @@ static void dump_gplls(struct udevice *dev, phys_addr_t base) {
 			xo_rate /= 2;
 	} else {
 		printf("Can't find XO clock, XO_BOARD rate may be wrong\n");
+	}
 
 	printf("| GPLL   | LOCKED | XO_BOARD  |  PLL_L     | ALPHA          |\n");
 	printf("+--------+--------+-----------+------------+----------------+\n");
