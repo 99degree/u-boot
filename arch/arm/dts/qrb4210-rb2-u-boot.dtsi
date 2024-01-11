@@ -1,7 +1,9 @@
 
 / {
 	/* When running as the primary bootloader there is no prior
-	 * stage to populate the memory layout for us
+	 * stage to populate the memory layout for us. We *should*
+	 * have two nodes here, but ABL does NOT like that.
+	 * sooo we're stuck with this.
 	 */
 	memory@40000000 {
 		device_type = "memory";
