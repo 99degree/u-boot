@@ -52,7 +52,7 @@ int dram_init_banksize(void)
 	start = gd->bd->bi_dram[1].start;
 	size = gd->bd->bi_dram[1].size;
 	if (size && start < gd->bd->bi_dram[0].start) {
-		printf("dram_init_banksize: Sorting DRAM banks\n");
+		debug("dram_init_banksize: Sorting DRAM banks\n");
 		gd->bd->bi_dram[1].start = gd->bd->bi_dram[0].start;
 		gd->bd->bi_dram[1].size = gd->bd->bi_dram[0].size;
 		gd->bd->bi_dram[0].start = start;
