@@ -5,11 +5,6 @@
 	 * have two nodes here, but ABL does NOT like that.
 	 * sooo we're stuck with this.
 	 */
-	memory@40000000 {
-		device_type = "memory";
-		reg = <0 0x40000000 0 0x3EB00000>;
-	};
-
 	memory@80000000 {
 		device_type = "memory";
 		reg = <0 0x80000000 0 0x40000000>;
