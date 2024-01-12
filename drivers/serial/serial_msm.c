@@ -204,7 +204,6 @@ static int msm_serial_probe(struct udevice *dev)
 	if (ret)
 		return ret;
 
-	pinctrl_select_state(dev, "uart");
 	uart_dm_init(priv);
 
 	return 0;
