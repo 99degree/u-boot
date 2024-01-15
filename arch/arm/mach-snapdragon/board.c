@@ -6,7 +6,7 @@
  * Author: Caleb Connolly <caleb.connolly@linaro.org>
  */
 
-#define LOG_DEBUG
+//#define LOG_DEBUG
 
 #include <asm/armv8/mmu.h>
 #include <asm/gpio.h>
@@ -22,6 +22,7 @@
 #include <linux/sizes.h>
 #include <lmb.h>
 #include <malloc.h>
+#include <sort.h>
 
 #include "qcom-priv.h"
 
@@ -255,9 +256,76 @@ int board_late_init(void)
 	return 0;
 }
 
+static int fdt_cmp_res(const void *v1, const void *v2)
+{
+	const struct fdt_resource *res1 = v1, *res2 = v2;
+
+	return res1->start - res2->start;
+}
+
+#define N_RESERVED_REGIONS 32
+
+/* Mark all no-map regions as PTE_TYPE_FAULT to prevent speculative access.
+ * On some platforms this is enough to trigger a security violation and trap
+ * to EL3.
+ */
+static void carve_out_reserved_memory(void)
+{
+	static struct fdt_resource res[N_RESERVED_REGIONS] = { 0 };
+	int parent, rmem, count, i = 0;
+	phys_addr_t start;
+	size_t size;
+
+	/* Some reserved nodes must be carved out, as the cache-prefetcher may otherwise
+	 * attempt to access them, causing a security exception.
+	 */
+	parent = fdt_path_offset(gd->fdt_blob, "/reserved-memory");
+	if (parent <= 0) {
+		debug("No reserved memory regions found\n");
+		return;
+	}
+	count = fdtdec_get_child_count(gd->fdt_blob, parent);
+	if (count > N_RESERVED_REGIONS) {
+		log_err("Too many reserved memory regions!\n");
+		count = N_RESERVED_REGIONS;
+	}
+
+	/* Collect the reserved memory regions */
+	fdt_for_each_subnode(rmem, gd->fdt_blob, parent) {
+		if (!fdt_getprop(gd->fdt_blob, rmem, "no-map", NULL))
+			continue;
+		/* Skip regions that don't have a fixed address/size */
+		if (fdt_get_resource(gd->fdt_blob, rmem, "reg", 0, &res[i++]))
+			i--;
+	}
+
+	/* Sort the reserved memory regions by address */
+	count = i;
+	qsort(res, count, sizeof(struct fdt_resource), fdt_cmp_res);
+
+	/* Now set the right attributes for them. Often a lot of the regions are tightly packed together
+	 * so we can optimise the number of calls to mmu_change_region_attr() by combining adjacent
+	 * regions.
+	 */
+	start = res[0].start;
+	size = ALIGN(res[0].end, SZ_4K) - res[0].start;
+	for (i = 1; i < count; i++) {
+		if (start + size < res[i].start) {
+			debug("  0x%016llx - 0x%016llx FAULT\n",
+			      start, start + size);
+			mmu_change_region_attr(start, size, PTE_TYPE_FAULT);
+			start = res[i].start;
+			size = ALIGN(res[i].end, SZ_4K) - res[i].start;
+		} else {
+			/* Bump size if this region is immediately after the previous one */
+			size = ALIGN(res[i].end, SZ_4K) - start;
+		}
+	}
+}
+
 static void build_mem_map(void)
 {
-	int i;
+	int i = 0, j;
 
 	/*
 	 * Ensure the peripheral block is sized to correctly cover the address range
@@ -273,33 +341,26 @@ static void build_mem_map(void)
 			 PTE_BLOCK_NON_SHARE |
 			 PTE_BLOCK_PXN | PTE_BLOCK_UXN;
 
-	debug("Configured memory map:\n");
-	debug("  0x%016llx - 0x%016llx: Peripheral block\n",
-	      mem_map[0].phys, mem_map[0].phys + mem_map[0].size);
-
-	/*
-	 * Now add memory map entries for each DRAM bank, ensuring we don't
-	 * overwrite the list terminator
-	 */
-	for (i = 0; i < ARRAY_SIZE(rbx_mem_map) - 2 && gd->bd->bi_dram[i].size; i++) {
-		if (i == ARRAY_SIZE(rbx_mem_map) - 1) {
-			log_warning("Too many DRAM banks!\n");
-			break;
-		}
-		mem_map[i + 1].phys = gd->bd->bi_dram[i].start;
-		mem_map[i + 1].virt = mem_map[i + 1].phys;
-		mem_map[i + 1].size = gd->bd->bi_dram[i].size;
-		mem_map[i + 1].attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
+	for (i = 1, j = 0; i < ARRAY_SIZE(rbx_mem_map) - 1 && gd->bd->bi_dram[j].size; i++, j++) {
+		mem_map[i].phys = gd->bd->bi_dram[j].start;
+		mem_map[i].virt = mem_map[i].phys;
+		mem_map[i].size = gd->bd->bi_dram[j].size;
+		mem_map[i].attrs = PTE_BLOCK_MEMTYPE(MT_NORMAL) |
 				     PTE_BLOCK_INNER_SHARE;
-
-		debug("  0x%016llx - 0x%016llx: DDR bank %d\n",
-		      mem_map[i + 1].phys, mem_map[i + 1].phys + mem_map[i + 1].size, i);
 	}
+
+	mem_map[i].phys = UINT64_MAX;
+	mem_map[i].size = 0;
+
+	debug("Configured memory map:\n");
+	for (i = 0; mem_map[i].size; i++)
+		debug("  0x%016llx - 0x%016llx: DDR bank %d\n",
+		      mem_map[i].phys, mem_map[i].phys + mem_map[i].size, i);
 }
 
 u64 get_page_table_size(void)
 {
-	return SZ_64K;
+	return SZ_256K;
 }
 
 void enable_caches(void)
@@ -308,4 +369,7 @@ void enable_caches(void)
 
 	icache_enable();
 	dcache_enable();
+
+	/* Doing this before enabling dcache is *REALLY SLOW* */
+	carve_out_reserved_memory();
 }
