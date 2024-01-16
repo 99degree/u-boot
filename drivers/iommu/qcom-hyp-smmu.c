@@ -381,7 +381,9 @@ static struct iommu_ops qcom_smmu_ops = {
 
 static const struct udevice_id qcom_smmu500_ids[] = {
 	{ .compatible = "qcom,sdm845-smmu-500" },
-	{ .compatible = "qcom,sm6115-smmu-500", },
+	{ .compatible = "qcom,sm6115-smmu-500" },
+	{ .compatible = "qcom,qcm2290-smmu-500" },
+	{ .compatible = "qcom,sm8250-smmu-500" },
 	{ /* sentinel */ }
 };
 
