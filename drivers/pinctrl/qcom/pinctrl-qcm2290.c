@@ -46,7 +46,7 @@ struct msm_pinctrl_data qcm2290_data = {
 };
 
 static const struct udevice_id msm_pinctrl_ids[] = {
-	{ .compatible = "com,qcm2290-tlmm", .data = (ulong)&qcm2290_data },
+	{ .compatible = "qcom,qcm2290-tlmm", .data = (ulong)&qcm2290_data },
 	{ /* Sentinal */ }
 };
 
