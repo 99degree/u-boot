@@ -371,5 +371,6 @@ void enable_caches(void)
 	dcache_enable();
 
 	/* Doing this before enabling dcache is *REALLY SLOW* */
-	carve_out_reserved_memory();
+	if (of_machine_is_compatible("qcom,qcs404"))
+		carve_out_reserved_memory();
 }
