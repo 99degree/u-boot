@@ -207,7 +207,7 @@ static ulong qcs404_clk_set_rate(struct clk *clk, ulong rate)
 				     CFG_CLK_SRC_GPLL0, 8);
 		clk_enable_gpll0(priv->base, &gpll0_vote_clk);
 		clk_enable_cbc(priv->base + SDCC_APPS_CBCR(1));
-		break;
+		return rate;
 	case GCC_SDCC1_AHB_CLK:
 		clk_enable_cbc(priv->base + SDCC_AHB_CBCR(1));
 		break;
@@ -224,11 +224,10 @@ static ulong qcs404_clk_set_rate(struct clk *clk, ulong rate)
 		else if (rate == 5000000)
 			clk_rcg_set_rate_mnd(priv->base, &emac_regs, 3, 1, 50,
 					     CFG_CLK_SRC_GPLL1, 8);
-		break;
-	default:
-		return 0;
+		return rate;
 	}
 
+	log_warning("Unknown clock id %ld\n", clk->id);
 	return 0;
 }
 
