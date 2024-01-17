@@ -258,7 +258,7 @@ static int rpmh_regulator_is_enabled(struct udevice *rdev)
 
 	debug("%s: is_enabled %d\n", rdev->name, vreg->enabled);
 
-	return vreg->enabled;
+	return vreg->enabled > 0;
 }
 
 static int rpmh_regulator_set_enable_state(struct udevice *rdev,
