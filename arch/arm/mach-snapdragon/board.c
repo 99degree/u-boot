@@ -17,6 +17,7 @@
 #include <dm/uclass-internal.h>
 #include <dm/read.h>
 #include <env.h>
+#include <fdt_support.h>
 #include <init.h>
 #include <linux/arm-smccc.h>
 #include <linux/bug.h>
@@ -83,24 +84,33 @@ static void show_psci_version(void)
 	      PSCI_VERSION_MINOR(res.a0));
 }
 
+/* We support booting U-Boot with an internal DT when running as a first-stage bootloader
+ * or for supporting quirky devices where it's easier to leave the downstream DT in place
+ * to improve ABL compatibility. Otherwise, we use the DT provided by ABL.
+ */
 void *board_fdt_blob_setup(int *err)
 {
-	phys_addr_t fdt;
-	/* Return DTB pointer passed by ABL */
+	struct fdt_header *fdt;
+	bool internal_valid;
+
 	*err = 0;
-	fdt = get_prev_bl_fdt_addr();
+	fdt = (struct fdt_header *)get_prev_bl_fdt_addr();
+	internal_valid = !fdt_check_header(gd->fdt_blob);
 
 	/*
-	 * If we bail then the board will simply not boot, instead let's
-	 * try and use the FDT built into U-Boot if there is one...
-	 * This avoids having a hard dependency on the previous stage bootloader
+	 * There is no point returning an error here, U-Boot can't do anything useful in this situation.
+	 * Bail out while we can still print a useful error message.
 	 */
-	if (IS_ENABLED(CONFIG_OF_SEPARATE) && (!fdt || fdt != ALIGN(fdt, SZ_4K))) {
-		debug("%s: Using built in FDT, bootloader gave us %#llx\n", __func__, fdt);
-		return (void *)gd->fdt_blob;
-	}
+	if (!internal_valid && (!fdt || !fdt_check_header(fdt)))
+		panic("Internal FDT is invalid and no external FDT was provided! (fdt=%#llx)\n", (phys_addr_t)fdt);
 
-	return (void *)fdt;
+	if (internal_valid) {
+		debug("Using built in FDT\n");
+		return (void *)gd->fdt_blob;
+	} else {
+		debug("Using external FDT\n");
+		return (void *)fdt;
+	}
 }
 
 /*
@@ -359,6 +369,7 @@ int board_late_init(void)
 {
 	struct lmb lmb;
 	u32 status = 0;
+	phys_addr_t fdt_addr;
 
 	lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
 
@@ -369,10 +380,14 @@ int board_late_init(void)
 	status |= env_set_hex("kernel_comp_size", KERNEL_COMP_SIZE);
 	status |= env_set_hex("scriptaddr", addr_alloc(&lmb, SZ_4M));
 	status |= env_set_hex("pxefile_addr_r", addr_alloc(&lmb, SZ_4M));
-	status |= env_set_hex("fdt_addr_r", addr_alloc(&lmb, SZ_2M));
+	fdt_addr = addr_alloc(&lmb, SZ_2M);
+	status |= env_set_hex("fdt_addr_r", fdt_addr);
 
 	if (status)
 		log_warning("%s: Failed to set run time variables\n", __func__);
+
+	/* By default copy U-Boots FDT, it will be used as a fallback */
+	memcpy((void *)fdt_addr, (void *)gd->fdt_blob, gd->fdt_size);
 
 	configure_env();
 	qcom_late_init();
