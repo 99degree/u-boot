@@ -239,8 +239,6 @@ static const struct qusb2_phy_cfg qusb2_v2_phy_cfg = {
  * @base: iomapped memory space for qubs2 phy
  *
  * @cfg_ahb_clk: AHB2PHY interface clock
- * @ref_clk: phy reference clock
- * @iface_clk: phy interface clock
  * @phy_rst: phy reset control
  *
  * @cfg: phy config data
@@ -250,10 +248,7 @@ struct qusb2_phy {
 	struct phy *phy;
 	void __iomem *base;
 
-	struct clk *cfg_ahb_clk;
-	struct clk *ref_clk;
-	struct clk *iface_clk;
-	struct clk_bulk clks;
+	struct clk cfg_ahb_clk;
 	struct reset_ctl phy_rst;
 
 	const struct qusb2_phy_cfg *cfg;
@@ -391,8 +386,7 @@ static int qusb2phy_power_off(struct phy *phy)
 
 	reset_assert(&qphy->phy_rst);
 
-	clk_disable_bulk(&qphy->clks);
-	clk_release_bulk(&qphy->clks);
+	clk_disable(&qphy->cfg_ahb_clk);
 
 	return 0;
 }
@@ -401,15 +395,17 @@ static int qusb2phy_clk_init(struct udevice *dev, struct qusb2_phy *qphy)
 {
 	int ret;
 
-	ret = clk_get_bulk(dev, &qphy->clks);
+	/* We ignore the ref clock as we currently lack a driver for rpmcc/rpmhcc where
+	 * it usually comes from - we assume it's always on.
+	 */
+	ret = clk_get_by_name(dev, "cfg_ahb", &qphy->cfg_ahb_clk);
 	if (ret == -ENOSYS || ret == -ENOENT)
 		return 0;
 	if (ret)
 		return ret;
 
-	ret = clk_enable_bulk(&qphy->clks);
+	ret = clk_enable(&qphy->cfg_ahb_clk);
 	if (ret) {
-		clk_release_bulk(&qphy->clks);
 		return ret;
 	}
 
