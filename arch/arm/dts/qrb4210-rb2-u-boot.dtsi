@@ -37,9 +37,3 @@
 	phys = <&usb_hsphy>;
 	phy-names = "usb2-phy";
 };
-
-&usb_hsphy {
-	/* Disable ref clk because rpmcc isn't supported */
-	clocks = <&gcc GCC_AHB2PHY_USB_CLK>;
-	clock-names = "cfg_ahb";
-};
