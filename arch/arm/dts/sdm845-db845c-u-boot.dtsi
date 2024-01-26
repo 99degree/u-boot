@@ -63,12 +63,6 @@
 	maximum-speed = "high-speed";
 };
 
-&usb_1_hsphy {
-	/* Remove ref clk because rmphcc isn't available */
-	clocks = <&gcc GCC_USB_PHY_CFG_AHB2PHY_CLK>;
-	clock-names = "cfg_ahb";
-};
-
 &usb_2 {
 	qcom,select-utmi-as-pipe-clk;
 };
@@ -86,10 +80,3 @@
 	/* Upstream DT just makes this regulator always-on */
 	vbus-supply = <&pcie0_3p3v_dual>;
 };
-
-&usb_2_hsphy {
-	/* Remove ref clk because rmphcc isn't available */
-	clocks = <&gcc GCC_USB_PHY_CFG_AHB2PHY_CLK>;
-	clock-names = "cfg_ahb";
-};
-
