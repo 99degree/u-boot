@@ -72,6 +72,23 @@ static int msm_gpio_direction_output(struct udevice *dev, unsigned int gpio,
 	return 0;
 }
 
+static int msm_gpio_set_flags(struct udevice *dev, unsigned int gpio, ulong flags)
+{
+	if (flags & GPIOD_IS_OUT_ACTIVE)
+		return msm_gpio_direction_output(dev, gpio, 1);
+	else if (flags & GPIOD_IS_OUT)
+		return msm_gpio_direction_output(dev, gpio, 0);
+	else if (flags & GPIOD_IS_IN) {
+		return msm_gpio_direction_input(dev, gpio);
+		if (flags & GPIOD_PULL_UP)
+			return msm_gpio_set_value(dev, gpio, 1);
+		else if (flags & GPIOD_PULL_DOWN)
+			return msm_gpio_set_value(dev, gpio, 0);
+	}
+
+	return 0;
+}
+
 static int msm_gpio_get_value(struct udevice *dev, unsigned int gpio)
 {
 	struct msm_gpio_bank *priv = dev_get_priv(dev);
@@ -90,10 +107,8 @@ static int msm_gpio_get_function(struct udevice *dev, unsigned int gpio)
 }
 
 static const struct dm_gpio_ops gpio_msm_ops = {
-	.direction_input	= msm_gpio_direction_input,
-	.direction_output	= msm_gpio_direction_output,
+	.set_flags		= msm_gpio_set_flags,
 	.get_value		= msm_gpio_get_value,
-	.set_value		= msm_gpio_set_value,
 	.get_function		= msm_gpio_get_function,
 };
 
