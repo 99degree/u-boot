@@ -449,7 +449,7 @@ static int qcom_pmic_pinctrl_bind(struct udevice *dev)
 	return 0;
 }
 
-static int qcom_pmic_pinctrl_remove(struct udevice *dev)
+static int qcom_pmic_pinctrl_unbind(struct udevice *dev)
 {
 	struct qcom_gpio_bank *priv = dev_get_priv(dev);
 
@@ -473,5 +473,5 @@ U_BOOT_DRIVER(qcom_pmic_pinctrl) = {
 	.of_match = qcom_gpio_ids,
 	.ops	= &qcom_pmic_pinctrl_ops,
 	.bind	= qcom_pmic_pinctrl_bind,
-	.remove = qcom_pmic_pinctrl_remove,
+	.unbind = qcom_pmic_pinctrl_unbind,
 };
