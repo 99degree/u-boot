@@ -289,6 +289,7 @@ int board_late_init(void)
 	struct lmb lmb;
 	u32 status = 0;
 	phys_addr_t fdt_addr;
+	unsigned int el;
 
 	lmb_init_and_reserve(&lmb, gd->bd, (void *)gd->fdt_blob);
 
@@ -315,6 +316,9 @@ int board_late_init(void)
 
 	/* Configure the dfu_string for capsule updates */
 	qcom_configure_capsule_updates();
+
+	el = current_el();
+	printf("### Running in EL%d\n", el);
 
 	return 0;
 }
