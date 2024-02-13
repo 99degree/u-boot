@@ -6,8 +6,6 @@
  * Author: Caleb Connolly <caleb.connolly@linaro.org>
  */
 
-//#define LOG_DEBUG
-
 #include "time.h"
 #include <asm/armv8/mmu.h>
 #include <asm/gpio.h>
@@ -365,21 +363,32 @@ static void carve_out_reserved_memory(void)
 		log_err("No reserved memory regions found\n");
 		return;
 	}
-	count = fdtdec_get_child_count(gd->fdt_blob, parent);
-	if (count > N_RESERVED_REGIONS) {
-		log_err("Too many reserved memory regions!\n");
-		count = N_RESERVED_REGIONS;
-	}
 
 	/* Collect the reserved memory regions */
 	fdt_for_each_subnode(rmem, gd->fdt_blob, parent) {
+		const fdt32_t *ptr;
+		int len;
 		if (!fdt_getprop(gd->fdt_blob, rmem, "no-map", NULL))
 			continue;
-		if (fdt_getprop(gd->fdt_blob, rmem, "compatible", NULL))
-			continue;
-		/* Skip regions that don't have a fixed address/size */
-		if (fdt_get_resource(gd->fdt_blob, rmem, "reg", 0, &res[i++]))
-			i--;
+
+		if (i == N_RESERVED_REGIONS) {
+			log_err("Too many reserved regions!\n");
+			break;
+		}
+
+		/* Read the address and size out from the reg property. Doing this "properly" with
+		 * fdt_get_resource() takes ~70ms on SDM845, but open-coding the happy path here
+		 * takes <1ms... Oh the woes of no dcache.
+		 */
+		ptr = fdt_getprop(gd->fdt_blob, rmem, "reg", &len);
+		if (ptr) {
+			/* Qualcomm devices use #address/size-cells = <2> but all reserved regions are within
+			 * the 32-bit address space. So we can cheat here for speed.
+			 */
+			res[i].start = fdt32_to_cpu(ptr[1]);
+			res[i].end = res[i].start + fdt32_to_cpu(ptr[3]);
+			i++;
+		}
 	}
 
 	/* Sort the reserved memory regions by address */
@@ -391,23 +400,28 @@ static void carve_out_reserved_memory(void)
 	 * regions.
 	 */
 	start = ALIGN_DOWN(res[0].start, SZ_2M);
-	size = ALIGN(res[0].end, SZ_4K) - start;
-	for (i = 1; i < count; i++) {
+	size = ALIGN(res[0].end - start, SZ_2M);
+	for (i = 1; i <= count; i++) {
 		/* We ideally want to 2M align everything for more efficient pagetables, but we must avoid
 		 * overwriting reserved memory regions which shouldn't be mapped as FAULT (like those with
 		 * compatible properties).
 		 * If within 2M of the previous region, bump the size to include this region. Otherwise
 		 * start a new region.
 		 */
-		if (start + size < res[i].start - SZ_2M) {
-			debug("  0x%016llx - 0x%016llx FAULT\n",
+		if (i == count || start + size < res[i].start - SZ_2M) {
+			debug("  0x%016llx - 0x%016llx: reserved\n",
 			      start, start + size);
 			mmu_change_region_attr(start, size, PTE_TYPE_FAULT);
+			/* If this is the final region then quit here before we index
+			 * out of bounds...
+			 */
+			if (i == count)
+				break;
 			start = ALIGN_DOWN(res[i].start, SZ_2M);
-			size = ALIGN(res[i].end, SZ_4K) - start;
+			size = ALIGN(res[i].end - start, SZ_2M);
 		} else {
 			/* Bump size if this region is immediately after the previous one */
-			size = ALIGN(res[i].end, SZ_4K) - start;
+			size = ALIGN(res[i].end - start, SZ_2M);
 		}
 	}
 }
@@ -439,16 +453,10 @@ void enable_caches(void)
 	gd->arch.tlb_addr = tlb_addr;
 	gd->arch.tlb_size = tlb_size;
 
-	/* Doing this has a noticeable impact on boot time, so until we can
-	 * find a more efficient solution, just enable the workaround for
-	 * the one board where it's necessary. Without this there seems to
-	 * be a speculative access to a region which is protected by the TZ.
-	 */
-	if (of_machine_is_compatible("qcom,qcs404")) {
-		carveout_start = get_timer(0);
-		carve_out_reserved_memory();
-		debug("carveout time: %lums\n", get_timer(carveout_start));
-	}
+	carveout_start = get_timer(0);
+	/* Takes about ~23ms on SDM845 */
+	carve_out_reserved_memory();
+	debug("carveout time: %lums\n", get_timer(carveout_start));
 
 	dcache_enable();
 }
