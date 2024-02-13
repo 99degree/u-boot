@@ -93,9 +93,12 @@ void *board_fdt_blob_setup(int *err)
 	/*
 	 * If we bail then the board will simply not boot, instead let's
 	 * try and use the FDT built into U-Boot if there is one...
-	 * This avoids having a hard dependency on the previous stage bootloader
+	 * This avoids having a hard dependency on the previous stage bootloader.
+	 *
+	 * If building an ELF file, then we're probably running as some first-stage bootloader
+	 * so we should always prefer the built-in FDT.
 	 */
-	if (IS_ENABLED(CONFIG_OF_SEPARATE) && (!fdt || fdt != ALIGN(fdt, SZ_4K))) {
+	if (IS_ENABLED(CONFIG_REMAKE_ELF) || (IS_ENABLED(CONFIG_OF_SEPARATE) && (!fdt || fdt != ALIGN(fdt, SZ_4K)))) {
 		debug("%s: Using built in FDT, bootloader gave us %#llx\n", __func__, fdt);
 		return (void *)gd->fdt_blob;
 	}
