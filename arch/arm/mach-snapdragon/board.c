@@ -2,7 +2,7 @@
 /*
  * Common initialisation for Qualcomm Snapdragon boards.
  *
- * Copyright (c) 2023 Linaro Ltd.
+ * Copyright (c) 2024 Linaro Ltd.
  * Author: Caleb Connolly <caleb.connolly@linaro.org>
  */
 
