@@ -54,6 +54,14 @@ static const struct bcr_regs uart2_regs = {
 	.D = SE9_UART_APPS_D,
 };
 
+static const struct bcr_regs uart3_regs = {
+	.cmd_rcgr = 0x173c4,
+	.cfg_rcgr = 0x173c4 + 0x4,
+	.M = 0x173c4 + 0x8,
+	.N = 0x173c4 + 0xC,
+	.D = 0x173c4 + 0x10,
+};
+
 static ulong sdm845_clk_set_rate(struct clk *clk, ulong rate)
 {
 	struct msm_clk_priv *priv = dev_get_priv(clk->dev);
@@ -63,6 +71,11 @@ static ulong sdm845_clk_set_rate(struct clk *clk, ulong rate)
 	case GCC_QUPV3_WRAP1_S1_CLK: /* UART9 */
 		freq = qcom_find_freq(ftbl_gcc_qupv3_wrap0_s0_clk_src, rate);
 		clk_rcg_set_rate_mnd(priv->base, &uart2_regs,
+				     freq->pre_div, freq->m, freq->n, freq->src, 16);
+		return freq->freq;
+	case GCC_QUPV3_WRAP0_S3_CLK: /* UART3 */
+		freq = qcom_find_freq(ftbl_gcc_qupv3_wrap0_s0_clk_src, rate);
+		clk_rcg_set_rate_mnd(priv->base, &uart3_regs,
 				     freq->pre_div, freq->m, freq->n, freq->src, 16);
 		return freq->freq;
 	default:

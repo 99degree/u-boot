@@ -371,6 +371,11 @@ void serial_putc(char ch)
 		_serial_putc(gd->cur_serial_dev, ch);
 }
 
+void serial_dev_putc(struct udevice *dev, char ch)
+{
+	_serial_putc(dev, ch);
+}
+
 void serial_puts(const char *str)
 {
 	if (gd->cur_serial_dev)
@@ -395,6 +400,11 @@ int serial_getc(void)
 	return _serial_getc(gd->cur_serial_dev);
 }
 
+int serial_dev_getc(struct udevice *dev)
+{
+	return _serial_getc(dev);
+}
+
 int serial_tstc(void)
 {
 	if (!gd->cur_serial_dev)
@@ -413,6 +423,15 @@ void serial_setbrg(void)
 	ops = serial_get_ops(gd->cur_serial_dev);
 	if (ops->setbrg)
 		ops->setbrg(gd->cur_serial_dev, gd->baudrate);
+}
+
+void serial_dev_setbrg(struct udevice *dev, unsigned int baudrate)
+{
+	struct dm_serial_ops *ops;
+
+	ops = serial_get_ops(dev);
+	if (ops->setbrg)
+		ops->setbrg(dev, baudrate);
 }
 
 int serial_getconfig(struct udevice *dev, uint *config)

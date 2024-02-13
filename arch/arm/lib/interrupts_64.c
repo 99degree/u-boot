@@ -12,6 +12,7 @@
 #include <linux/compiler.h>
 #include <efi_loader.h>
 #include <semihosting.h>
+#include <kgdb.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -147,6 +148,10 @@ static bool smh_emulate_trap(struct pt_regs *regs)
 void do_bad_sync(struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
+#if defined(CONFIG_CMD_KGDB)
+	if (debugger_exception_handler && (*debugger_exception_handler)(pt_regs))
+		return;
+#endif
 	printf("Bad mode in \"Synchronous Abort\" handler, esr 0x%08lx\n",
 	       pt_regs->esr);
 	show_regs(pt_regs);
@@ -160,6 +165,10 @@ void do_bad_sync(struct pt_regs *pt_regs)
 void do_bad_irq(struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
+#if defined(CONFIG_CMD_KGDB)
+	if (debugger_exception_handler && (*debugger_exception_handler)(pt_regs))
+		return;
+#endif
 	printf("Bad mode in \"Irq\" handler, esr 0x%08lx\n", pt_regs->esr);
 	show_regs(pt_regs);
 	show_efi_loaded_images(pt_regs);
@@ -172,6 +181,10 @@ void do_bad_irq(struct pt_regs *pt_regs)
 void do_bad_fiq(struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
+#if defined(CONFIG_CMD_KGDB)
+	if (debugger_exception_handler && (*debugger_exception_handler)(pt_regs))
+		return;
+#endif
 	printf("Bad mode in \"Fiq\" handler, esr 0x%08lx\n", pt_regs->esr);
 	show_regs(pt_regs);
 	show_efi_loaded_images(pt_regs);
@@ -184,6 +197,10 @@ void do_bad_fiq(struct pt_regs *pt_regs)
 void do_bad_error(struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
+#if defined(CONFIG_CMD_KGDB)
+	if (debugger_exception_handler && (*debugger_exception_handler)(pt_regs))
+		return;
+#endif
 	printf("Bad mode in \"Error\" handler, esr 0x%08lx\n", pt_regs->esr);
 	show_regs(pt_regs);
 	show_efi_loaded_images(pt_regs);
@@ -199,6 +216,10 @@ void do_sync(struct pt_regs *pt_regs)
 	    smh_emulate_trap(pt_regs))
 		return;
 	efi_restore_gd();
+#if defined(CONFIG_CMD_KGDB)
+	if (debugger_exception_handler && (*debugger_exception_handler)(pt_regs))
+		return;
+#endif
 	printf("\"Synchronous Abort\" handler, esr 0x%08lx", pt_regs->esr);
 	dump_far(pt_regs->esr);
 	printf("\n");
@@ -213,6 +234,10 @@ void do_sync(struct pt_regs *pt_regs)
 void do_irq(struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
+#if defined(CONFIG_CMD_KGDB)
+	if (debugger_exception_handler && (*debugger_exception_handler)(pt_regs))
+		return;
+#endif
 	printf("\"Irq\" handler, esr 0x%08lx\n", pt_regs->esr);
 	show_regs(pt_regs);
 	show_efi_loaded_images(pt_regs);
@@ -225,6 +250,10 @@ void do_irq(struct pt_regs *pt_regs)
 void do_fiq(struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
+#if defined(CONFIG_CMD_KGDB)
+	if (debugger_exception_handler && (*debugger_exception_handler)(pt_regs))
+		return;
+#endif
 	printf("\"Fiq\" handler, esr 0x%08lx\n", pt_regs->esr);
 	show_regs(pt_regs);
 	show_efi_loaded_images(pt_regs);
@@ -240,6 +269,10 @@ void do_fiq(struct pt_regs *pt_regs)
 void __weak do_error(struct pt_regs *pt_regs)
 {
 	efi_restore_gd();
+#if defined(CONFIG_CMD_KGDB)
+	if (debugger_exception_handler && (*debugger_exception_handler)(pt_regs))
+		return;
+#endif
 	printf("\"Error\" handler, esr 0x%08lx\n", pt_regs->esr);
 	show_regs(pt_regs);
 	show_efi_loaded_images(pt_regs);

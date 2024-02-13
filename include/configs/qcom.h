@@ -16,6 +16,6 @@
 	"stdin=serial,button-kbd\0"	\
 	"stdout=serial,vidconsole\0"	\
 	"stderr=serial,vidconsole\0" \
-	"bootcmd=bootm $prevbl_initrd_start_addr\0"
+	"bootcmd=echo beep || bootm $prevbl_initrd_start_addr\0"
 
 #endif

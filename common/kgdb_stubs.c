@@ -7,6 +7,8 @@
  * Licensed under the GPL-2 or later.
  */
 
+//#define LOG_DEBUG
+
 #include <common.h>
 #include <cpu_func.h>
 #include <kgdb.h>

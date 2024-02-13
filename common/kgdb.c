@@ -93,15 +93,15 @@
 #include <kgdb.h>
 #include <command.h>
 
-#undef KGDB_DEBUG
+#define KGDB_DEBUG
 
 /*
  * BUFMAX defines the maximum number of characters in inbound/outbound buffers
  */
 #define BUFMAX 1024
-static char remcomInBuffer[BUFMAX];
-static char remcomOutBuffer[BUFMAX];
-static char remcomRegBuffer[BUFMAX];
+static char remcomInBuffer[BUFMAX] = { 0 };
+static char remcomOutBuffer[BUFMAX] = { 0 };
+static char remcomRegBuffer[BUFMAX] = { 0 };
 
 static int initialized = 0;
 static int kgdb_active;
@@ -319,7 +319,7 @@ handle_exception (struct pt_regs *regs)
 	int addr;
 	int length;
 	char *ptr;
-	kgdb_data kd;
+	kgdb_data kd = { 0 };
 	int i;
 
 	if (!initialized) {
@@ -372,7 +372,7 @@ handle_exception (struct pt_regs *regs)
 
 #ifdef KGDB_DEBUG
 	if (kdebug)
-		printf("kgdb: remcomOutBuffer: %s\n", remcomOutBuffer);
+		printf("kgdb: remcomOutBuffer: '%s'\n", remcomOutBuffer);
 #endif
 
 	putpacket((unsigned char *)&remcomOutBuffer);
