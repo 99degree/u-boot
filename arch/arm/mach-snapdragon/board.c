@@ -6,6 +6,8 @@
  * Author: Caleb Connolly <caleb.connolly@linaro.org>
  */
 
+#define LOG_DEBUG
+
 #include "time.h"
 #include <asm/armv8/mmu.h>
 #include <asm/gpio.h>
