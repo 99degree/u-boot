@@ -227,6 +227,10 @@ static int hs_7nm_phy_clk_init(struct udevice *dev,
 		debug("%s: no clocks\n", __func__);
 		return 0;
 	}
+	if (ret == -ENODEV) {
+		debug("%s: unsupported clock device, hopefully not important...\n", __func__);
+		return 0;
+	}
 	if (ret < 0) {
 		printf("%s: Failed to get clocks %d\n", __func__, ret);
 		return ret;
