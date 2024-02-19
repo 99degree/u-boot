@@ -17,6 +17,7 @@
 #include <dm/uclass-internal.h>
 #include <dm/read.h>
 #include <env.h>
+#include <fdt_support.h>
 #include <init.h>
 #include <linux/arm-smccc.h>
 #include <linux/bug.h>
@@ -85,25 +86,24 @@ static void show_psci_version(void)
 
 void *board_fdt_blob_setup(int *err)
 {
-	phys_addr_t fdt;
-	/* Return DTB pointer passed by ABL */
+	struct fdt_header *fdt;
+	bool internal_valid, external_valid;
+
 	*err = 0;
-	fdt = get_prev_bl_fdt_addr();
+	fdt = (struct fdt_header *)get_prev_bl_fdt_addr();
+	/* We prioritise the internal FDT over one provided by ABL */
+	internal_valid = !fdt_check_header(gd->fdt_blob);
+	external_valid = fdt && !fdt_check_header(fdt);
+	if (!internal_valid && !external_valid)
+		panic("Internal FDT is invalid and no external FDT was provided! (fdt=%#llx)\n", (phys_addr_t)fdt);
 
-	/*
-	 * If we bail then the board will simply not boot, instead let's
-	 * try and use the FDT built into U-Boot if there is one...
-	 * This avoids having a hard dependency on the previous stage bootloader.
-	 *
-	 * If building an ELF file, then we're probably running as some first-stage bootloader
-	 * so we should always prefer the built-in FDT.
-	 */
-	if (IS_ENABLED(CONFIG_REMAKE_ELF) || (IS_ENABLED(CONFIG_OF_SEPARATE) && (!fdt || fdt != ALIGN(fdt, SZ_4K)))) {
-		debug("%s: Using built in FDT, bootloader gave us %#llx\n", __func__, fdt);
+	if (internal_valid) {
+		printf("Using built in FDT\n");
 		return (void *)gd->fdt_blob;
+	} else {
+		printf("Using external FDT\n");
+		return (void *)fdt;
 	}
-
-	return (void *)fdt;
 }
 
 /*
