@@ -24,6 +24,11 @@
 #define APCS_GPLL9_STATUS 0x1c000
 #define APCS_GPLLX_ENA_REG 0x52018
 
+#define USB30_PRIM_MASTER_CLK_CMD_RCGR 0xf020
+#define USB30_PRIM_MOCK_UTMI_CLK_CMD_RCGR 0xf038
+#define USB3_PRIM_PHY_AUX_CMD_RCGR 0xf064
+
+#define USB30_PRIM_GDSCR 0xf004
 #define USB30_SEC_GDSCR 0x10004
 
 static const struct freq_tbl ftbl_gcc_qupv3_wrap1_s4_clk_src[] = {
@@ -180,6 +185,18 @@ static int sm8250_enable(struct clk *clk)
 	debug("%s: clk %s\n", __func__, sm8250_clks[clk->id].name);
 
 	switch (clk->id) {
+	case GCC_USB30_PRIM_MASTER_CLK:
+		gdsc_enable(priv->base + USB30_PRIM_GDSCR);
+		// clk_rcg_set_rate_mnd(priv->base, USB30_PRIM_MASTER_CLK_CMD_RCGR,
+		// 		     (2 * 2) - 1, 0, 0, CFG_CLK_SRC_GPLL0, 8);
+		// clk_rcg_set_rate_mnd(priv->base, USB30_PRIM_MOCK_UTMI_CLK_CMD_RCGR,
+		// 		     1, 0, 0, CFG_CLK_SRC_CXO, 0);
+		// clk_rcg_set_rate_mnd(priv->base, USB3_PRIM_PHY_AUX_CMD_RCGR,
+		// 		     1, 0, 0, CFG_CLK_SRC_CXO, 8);
+		qcom_gate_clk_en(priv, GCC_USB3_PRIM_PHY_AUX_CLK);
+		qcom_gate_clk_en(priv, GCC_USB3_PRIM_PHY_COM_AUX_CLK);
+		//qcom_gate_clk_en(priv, GCC_USB3_PRIM_PHY_PIPE_CLK);
+		break;
 	case GCC_USB30_SEC_MASTER_CLK:
 		gdsc_enable(priv->base + USB30_SEC_GDSCR);
 		qcom_gate_clk_en(priv, GCC_USB3_SEC_PHY_AUX_CLK);
