@@ -19,7 +19,7 @@
 		 <&gcc GCC_SDCC1_ICE_CORE_CLK>;
 	clock-names = "iface", "core", "ice";
 
-	clock-frequency = <200000000>;
+	clock-frequency = <384000000>;
 };
 
 &sdhc_2 {
@@ -27,13 +27,6 @@
 };
 
 &usb {
-	qcom,select-utmi-as-pipe-clk;
+	dr_mode = "host";
 };
 
-&usb_dwc3 {
-	maximum-speed = "high-speed";
-
-	/* We don't support superspeed in u-boot so remove the SSPHY */
-	phys = <&usb_hsphy>;
-	phy-names = "usb2-phy";
-};
