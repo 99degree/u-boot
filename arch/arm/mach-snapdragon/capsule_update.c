@@ -111,10 +111,11 @@ void qcom_configure_capsule_updates(void)
 {
 	struct blk_desc *desc;
 	struct disk_partition info;
-	int ret, partnum = -1, devnum;
-	char *dfu_string;
+	int ret, partnum = -1, devnum, uclass, failcount;
+	static char dfu_string[32] = { 0 };
 	const char *cmdline;
 	char partname[7] = "boot";
+	enum uclass_id storage_uclasses[] = { UCLASS_SCSI, UCLASS_MMC };
 
 #ifdef CONFIG_DM_SCSI
 	/* Scan for SCSI devices */
@@ -124,8 +125,7 @@ void qcom_configure_capsule_updates(void)
 		return;
 	}
 #else
-	debug("Qualcomm UEFI CapsuleUpdates requires SCSI support\n");
-	return;
+	debug("Qualcomm capsule update running without SCSI support!\n");
 #endif
 
 	cmdline = get_cmdline();
@@ -139,27 +139,44 @@ void qcom_configure_capsule_updates(void)
 	if (ret < 0)
 		debug("Failed to get slot suffix from bootargs (board might be A-only?)\n");
 
-	for(devnum = 0;; devnum++) {
-		ret = blk_get_desc(UCLASS_SCSI, devnum, &desc);
-		if (ret == -ENODEV)
-			break;
-		else if (ret)
-			continue;
-		if (desc->part_type != PART_TYPE_UNKNOWN) {
-			partnum = find_boot_partition(partname, desc, &info);
-			if (partnum >= 0)
-				break;
+	for (devnum = 0;; devnum++) {
+		failcount = 0;
+		for (uclass = 0; uclass < ARRAY_SIZE(storage_uclasses); uclass++) {
+			ret = blk_get_desc(storage_uclasses[uclass], devnum, &desc);
+			if (ret == -ENODEV) {
+				failcount++;
+				if (failcount == ARRAY_SIZE(storage_uclasses))
+					/* break 2 my beloved */
+					goto out;
+			}
+			else if (ret)
+				continue;
+			if (desc->part_type != PART_TYPE_UNKNOWN) {
+				partnum = find_boot_partition(partname, desc,
+							      &info);
+				if (partnum >= 0)
+					break;
+			}
 		}
 	}
-	if (partnum < 0) {
+out:
+	if (partnum < 0 || !desc) {
 		debug("Failed to find boot partition\n");
 		return;
 	}
 
-	dfu_string = malloc(32);
-
-	snprintf(dfu_string, 32, "scsi %d=u-boot-bin part %d", devnum, partnum);
-	printf("DFU string: %s\n", dfu_string);
+	switch(desc->uclass_id) {
+	case UCLASS_SCSI:
+		snprintf(dfu_string, 32, "scsi %d=u-boot-bin part %d", devnum, partnum);
+		break;
+	case UCLASS_MMC:
+		snprintf(dfu_string, 32, "mmc part %d:%d=u-boot-bin", devnum, partnum);
+		break;
+	default:
+		debug("Unsupported storage uclass: %d\n", desc->uclass_id);
+		return;
+	}
+	debug("DFU string: %s\n", dfu_string);
 
 	update_info.dfu_string = dfu_string;
 }
