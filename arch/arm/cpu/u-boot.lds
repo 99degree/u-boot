@@ -37,7 +37,7 @@ SECTIONS
 	. = ALIGN(4);
 	.text :
 	{
-		*(.__image_copy_start)
+		__image_copy_start = .;
 		*(.vectors)
 		CPUDIR/start.o (.text*)
 	}
@@ -151,13 +151,7 @@ SECTIONS
 		*(.rel*.efi_runtime)
 		*(.rel*.efi_runtime.*)
 		__efi_runtime_rel_stop = .;
-	}
-
-	. = ALIGN(4);
-
-	.image_copy_end :
-	{
-		*(.__image_copy_end)
+		__image_copy_end = .;
 	}
 
 	.rel.dyn ALIGN(4) : {

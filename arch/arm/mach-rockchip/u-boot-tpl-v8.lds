@@ -24,7 +24,7 @@ SECTIONS
 
 	.text : {
 		. = ALIGN(8);
-		*(.__image_copy_start)
+		__image_copy_start = .;
 		CPUDIR/start.o (.text*)
 		*(.text*)
 	}
@@ -42,11 +42,7 @@ SECTIONS
 	__u_boot_list : {
 		. = ALIGN(8);
 		KEEP(*(SORT(__u_boot_list*)));
-	}
-
-	.image_copy_end : {
-		. = ALIGN(8);
-		*(.__image_copy_end)
+		__image_copy_end = .;
 	}
 
 	.end : {
