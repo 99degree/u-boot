@@ -1,5 +1,15 @@
 // SPDX-License-Identifier: GPL-2.0
 
+/ {
+	/* When running as a first-stage bootloader or with embedded
+	 * DT we can't rely on this being populated for us.
+	 */
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0 0x80000000 0 0xfdfa0000>;
+	};
+};
+
 /* Needed for Linux to boot from USB, otherwise if PCIe driver is not in initramfs
  * the VBUS supply will never get turned on.
  * https://lore.kernel.org/linux-arm-msm/20240320122515.3243711-1-caleb.connolly@linaro.org/
