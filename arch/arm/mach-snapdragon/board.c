@@ -91,8 +91,13 @@ static void show_psci_version(void)
  */
 void *board_fdt_blob_setup(int *err)
 {
+	struct pte_smem_detect_state smem_state = { 0 };
 	struct fdt_header *fdt;
 	bool internal_valid;
+
+	qcom_smem_detect(&smem_state);
+
+	printf("SMEM: 0x%llx - 0x%llx\n", smem_state.start, smem_state.start + smem_state.size);
 
 	*err = 0;
 	fdt = (struct fdt_header *)get_prev_bl_fdt_addr();
