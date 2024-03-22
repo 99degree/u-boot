@@ -85,40 +85,6 @@ static void show_psci_version(void)
 	      PSCI_VERSION_MINOR(res.a0));
 }
 
-/* We support booting U-Boot with an internal DT when running as a first-stage bootloader
- * or for supporting quirky devices where it's easier to leave the downstream DT in place
- * to improve ABL compatibility. Otherwise, we use the DT provided by ABL.
- */
-void *board_fdt_blob_setup(int *err)
-{
-	struct pte_smem_detect_state smem_state = { 0 };
-	struct fdt_header *fdt;
-	bool internal_valid;
-
-	qcom_smem_detect(&smem_state);
-
-	printf("SMEM: 0x%llx - 0x%llx\n", smem_state.start, smem_state.start + smem_state.size);
-
-	*err = 0;
-	fdt = (struct fdt_header *)get_prev_bl_fdt_addr();
-	internal_valid = !fdt_check_header(gd->fdt_blob);
-
-	/*
-	 * There is no point returning an error here, U-Boot can't do anything useful in this situation.
-	 * Bail out while we can still print a useful error message.
-	 */
-	if (!internal_valid && (!fdt || fdt_check_header(fdt) != 0))
-		panic("Internal FDT is invalid and no external FDT was provided! (fdt=%#llx)\n", (phys_addr_t)fdt);
-
-	if (internal_valid) {
-		debug("Using built in FDT\n");
-		return (void *)gd->fdt_blob;
-	} else {
-		debug("Using external FDT\n");
-		return (void *)fdt;
-	}
-}
-
 /*
  * Some Qualcomm boards require GPIO configuration when switching USB modes.
  * Support setting this configuration via pinctrl state.
