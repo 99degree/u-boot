@@ -1126,6 +1126,34 @@ struct efi_capsule_update_info {
 
 extern struct efi_capsule_update_info update_info;
 
+#if CONFIG_IS_ENABLED(EFI_CAPSULE_DYNAMIC_UUIDS)
+/**
+* efi_capsule_update_info_gen_ids - Generate image_type_id UUIDs
+* for all firmware images based on a platform namespace UUID.
+*
+* @namespace: The arch/platform specific namespace salt. This should be
+* hardcoded per platform and replaced by vendors.
+* @soc: A string identifying the SoC used on this board.
+* @model: The model string for the board.
+* @compatible: The most specific (first) root compatible string.
+*
+* This can be called by board code to populate the image_type_id
+* UUID fields deterministically based on the board's model. Allowing
+* many boards to be supported without the need for a large hardcoded
+* array of fw images. This works using v5 UUIDs.
+*/
+int efi_capsule_update_info_gen_ids(efi_guid_t *namespace, const char *soc,
+				    const char *model,
+				    const char *compatible);
+#else
+static inline int efi_capsule_update_info_gen_ids(efi_guid_t *namespace, const char *soc,
+						  const char *model,
+						  const char *compatible)
+{
+	return -ENOSYS;
+}
+#endif
+
 /**
  * Install the ESRT system table.
  *
