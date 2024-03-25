@@ -35,7 +35,7 @@ obj-$(CONFIG_$(PHASE_)BOOTMETH_QFW) += bootmeth_qfw.o
 obj-$(CONFIG_$(PHASE_)BOOTMETH_SANDBOX) += bootmeth_sandbox.o
 obj-$(CONFIG_$(PHASE_)BOOTMETH_SCRIPT) += bootmeth_script.o
 obj-$(CONFIG_$(PHASE_)CEDIT) += cedit.o
-obj-$(CONFIG_$(PHASE_)BOOTMETH_EFI_BOOTMGR) += bootmeth_efi_mgr.o
+# obj-$(CONFIG_$(PHASE_)BOOTMETH_EFI_BOOTMGR) += bootmeth_efi_mgr.o
 
 obj-$(CONFIG_$(PHASE_)OF_LIBFDT) += fdt_support.o
 obj-$(CONFIG_$(PHASE_)FDT_SIMPLEFB) += fdt_simplefb.o
