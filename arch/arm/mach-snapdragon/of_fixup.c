@@ -25,6 +25,8 @@
 #include <stdlib.h>
 #include <time.h>
 
+#define propstrlen(str) (strlen(str) + 1)
+
 /* U-Boot only supports USB high-speed mode on Qualcomm platforms with DWC3
  * USB controllers. Rather than requiring source level DT changes, we fix up
  * DT here. This improves compatibility with upstream DT and simplifies the
@@ -84,13 +86,13 @@ static int fixup_qcom_dwc3(struct device_node *glue_np)
 	}
 
 	/* Overwrite "phy-names" to only contain a single entry */
-	ret = of_write_prop(dwc3, "phy-names", strlen("usb2-phy"), "usb2-phy");
+	ret = of_write_prop(dwc3, "phy-names", propstrlen("usb2-phy"), "usb2-phy");
 	if (ret) {
 		log_err("Failed to overwrite 'phy-names' property: %d\n", ret);
 		return ret;
 	}
 
-	ret = of_write_prop(dwc3, "maximum-speed", strlen("high-speed"), "high-speed");
+	ret = of_write_prop(dwc3, "maximum-speed", propstrlen("high-speed"), "high-speed");
 	if (ret) {
 		log_err("Failed to set 'maximum-speed' property: %d\n", ret);
 		return ret;
