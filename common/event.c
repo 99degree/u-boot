@@ -46,6 +46,8 @@ const char *const type_name[] = {
 	/* fdt hooks */
 	"ft_fixup",
 
+	"of_live",
+
 	/* main loop events */
 	"main_loop",
 };

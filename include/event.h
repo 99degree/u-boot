@@ -146,6 +146,18 @@ enum event_t {
 	EVT_FT_FIXUP,
 
 	/**
+	 * @EVT_OF_LIVE:
+	 * This event is triggered when using CONFIG_OF_LIVE immediately after
+	 * the live tree has been created. It has no parameters, the live tree
+	 * can be accessed from gd->of_root, or using the of_* helpers.
+	 *
+	 * This is intended to be used for performing board specific fixups
+	 * on the tree before it is used by U-Boot. It is much more efficient
+	 * to access and modify than the FDT.
+	 */
+	EVT_OF_LIVE,
+
+	/**
 	 * @EVT_MAIN_LOOP:
 	 * This event is triggered immediately before calling main_loop() which
 	 * is the entry point of the command line. Its parameter is NULL.

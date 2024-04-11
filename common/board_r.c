@@ -218,6 +218,7 @@ static int initr_of_live(void)
 		bootstage_accum(BOOTSTAGE_ID_ACCUM_OF_LIVE);
 		if (ret)
 			return ret;
+		event_notify_null(EVT_OF_LIVE);
 	}
 
 	return 0;
