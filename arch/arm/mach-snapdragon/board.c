@@ -164,7 +164,6 @@ int board_init(void)
 {
 	regulators_enable_boot_on(false);
 	show_psci_version();
-	qcom_of_fixup_nodes();
 	qcom_board_init();
 	return 0;
 }

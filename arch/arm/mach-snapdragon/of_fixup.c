@@ -150,8 +150,12 @@ static void fixup_power_domains(void)
 		debug(#func " took %lluus\n", timer_get_us() - start); \
 	} while (0)
 
-void qcom_of_fixup_nodes(void)
+static int qcom_of_fixup_nodes(void)
 {
 	time_call(fixup_usb_nodes);
 	time_call(fixup_power_domains);
+
+	return 0;
 }
+
+EVENT_SPY_SIMPLE(EVT_OF_LIVE, qcom_of_fixup_nodes);
