@@ -449,6 +449,41 @@ practice. Getting this information from the firmware itself is more
 secure, assuming the firmware has been verified by a previous stage
 boot loader.
 
+The image_type_id contains a GUID value which is specific to the image
+and board being updated, that is to say it should uniquely identify the
+board model (and revision if relevant) and image pair. Traditionally,
+these GUIDs are generated manually and hardcoded on a per-board basis,
+however this scheme makes it difficult to scale up to support many
+boards.
+
+To address this, v5 GUIDs can be used to generate board-specific GUIDs
+at runtime, based on a set of persistent identifiable information:
+
+.. code-block:: c
+
+	/**
+	* efi_capsule_update_info_gen_ids - Generate image_type_id UUIDs
+	* for all firmware images based on a platform namespace UUID.
+	*
+	* @namespace: The arch/platform specific namespace salt. This should be
+	* hardcoded per platform and replaced by vendors.
+	* @soc: A string identifying the SoC used on this board.
+	* @model: The model string for the board.
+	* @compatible: The most specific (first) root compatible string.
+	*
+	* This can be called by board code to populate the image_type_id
+	* UUID fields deterministically based on the board's model. Allowing
+	* many boards to be supported without the need for a large hardcoded
+	* array of fw images. This works using v5 UUIDs.
+	*/
+	int efi_capsule_update_info_gen_ids(efi_guid_t *namespace, const char *soc,
+										const char *model,
+										const char *compatible);
+
+These strings are combined with the fw_image name to generate GUIDs for
+each image. This function should be called during board init, before the
+EFI subsystem is initialised.
+
 The firmware images structure defines the GUID values, image index
 values and the name of the images that are to be updated through
 the capsule update feature. These values are to be defined as part of
