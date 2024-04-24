@@ -46,6 +46,8 @@
 #define PCIE_ATU_DEV(x)			(((x) & 0x1f) << 19)
 #define PCIE_ATU_FUNC(x)		(((x) & 0x7) << 16)
 
+#define PCIE_ATU_INCREASE_REGION_SIZE    BIT(13)
+
 /* Register address builder */
 #define PCIE_GET_ATU_OUTB_UNR_REG_OFFSET(region)	((region) << 9)
 
@@ -90,6 +92,9 @@
 
 #define PCIE_MISC_CONTROL_1_OFF		0x8bc
 #define PCIE_DBI_RO_WR_EN		BIT(0)
+
+#define PCIE_VERSION_NUMBER              0x8F8
+#define PCIE_VERSION_TYPE                0x8FC
 
 /* Parameters for the waiting for iATU enabled routine */
 #define LINK_WAIT_MAX_IATU_RETRIES	5
@@ -138,6 +143,8 @@ int pcie_dw_read_config(const struct udevice *bus, pci_dev_t bdf, uint offset, u
 
 int pcie_dw_write_config(struct udevice *bus, pci_dev_t bdf, uint offset, ulong value,
 			 enum pci_size_t size);
+
+u8 pcie_dw_find_capability(struct pcie_dw *pci, u8 cap);
 
 static inline void dw_pcie_dbi_write_enable(struct pcie_dw *pci, bool en)
 {
