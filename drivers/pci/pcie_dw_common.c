@@ -78,8 +78,12 @@ int pcie_dw_prog_outbound_atu_unroll(struct pcie_dw *pci, int index,
 				 lower_32_bits(pci_addr));
 	dw_pcie_writel_ob_unroll(pci, index, PCIE_ATU_UNR_UPPER_TARGET,
 				 upper_32_bits(pci_addr));
+
+	val = type;
+	if (upper_32_bits(cpu_addr + size - 1) > upper_32_bits(cpu_addr))
+		val |= PCIE_ATU_INCREASE_REGION_SIZE;
 	dw_pcie_writel_ob_unroll(pci, index, PCIE_ATU_UNR_REGION_CTRL1,
-				 type);
+				 val);
 	dw_pcie_writel_ob_unroll(pci, index, PCIE_ATU_UNR_REGION_CTRL2,
 				 PCIE_ATU_ENABLE);
 
@@ -216,7 +220,7 @@ int pcie_dw_read_config(const struct udevice *bus, pci_dev_t bdf,
 
 	value = readl((void __iomem *)va_address);
 
-	debug("(addr,val)=(0x%04x, 0x%08lx)\n", offset, value);
+	debug("(addr,val)=(0x%04x, 0x%08lx)\n", va_address, value);
 	*valuep = pci_conv_32_to_size(value, offset, size);
 
 	return pcie_dw_prog_outbound_atu_unroll(pcie, PCIE_ATU_REGION_INDEX1,
@@ -267,6 +271,63 @@ int pcie_dw_write_config(struct udevice *bus, pci_dev_t bdf,
 						 pcie->io.bus_start, pcie->io.size);
 }
 
+/*
+ * These interfaces resemble the pci_find_*capability() interfaces, but these
+ * are for configuring host controllers, which are bridges *to* PCI devices but
+ * are not PCI devices themselves.
+ */
+static u8 pcie_dw_find_next_cap(struct pcie_dw *pci, u8 cap_ptr,
+				  u8 cap)
+{
+	u8 cap_id, next_cap_ptr;
+	u32 val;
+	u16 reg;
+
+	if (!cap_ptr)
+		return 0;
+
+	val = readl(pci->dbi_base + (cap_ptr & ~0x3));
+	reg = pci_conv_32_to_size(val, cap_ptr, 2);
+	cap_id = (reg & 0x00ff);
+
+	if (cap_id > PCI_CAP_ID_MAX)
+		return 0;
+
+	if (cap_id == cap)
+		return cap_ptr;
+
+	next_cap_ptr = (reg & 0xff00) >> 8;
+	return pcie_dw_find_next_cap(pci, next_cap_ptr, cap);
+}
+
+u8 pcie_dw_find_capability(struct pcie_dw *pci, u8 cap)
+{
+	u8 next_cap_ptr;
+	u32 val;
+	u16 reg;
+
+	val = readl(pci->dbi_base + (PCI_CAPABILITY_LIST & ~0x3));
+	reg = pci_conv_32_to_size(val, PCI_CAPABILITY_LIST, 2);
+
+	next_cap_ptr = (reg & 0x00ff);
+
+	return pcie_dw_find_next_cap(pci, next_cap_ptr, cap);
+}
+
+void pcie_dw_version_detect(struct pcie_dw *pci)
+{
+	u32 ver, type;
+
+	/* The content of the CSR is zero on DWC PCIe older than v4.70a */
+	ver = readl(pci->dbi_base + PCIE_VERSION_NUMBER);
+	if (!ver)
+		return;
+
+	type = readl(pci->dbi_base + PCIE_VERSION_TYPE);
+
+	printf("%s: DW PCIe Version %x type %x\n", __func__, ver, type);
+}
+
 /**
  * pcie_dw_setup_host() - Setup the PCIe controller for RC opertaion
  *
@@ -280,6 +341,11 @@ void pcie_dw_setup_host(struct pcie_dw *pci)
 	struct udevice *ctlr = pci_get_controller(pci->dev);
 	struct pci_controller *hose = dev_get_uclass_priv(ctlr);
 	u32 ret;
+
+	pcie_dw_version_detect(pci);
+
+	/* Enable write permission for the DBI read-only register */
+	dw_pcie_dbi_write_enable(pci, true);
 
 	if (!pci->atu_base)
 		pci->atu_base = pci->dbi_base + DEFAULT_DBI_ATU_OFFSET;
@@ -303,15 +369,15 @@ void pcie_dw_setup_host(struct pcie_dw *pci)
 			PCI_COMMAND_IO | PCI_COMMAND_MEMORY |
 			PCI_COMMAND_MASTER | PCI_COMMAND_SERR);
 
-	/* Enable write permission for the DBI read-only register */
-	dw_pcie_dbi_write_enable(pci, true);
+	writel(0, pci->dbi_base + PCI_BASE_ADDRESS_0);
+
 	/* program correct class for RC */
 	writew(PCI_CLASS_BRIDGE_PCI, pci->dbi_base + PCI_CLASS_DEVICE);
-	/* Better disable write permission right after the update */
-	dw_pcie_dbi_write_enable(pci, false);
 
 	setbits_le32(pci->dbi_base + PCIE_LINK_WIDTH_SPEED_CONTROL,
 		     PORT_LOGIC_SPEED_CHANGE);
+	/* Better disable write permission right after the update */
+	dw_pcie_dbi_write_enable(pci, false);
 
 	for (ret = 0; ret < hose->region_count; ret++) {
 		if (hose->regions[ret].flags == PCI_REGION_IO) {
