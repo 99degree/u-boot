@@ -23,4 +23,6 @@ static inline void qcom_of_fixup_nodes(void)
 }
 #endif /* OF_LIVE */
 
+void qcom_parse_memory(void);
+
 #endif /* __QCOM_PRIV_H__ */
