@@ -90,7 +90,7 @@ static int sc7280_enable(struct clk *clk)
 {
 	struct msm_clk_priv *priv = dev_get_priv(clk->dev);
 
-	if (priv->data->num_clks < clk->id) {
+	if (priv->data->num_clks <= clk->id) {
 		debug("%s: unknown clk id %lu\n", __func__, clk->id);
 		return 0;
 	}
