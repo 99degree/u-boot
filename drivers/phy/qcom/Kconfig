@@ -14,7 +14,7 @@ config PHY_QCOM_IPQ4019_USB
 
 config PHY_QCOM_QMP_PCIE
 	tristate "Qualcomm QMP PCIe PHY driver"
-	depends on PHY && ARCH_SNAPDRAGON
+	depends on PHY && ARCH_SNAPDRAGON && CLK_STUB
 	help
 	  Enable this to support the PCIe QMP PHY on various Qualcomm chipsets.
 
