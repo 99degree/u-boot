@@ -803,21 +803,21 @@
 };
 
 &pcie1 {
-	status = "okay";
+	status = "disabled";
 };
 
 &pcie1_phy {
-	status = "okay";
+	status = "disabled";
 	vdda-phy-supply = <&vreg_l5a_0p88>;
 	vdda-pll-supply = <&vreg_l9a_1p2>;
 };
 
 &pcie2 {
-	status = "okay";
+	status = "disabled";
 };
 
 &pcie2_phy {
-	status = "okay";
+	status = "disabled";
 	vdda-phy-supply = <&vreg_l5a_0p88>;
 	vdda-pll-supply = <&vreg_l9a_1p2>;
 };
