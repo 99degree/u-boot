@@ -53,7 +53,7 @@
 #define PHYSTATUS				BIT(6)
 #define PHYSTATUS_4_20				BIT(7)
 
-#define PHY_INIT_COMPLETE_TIMEOUT		(200 * 10000)
+#define PHY_INIT_COMPLETE_TIMEOUT		(1000 * 10000)
 
 #define NUM_SUPPLIES	3
 
@@ -604,6 +604,13 @@ static const char * const sdm845_pciephy_reset_l[] = {
 	"phy",
 };
 
+static const struct qmp_pcie_offsets qmp_pcie_offsets_v4x1 = {
+	.serdes		= 0,
+	.pcs		= 0x0800,
+	.pcs_misc	= 0x0c00,
+	.tx		= 0x0200,
+	.rx		= 0x0400,
+};
 
 static const struct qmp_pcie_offsets qmp_pcie_offsets_v4x2 = {
 	.serdes		= 0,
@@ -613,6 +620,33 @@ static const struct qmp_pcie_offsets qmp_pcie_offsets_v4x2 = {
 	.rx		= 0x0400,
 	.tx2		= 0x0600,
 	.rx2		= 0x0800,
+};
+
+static const struct qmp_pcie_cfg sm8250_qmp_gen3x1_pciephy_cfg = {
+	.lanes			= 1,
+
+	.offsets		= &qmp_pcie_offsets_v4x1,
+
+	.tbls = {
+		.serdes		= sm8250_qmp_pcie_serdes_tbl,
+		.serdes_num	= ARRAY_SIZE(sm8250_qmp_pcie_serdes_tbl),
+		.tx		= sm8250_qmp_pcie_tx_tbl,
+		.tx_num		= ARRAY_SIZE(sm8250_qmp_pcie_tx_tbl),
+		.rx		= sm8250_qmp_pcie_rx_tbl,
+		.rx_num		= ARRAY_SIZE(sm8250_qmp_pcie_rx_tbl),
+		.pcs		= sm8250_qmp_pcie_pcs_tbl,
+		.pcs_num	= ARRAY_SIZE(sm8250_qmp_pcie_pcs_tbl),
+		.pcs_misc	= sm8250_qmp_pcie_pcs_misc_tbl,
+		.pcs_misc_num	= ARRAY_SIZE(sm8250_qmp_pcie_pcs_misc_tbl),
+	},
+	.reset_list		= sdm845_pciephy_reset_l,
+	.num_resets		= ARRAY_SIZE(sdm845_pciephy_reset_l),
+	.vreg_list		= qmp_phy_vreg_l,
+	.num_vregs		= ARRAY_SIZE(qmp_phy_vreg_l),
+	.regs			= pciephy_v4_regs_layout,
+
+	.pwrdn_ctrl		= SW_PWRDN | REFCLK_DRV_DSBL,
+	.phy_status		= PHYSTATUS,
 };
 
 static const struct qmp_pcie_cfg sm8250_qmp_gen3x2_pciephy_cfg = {
@@ -874,6 +908,9 @@ static int qmp_pcie_power_on(struct phy *phy)
 	/* start SerDes */
 	qphy_setbits(pcs, cfg->regs[QPHY_START_CTRL], SERDES_START | PCS_START);
 
+	mb();
+	//invalidate_dcache_all();
+
 	status = pcs + cfg->regs[QPHY_PCS_STATUS];
 	mask = cfg->phy_status;
 	ret = readl_poll_timeout(status, val, !(val & mask), PHY_INIT_COMPLETE_TIMEOUT);
@@ -1096,6 +1133,7 @@ static struct phy_ops qmp_pcie_ops = {
 };
 
 static const struct udevice_id qmp_pcie_ids[] = {
+	{ .compatible = "qcom,sm8250-qmp-gen3x1-pcie-phy", .data = (ulong)&sm8250_qmp_gen3x1_pciephy_cfg },
 	{ .compatible = "qcom,sm8250-qmp-gen3x2-pcie-phy", .data = (ulong)&sm8250_qmp_gen3x2_pciephy_cfg, },
 	{ .compatible = "qcom,sm8550-qmp-gen3x2-pcie-phy", .data = (ulong)&sm8550_qmp_gen3x2_pciephy_cfg, },
 	{ .compatible = "qcom,sm8550-qmp-gen4x2-pcie-phy", .data = (ulong)&sm8550_qmp_gen4x2_pciephy_cfg },
