@@ -5,6 +5,8 @@
  * (C) Copyright 2024 Linaro Ltd.
  */
 
+#define LOG_DEBUG
+
 #include <clk-uclass.h>
 #include <dm.h>
 #include <linux/delay.h>
@@ -25,6 +27,8 @@
 #define USB30_PRIM_MASTER_CLK_CMD_RCGR 0xf020
 #define USB30_PRIM_MOCK_UTMI_CLK_CMD_RCGR 0xf038
 #define USB3_PRIM_PHY_AUX_CMD_RCGR 0xf064
+
+#define PCIE_0_AUX_CLK_CMD_RCGR 0x6b038
 
 static const struct freq_tbl ftbl_gcc_qupv3_wrap1_s4_clk_src[] = {
 	F(7372800, CFG_CLK_SRC_GPLL0_EVEN, 1, 384, 15625),
@@ -52,6 +56,12 @@ static const struct freq_tbl ftbl_gcc_sdcc2_apps_clk_src[] = {
 	{}
 };
 
+static const struct freq_tbl ftbl_gcc_pcie_phy_refgen_clk_src[] = {
+	F(19200000, CFG_CLK_SRC_CXO, 1, 0, 0),
+	F(100000000, CFG_CLK_SRC_GPLL0, 6, 0, 0),
+	{ }
+};
+
 static struct pll_vote_clk gpll9_vote_clk = {
 	.status = APCS_GPLL9_STATUS,
 	.status_bit = BIT(31),
@@ -65,8 +75,8 @@ static ulong sm8250_set_rate(struct clk *clk, ulong rate)
 	const struct freq_tbl *freq;
 
 	if (clk->id < priv->data->num_clks)
-		debug("%s: %s, requested rate=%ld\n", __func__,
-		      priv->data->clks[clk->id].name, rate);
+		debug("%s: %lu: %s, requested rate=%ld\n", __func__,
+		      clk->id, priv->data->clks[clk->id].name, rate);
 
 	switch (clk->id) {
 	case GCC_QUPV3_WRAP1_S4_CLK: /*UART2*/
@@ -88,6 +98,10 @@ static ulong sm8250_set_rate(struct clk *clk, ulong rate)
 				     freq->pre_div, freq->m, freq->n,
 				     CFG_CLK_SRC_GPLL9, 8);
 
+		return rate;
+	case GCC_PCIE0_PHY_REFGEN_CLK:
+		freq = qcom_find_freq(ftbl_gcc_pcie_phy_refgen_clk_src, rate);
+		clk_rcg_set_rate_mnd(priv->base, 0x6f014, freq->pre_div, freq->n, freq->m, freq->src, 0);
 		return rate;
 	default:
 		return 0;
@@ -171,6 +185,18 @@ static const struct gate_clk sm8250_clks[] = {
 	GATE_CLK(GCC_USB3_SEC_PHY_AUX_CLK, 0x10054, 0x00000001),
 	GATE_CLK(GCC_USB3_SEC_PHY_COM_AUX_CLK, 0x10058, 0x00000001),
 	GATE_CLK(GCC_USB3_SEC_PHY_PIPE_CLK, 0x1005c, 0x00000001),
+	GATE_CLK(GCC_PCIE0_PHY_REFGEN_CLK, 0x6f02c, 0x00000001),
+	GATE_CLK(GCC_PCIE_0_SLV_Q2A_AXI_CLK, 0x52008, BIT(5)),
+	GATE_CLK(GCC_PCIE_0_PIPE_CLK, 0x52008, BIT(4)),
+	GATE_CLK(GCC_PCIE_0_AUX_CLK, 0x52008, BIT(3)),
+	GATE_CLK(GCC_PCIE_0_CFG_AHB_CLK, 0x52008, BIT(2)),
+	GATE_CLK(GCC_PCIE_0_MSTR_AXI_CLK, 0x52008, BIT(1)),
+	GATE_CLK(GCC_PCIE_0_SLV_AXI_CLK, 0x52008, BIT(0)),
+	GATE_CLK(GCC_AGGRE_NOC_PCIE_TBU_CLK, 0x9000c, BIT(0)),
+	GATE_CLK(GCC_DDRSS_PCIE_SF_TBU_CLK, 0x8d058, BIT(0)),
+	GATE_CLK(GCC_PCIE_WIFI_CLKREF_EN, 0x8c004, BIT(0)),
+	GATE_CLK(GCC_PCIE_PHY_AUX_CLK, 0x6f004, BIT(0)),
+
 };
 
 static int sm8250_enable(struct clk *clk)
@@ -182,7 +208,7 @@ static int sm8250_enable(struct clk *clk)
 		return 0;
 	}
 
-	debug("%s: clk %s\n", __func__, sm8250_clks[clk->id].name);
+	debug("%s: clk %lu: %s\n", __func__, clk->id, sm8250_clks[clk->id].name);
 
 	switch (clk->id) {
 	case GCC_USB30_PRIM_MASTER_CLK:
@@ -192,6 +218,9 @@ static int sm8250_enable(struct clk *clk)
 	case GCC_USB30_SEC_MASTER_CLK:
 		qcom_gate_clk_en(priv, GCC_USB3_SEC_PHY_AUX_CLK);
 		qcom_gate_clk_en(priv, GCC_USB3_SEC_PHY_COM_AUX_CLK);
+		break;
+	case GCC_PCIE_0_AUX_CLK:
+		clk_rcg_set_rate_mnd(priv->base, PCIE_0_AUX_CLK_CMD_RCGR, 1, 0, 0, CFG_CLK_SRC_CXO, 16);
 		break;
 	}
 
