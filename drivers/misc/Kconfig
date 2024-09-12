@@ -446,6 +446,13 @@ config SPL_PWRSEQ
 	  device. When the device is started up, its power sequence can be
 	  initiated.
 
+config QCOM_QPS615
+	bool "Enable Qualcomm QPS615 PCIe bridge support"
+	depends on PCI && ARCH_SNAPDRAGON
+	help
+	  Enable support for the Qualcomm QPS615 PCIe bridge. This is used
+	  to enable wifi and the USB Type-A ports on some Qualcomm platforms.
+
 config PCA9551_LED
 	bool "Enable PCA9551 LED driver"
 	help
