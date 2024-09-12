@@ -21,7 +21,9 @@ static char pin_name[MAX_PIN_NAME_LEN] __section(".data");
 static const struct pinctrl_function msm_pinctrl_functions[] = { { "qup12", 1 },
 								 { "qup13", 1 },
 								 { "gpio", 0 },
-								 { "sdc2_clk", 0 } };
+								 { "sdc2_clk", 0 },
+								 { "pci_e0", 1 },
+								};
 
 static const unsigned int sm8250_pin_offsets[] = {
 	[0] = SOUTH,   [1] = SOUTH,   [2] = SOUTH,   [3] = SOUTH,   [4] = NORTH,   [5] = NORTH,
