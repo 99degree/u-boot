@@ -6,6 +6,8 @@
  * used by u-boot on platforms where the SMMU can't be disabled.
  */
 
+#define LOG_DEBUG
+
 #include <log.h>
 #include <cpu_func.h>
 #include <dm.h>
