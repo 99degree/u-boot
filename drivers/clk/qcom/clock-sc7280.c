@@ -22,6 +22,7 @@
 #define USB30_SEC_MOCK_UTMI_CLK_CMD_RCGR 0x9e038
 #define PCIE_1_AUX_CLK_CMD_RCGR 0x8d058
 #define PCIE1_PHY_RCHNG_CMD_RCGR 0x8d03c
+#define PCIE_1_PIPE_CLK_PHY_MUX 0x8d054
 
 static const struct freq_tbl ftbl_gcc_usb30_prim_master_clk_src[] = {
 	F(66666667, CFG_CLK_SRC_GPLL0_EVEN, 4.5, 0, 0),
@@ -91,7 +92,6 @@ static const struct gate_clk sc7280_clks[] = {
 	GATE_CLK(GCC_USB30_SEC_MOCK_UTMI_CLK, 0x9e01c, 1),
 	GATE_CLK(GCC_PCIE_CLKREF_EN, 0x8c004, 1),
 	GATE_CLK(GCC_PCIE_1_PIPE_CLK, 0x52000, BIT(30)),
-	GATE_CLK(GCC_PCIE_1_PIPE_CLK_SRC, 0x8d054, 1),
 	GATE_CLK(GCC_PCIE_1_AUX_CLK, 0x52000, BIT(29)),
 	GATE_CLK(GCC_PCIE_1_CFG_AHB_CLK, 0x52000, BIT(28)),
 	GATE_CLK(GCC_PCIE_1_MSTR_AXI_CLK, 0x52000, BIT(27)),
@@ -131,7 +131,7 @@ static int sc7280_enable(struct clk *clk)
 		qcom_gate_clk_en(priv, GCC_USB3_SEC_PHY_COM_AUX_CLK);
 		break;
 	case GCC_PCIE_1_PIPE_CLK:
-		qcom_gate_clk_en(priv, GCC_PCIE_1_PIPE_CLK_SRC);
+		clk_phy_mux_enable(priv->base, PCIE_1_PIPE_CLK_PHY_MUX, true);
 		break;
 	case GCC_PCIE_1_AUX_CLK:
 		clk_rcg_set_rate_mnd(priv->base, PCIE_1_AUX_CLK_CMD_RCGR, 1, 0, 0, CFG_CLK_SRC_CXO, 16);
