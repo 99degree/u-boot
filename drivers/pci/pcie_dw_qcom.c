@@ -535,6 +535,12 @@ static int qcom_pcie_probe(struct udevice *dev)
 						priv->dw.mem.size);
 }
 
+static int qcom_pcie_child_post_bind(struct udevice *child)
+{
+	printf("%s: %s\n", __func__, child->name);
+	return 0;
+}
+
 static const struct dm_pci_ops qcom_pcie_ops = {
 	.read_config	= pcie_dw_read_config,
 	.write_config	= pcie_dw_write_config,
@@ -566,5 +572,6 @@ U_BOOT_DRIVER(qcom_dw_pcie) = {
 	.of_match		= qcom_pcie_ids,
 	.ops			= &qcom_pcie_ops,
 	.probe			= qcom_pcie_probe,
+	.child_post_bind	= qcom_pcie_child_post_bind,
 	.priv_auto		= sizeof(struct qcom_pcie),
 };

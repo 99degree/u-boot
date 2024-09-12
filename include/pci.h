@@ -901,6 +901,10 @@ struct dm_pci_ops {
 	 */
 	int (*write_config)(struct udevice *bus, pci_dev_t bdf, uint offset,
 			    ulong value, enum pci_size_t size);
+
+	int (*stop_link)(struct udevice *bus);
+
+	int (*start_link)(struct udevice *bus);
 };
 
 /* Get access to a PCI bus' operations */

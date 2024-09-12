@@ -5,6 +5,7 @@
  */
 
 #define LOG_CATEGORY UCLASS_PCI
+#define LOG_DEBUG
 
 #include <dm.h>
 #include <errno.h>
