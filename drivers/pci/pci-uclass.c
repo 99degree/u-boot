@@ -1611,6 +1611,9 @@ void *dm_pci_map_bar(struct udevice *dev, int bar, size_t offset, size_t len,
 	dm_pci_read_config32(udev, bar, &bar_response);
 	pci_bus_addr = (pci_addr_t)(bar_response & ~0xf);
 
+	printf("PCI: map %s BAR%d, bus_addr %llx, offset %lx, len %lx\n",
+	      dev->name, bar, pci_bus_addr, offset, len);
+
 	/* This has a lot of baked in assumptions, but essentially tries
 	 * to mirror the behavior of BAR assignment for 64 Bit enabled
 	 * hosts and 64 bit placeable BARs in the auto assign code.
