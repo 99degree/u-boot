@@ -102,6 +102,7 @@ static const struct gate_clk sc7280_clks[] = {
 	GATE_CLK(GCC_AGGRE_NOC_PCIE_TBU_CLK, 0x52000, BIT(18)),
 	GATE_CLK(GCC_AGGRE_NOC_PCIE_1_AXI_CLK, 0x52000, BIT(11)),
 	GATE_CLK(GCC_AGGRE_NOC_PCIE_CENTER_SF_AXI_CLK, 0x52008, BIT(28)),
+	GATE_CLK(GCC_QUPV3_WRAP0_S0_CLK, 0x52008, BIT(10)),
 };
 
 static int sc7280_enable(struct clk *clk)
@@ -135,6 +136,9 @@ static int sc7280_enable(struct clk *clk)
 		break;
 	case GCC_PCIE_1_AUX_CLK:
 		clk_rcg_set_rate_mnd(priv->base, PCIE_1_AUX_CLK_CMD_RCGR, 1, 0, 0, CFG_CLK_SRC_CXO, 16);
+		break;
+	case GCC_QUPV3_WRAP0_S0_CLK:
+		clk_rcg_set_rate_mnd(priv->base, 0x17010, 1, 0, 0, CFG_CLK_SRC_CXO, 16);
 		break;
 	}
 
