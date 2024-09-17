@@ -109,6 +109,7 @@ struct mmu_dev {
 	u16 sid;
 	u16 cbx;
 	u16 smr;
+	u32 cbar;
 };
 
 #define page_addr(priv, page) ((priv)->base + ((page) << (priv)->pgshift))
@@ -147,13 +148,13 @@ static int get_stream_id(struct udevice *dev)
 	return args.args[0]; // Some mask from bit 16 onward?
 }
 
-static struct mmu_dev *alloc_dev(struct udevice *dev)
+static struct mmu_dev *alloc_dev(struct udevice *dev, int sid)
 {
 	struct qcom_smmu_priv *priv = dev_get_priv(dev->iommu);
 	struct mmu_dev *mmu_dev;
-	int sid;
 
-	sid = get_stream_id(dev);
+	if (sid < 0)
+		sid = get_stream_id(dev);
 	debug("%s %s has SID %#x\n", dev->iommu->name, dev->name, sid);
 	if (sid < 0 || sid > 0xffff) {
 		printf("\tSMMU: Invalid stream ID for %s\n", dev->name);
@@ -179,7 +180,7 @@ static struct mmu_dev *alloc_dev(struct udevice *dev)
 }
 
 /* Find and init the first free context bank */
-static int alloc_cb(struct qcom_smmu_priv *priv)
+static int alloc_cb(struct qcom_smmu_priv *priv, struct mmu_dev *mdev)
 {
 	u32 cbar, type, vmid, val;
 
@@ -207,6 +208,7 @@ static int alloc_cb(struct qcom_smmu_priv *priv)
 
 		val = IS_ENABLED(CONFIG_ARM64) == 1 ? ARM_SMMU_CBA2R_VA64 : 0;
 		gr1_setbits(priv, ARM_SMMU_GR1_CBA2R(i), val);
+		mdev->cbar = cbar;
 		return i;
 	}
 
@@ -269,13 +271,13 @@ static int configure_smr_s2cr(struct qcom_smmu_priv *priv, struct mmu_dev *mdev)
 	return 0;
 }
 
-static int qcom_smmu_connect(struct udevice *dev)
+static int qcom_smmu_connect(struct udevice *dev, int sid)
 {
 	struct mmu_dev *mdev;
 	struct qcom_smmu_priv *priv;
 	int ret;
 
-	debug("%s: %s -> %s\n", __func__, dev->name, dev->iommu->name);
+	debug("%s: %s -> %s (%#x)\n", __func__, dev->name, dev->iommu->name, sid > 0 ? sid : 0);
 
 	priv = dev_get_priv(dev->iommu);
 	if (WARN_ON(!priv))
@@ -284,7 +286,7 @@ static int qcom_smmu_connect(struct udevice *dev)
 	if (priv->disable)
 		return 0;
 
-	mdev = alloc_dev(dev);
+	mdev = alloc_dev(dev, sid);
 	if (IS_ERR(mdev) && PTR_ERR(mdev) != -EEXIST) {
 		printf("%s: %s Couldn't create mmu context\n", __func__,
 		       dev->name);
@@ -299,7 +301,7 @@ static int qcom_smmu_connect(struct udevice *dev)
 		return 0;
 	}
 
-	ret = alloc_cb(priv);
+	ret = alloc_cb(priv, mdev);
 	if (ret < 0 || ret > 0xff) {
 		printf("Error: %s: failed to allocate context bank for %s\n",
 		       __func__, dev->name);

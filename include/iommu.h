@@ -10,9 +10,10 @@ struct iommu_ops {
 	 *
 	 * @iommu_dev:	IOMMU device
 	 * @dev:	Device to connect
+	 * @sid:	Stream ID to connect (-1 to read from device)
 	 * @return 0 if OK, -errno on error
 	 */
-	int (*connect)(struct udevice *dev);
+	int (*connect)(struct udevice *dev, int sid);
 	/**
 	 * map() - map DMA memory
 	 *
