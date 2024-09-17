@@ -154,6 +154,10 @@ static int qps615_power_up(struct qps615 *priv)
 		return ret;
 	}
 
+	// i2c controller firmware hasn't been loaded so communication will fail
+	printf("QPS615: Skipping I2C init!\n");
+	return 0;
+
 	udelay(1000);
 
 	qps615_pwrctl_assert_deassert_reset(priv, true);
