@@ -328,10 +328,13 @@ static int qcom_smmu_connect(struct udevice *dev, int sid)
 }
 
 #ifdef DEBUG
-static inline void dump_boot_mappings(struct qcom_smmu_priv *priv)
+void dump_boot_mappings(struct udevice *iommu)
 {
+	struct qcom_smmu_priv *priv;
 	u32 val;
 	int i;
+
+	priv = dev_get_priv(iommu);
 
 	debug("  SMMU dump boot mappings:\n");
 	for (i = 0; i < priv->num_smr; i++) {
@@ -342,7 +345,7 @@ static inline void dump_boot_mappings(struct qcom_smmu_priv *priv)
 	}
 }
 #else
-#define dump_boot_mappings(priv) \
+#define dump_boot_mappings(dev) \
 	do {                     \
 	} while (0)
 #endif
@@ -370,7 +373,7 @@ static int qcom_smmu_probe(struct udevice *dev)
 	priv->cb_pg_offset = 1
 			     << (FIELD_GET(ARM_SMMU_ID1_NUMPAGENDXB, val) + 1);
 
-	dump_boot_mappings(priv);
+	dump_boot_mappings(dev);
 
 	return 0;
 }
@@ -389,6 +392,7 @@ static int qcom_smmu_remove(struct udevice *dev)
 
 static struct iommu_ops qcom_smmu_ops = {
 	.connect = qcom_smmu_connect,
+	.dump = dump_boot_mappings,
 };
 
 static const struct udevice_id qcom_smmu500_ids[] = {

@@ -9,7 +9,13 @@
  */
 #include <command.h>
 #include <cpu_func.h>
+#include <dm.h>
+#include <dm/uclass.h>
+#include <iommu.h>
 #include <linux/compiler.h>
+#include <asm/armv8/mmu.h>
+
+DECLARE_GLOBAL_DATA_PTR;
 
 static int parse_argv(const char *);
 
@@ -74,6 +80,27 @@ static int do_dcache(struct cmd_tbl *cmdtp, int flag, int argc,
 	return 0;
 }
 
+static int do_smmu(struct cmd_tbl *cmdtp, int flag, int argc,
+		  char *const argv[])
+{
+	struct udevice *dev;
+	struct uclass *uc;
+	const struct iommu_ops *ops;
+
+	uclass_id_foreach_dev(UCLASS_IOMMU, dev, uc) {
+		if (!device_active(dev))
+			continue;
+		printf("IOMMU device %s\n", dev->name);
+		ops = device_get_ops(dev);
+		if (ops && ops->dump)
+			ops->dump(dev);
+	}
+
+	dump_pagetable(gd->arch.tlb_addr, get_tcr(NULL, NULL));
+
+	return 0;
+}
+
 static int parse_argv(const char *s)
 {
 	if (strcmp(s, "flush") == 0)
@@ -98,4 +125,10 @@ U_BOOT_CMD(
 	"enable or disable data cache",
 	"[on, off, flush]\n"
 	"    - enable, disable, or flush data (writethrough) cache"
+);
+
+U_BOOT_CMD(
+	iommu,   1,   1,     do_smmu,
+	"dump SMMU context banks",
+	""
 );

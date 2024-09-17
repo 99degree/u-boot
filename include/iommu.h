@@ -32,6 +32,8 @@ struct iommu_ops {
 	 * @size:	size of the memory
 	 */
 	void (*unmap)(struct udevice *dev, dma_addr_t addr, size_t size);
+
+	void (*dump)(struct udevice *dev);
 };
 
 #if (CONFIG_IS_ENABLED(OF_CONTROL) && !CONFIG_IS_ENABLED(OF_PLATDATA)) && \
