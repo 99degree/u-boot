@@ -8,11 +8,14 @@
 
 #include <dm.h>
 #include <dm/device.h>
+#include <dm/device-internal.h>
+#include <dm/lists.h>
 #include <i2c.h>
 #include <dm/of.h>
 #include <linux/delay.h>
 #include <power/regulator.h>
 #include <asm-generic/gpio.h>
+#include <pci.h>
 
 #define QPS615_GPIO_CONFIG		0x801208
 #define QPS615_RESET_GPIO		0x801210
@@ -73,6 +76,8 @@ static int qps615_pwrctl_i2c_write(struct udevice *client,
 				   u32 reg_addr, u32 reg_val)
 {
 	u8 msg_buf[7];
+
+	debug("%s: %#x: %#x\n", __func__, reg_addr, reg_val);
 
 	/* Big Endian for reg addr */
 	reg_addr = cpu_to_be32(reg_addr);
@@ -140,15 +145,23 @@ static int qps615_power_up(struct qps615 *priv)
 {
 	int ret;
 
+	ret = dm_gpio_set_value(&priv->reset_gpio, 1);
+	if (ret) {
+		log_err("Couldn't set reset gpio: %d\n", ret);
+		return ret;
+	}
+
+	udelay(1000);
+
 	for (int i = 0; i < N_VREGS; i++) {
 		ret = regulator_set_enable(priv->vregs[i], true);
-		if (ret) {
+		if (ret && ret != -EALREADY) {
 			log_err("Couldn't enable %s regulator: %d\n", vregs[i], ret);
 			return ret;
 		}
 	}
 
-	ret = dm_gpio_set_value(&priv->reset_gpio, 1);
+	ret = dm_gpio_set_value(&priv->reset_gpio, 0);
 	if (ret) {
 		log_err("Couldn't set reset gpio: %d\n", ret);
 		return ret;
@@ -171,11 +184,44 @@ static int qps615_power_up(struct qps615 *priv)
 	return 0;
 }
 
+static int pci_bridge_read_config(const struct udevice *bus, pci_dev_t bdf,
+				  uint offset, ulong *valuep,
+				  enum pci_size_t size)
+{
+	struct pci_controller *hose = dev_get_uclass_priv(bus);
 
+	return pci_bus_read_config(hose->ctlr, bdf, offset, valuep, size);
+}
+
+static int pci_bridge_write_config(struct udevice *bus, pci_dev_t bdf,
+				   uint offset, ulong value,
+				   enum pci_size_t size)
+{
+	struct pci_controller *hose = dev_get_uclass_priv(bus);
+
+	return pci_bus_write_config(hose->ctlr, bdf, offset, value, size);
+}
 
 static int qps615_bind(struct udevice *dev)
 {
+	int ret;
+	struct udevice *devp;
 	printf("Binding %s\n", dev->name);
+
+	ret = device_bind_driver_to_node(dev->parent, "pci_bridge_drv", dev->name, dev_ofnode(dev), &devp);
+	if (ret) {
+		log_err("Couldn't bind pci_bridge_drv: %d\n", ret);
+		return ret;
+	}
+
+	// ofnode_for_each_subnode(node, dev_ofnode(dev)) {
+	// 	ret = device_bind_driver(dev->parent, "pci_bridge_drv", ofnode_get_name(node), NULL);
+	// 	if (ret) {
+	// 		log_err("Couldn't bind pci_bridge_drv: %d\n", ret);
+	// 		return ret;
+	// 	}
+	// }
+
 	return 0;
 }
 
@@ -203,8 +249,13 @@ static int qps615_probe(struct udevice *dev)
 	printf("Found i2c node: %s\n", ofnode_get_name(i2c_node));
 
 	ret = device_find_global_by_ofnode(i2c_node, &priv->i2c);
-	if (!ret) {
+	if (ret) {
 		log_err("Couldn't find i2c device: %d\n", ret);
+		return ret;
+	}
+	ret = device_probe(priv->i2c);
+	if (ret) {
+		log_err("Couldn't probe i2c device: %d\n", ret);
 		return ret;
 	}
 
@@ -231,6 +282,11 @@ static int qps615_probe(struct udevice *dev)
 	return 0;
 }
 
+static const struct dm_pci_ops qps615_pci_ops = {
+	.read_config	= pci_bridge_read_config,
+	.write_config	= pci_bridge_write_config,
+};
+
 static const struct udevice_id qps615_ids[] = {
 	{ .compatible = "pci1179,0623" },
 	{ }
@@ -243,7 +299,13 @@ U_BOOT_DRIVER(qcom_qps615) = {
 	.bind 		= qps615_bind,
 	.probe 		= qps615_probe,
 	.priv_auto	= sizeof(struct qps615),
-	.flags		= DM_FLAG_PROBE_AFTER_BIND,
+	.ops		= &qps615_pci_ops,
+};
+
+U_BOOT_DRIVER(qcom_qps615_bus) = {
+	.name		= "qcom-qps615-bus",
+	.id		= UCLASS_PCI,
+	.ops		= &qps615_pci_ops,
 };
 
 static const struct udevice_id qps615_i2c_ids[] = {
@@ -254,6 +316,6 @@ static const struct udevice_id qps615_i2c_ids[] = {
 /* Stub i2c peripheral */
 U_BOOT_DRIVER(qcom_qps615_i2c) = {
 	.name	= "qcom-qps615-i2c",
-	.id	= UCLASS_I2C,
+	.id	= UCLASS_MISC,
 	.of_match = qps615_i2c_ids,
 };
