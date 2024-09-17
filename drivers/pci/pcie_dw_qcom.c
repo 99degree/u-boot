@@ -508,6 +508,7 @@ static int qcom_pcie_probe(struct udevice *dev)
 
 	priv->dw.first_busno = dev_seq(dev);
 	priv->dw.dev = dev;
+	priv->ops = (struct qcom_pcie_ops *)dev_get_driver_data(dev);
 
 	ret = qcom_pcie_parse_dt(dev);
 	if (ret)
@@ -544,6 +545,8 @@ static int qcom_pcie_child_post_bind(struct udevice *child)
 static const struct dm_pci_ops qcom_pcie_ops = {
 	.read_config	= pcie_dw_read_config,
 	.write_config	= pcie_dw_write_config,
+	// .stop_link	= pcie_qcom_stop_link,
+	// .start_link	= pcie_qcom_start_link,
 };
 
 static const struct qcom_pcie_ops ops_1_9_0 = {
