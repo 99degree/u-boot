@@ -1093,12 +1093,17 @@ struct xhci_virt_device {
 /* xHCI spec says all registers are little endian */
 static inline unsigned int xhci_readl(uint32_t volatile *regs)
 {
-	return readl(regs);
+	unsigned int val = readl(regs);
+	printf("// READ : %#011llx: %#011x\n", (u64)regs, val);
+
+	return val;
 }
 
 static inline void xhci_writel(uint32_t volatile *regs, const unsigned int val)
 {
+	printf("// WRITE: %#011llx: %#011x\n", (u64)regs, val);
 	writel(val, regs);
+	readl(regs); /* flush */
 }
 
 /*
@@ -1114,12 +1119,14 @@ static inline u64 xhci_readq(__le64 volatile *regs)
 	__u32 *ptr = (__u32 *)regs;
 	u64 val_lo = readl(ptr);
 	u64 val_hi = readl(ptr + 1);
+	printf("// READ : %#011llx: %#011llx\n", (u64)regs, val_lo + (val_hi << 32));
 	return val_lo + (val_hi << 32);
 }
 
 static inline void xhci_writeq(__le64 volatile *regs, const u64 val)
 {
 	__u32 *ptr = (__u32 *)regs;
+	printf("// WRITE: %#011llx: %#011llx\n", (u64)regs, val);
 	u32 val_lo = lower_32_bits(val);
 	/* FIXME */
 	u32 val_hi = upper_32_bits(val);

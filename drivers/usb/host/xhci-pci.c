@@ -5,6 +5,8 @@
  * All rights reserved.
  */
 
+#define LOG_DEBUG
+
 #include <dm.h>
 #include <dm/device_compat.h>
 #include <init.h>
@@ -13,6 +15,26 @@
 #include <reset.h>
 #include <usb.h>
 #include <usb/xhci.h>
+
+#define RENESAS_FW_VERSION				0x6C
+#define RENESAS_ROM_CONFIG				0xF0
+#define RENESAS_FW_STATUS				0xF4
+#define RENESAS_FW_STATUS_MSB				0xF5
+#define RENESAS_ROM_STATUS				0xF6
+#define RENESAS_ROM_STATUS_MSB				0xF7
+#define RENESAS_DATA0					0xF8
+#define RENESAS_DATA1					0xFC
+
+#define RENESAS_ROM_STATUS_ACCESS			BIT(0)
+#define RENESAS_ROM_STATUS_ERASE			BIT(1)
+#define RENESAS_ROM_STATUS_RELOAD			BIT(2)
+#define RENESAS_ROM_STATUS_RESULT			GENMASK(6, 4)
+  #define RENESAS_ROM_STATUS_NO_RESULT			0
+  #define RENESAS_ROM_STATUS_SUCCESS			BIT(4)
+  #define RENESAS_ROM_STATUS_ERROR			BIT(5)
+#define RENESAS_ROM_STATUS_SET_DATA0			BIT(8)
+#define RENESAS_ROM_STATUS_SET_DATA1			BIT(9)
+#define RENESAS_ROM_STATUS_ROM_EXISTS			BIT(15)
 
 struct xhci_pci_plat {
 	struct reset_ctl reset;
@@ -26,8 +48,8 @@ static int xhci_pci_init(struct udevice *dev, struct xhci_hccr **ret_hccr,
 	u32 cmd;
 
 	hccr = (struct xhci_hccr *)dm_pci_map_bar(dev,
-			PCI_BASE_ADDRESS_0, 0, 0, PCI_REGION_TYPE,
-			PCI_REGION_MEM);
+			PCI_BASE_ADDRESS_0, 0, 0x10000000,
+			PCI_REGION_TYPE, PCI_REGION_MEM);
 	if (!hccr) {
 		printf("xhci-pci init cannot map PCI mem bar\n");
 		return -EIO;
@@ -54,7 +76,13 @@ static int xhci_pci_probe(struct udevice *dev)
 	struct xhci_pci_plat *plat = dev_get_plat(dev);
 	struct xhci_hccr *hccr;
 	struct xhci_hcor *hcor;
+	ofnode node;
+	u16 rom_status;
 	int ret;
+
+	node = dev_ofnode(dev);
+
+	printf("%s: %s, %s\n", __func__, dev->name, ofnode_valid(node) ? ofnode_get_name(node) : "NO node");
 
 	ret = reset_get_by_index(dev, 0, &plat->reset);
 	if (ret && ret != -ENOENT && ret != -ENOTSUPP) {
@@ -70,6 +98,23 @@ static int xhci_pci_probe(struct udevice *dev)
 		ret = reset_deassert(&plat->reset);
 		if (ret)
 			goto err_reset;
+	}
+
+	ret = dm_pci_read_config16(dev, RENESAS_ROM_STATUS, &rom_status);
+	if (ret) {
+		dev_err(dev, "failed to read ROM status\n");
+		return ret;
+	}
+	if (rom_status != 0x0000) {
+		dev_err(dev, "ROM status is not 0x0000\n");
+		return -ENODEV;
+	}
+
+	dev_info(dev, "ROM status: 0x%04x\n", rom_status);
+	rom_status &= RENESAS_ROM_STATUS_ROM_EXISTS;
+	if (rom_status) {
+		dev_info(dev, "External ROM exists\n");
+		return true; /* External ROM exists */
 	}
 
 	ret = xhci_pci_init(dev, &hccr, &hcor);
