@@ -18,6 +18,7 @@
 #include <lmb.h>
 #include <memalign.h>
 #include <asm/io.h>
+#include <linux/delay.h>
 
 #define ARM_SMMU_GR0 0
 #define ARM_SMMU_GR1 1
@@ -68,6 +69,18 @@ enum arm_smmu_cbar_type {
 
 #define ARM_SMMU_GR0_S2CR(n) (0xc00 + ((n) << 2))
 #define ARM_SMMU_S2CR_PRIVCFG GENMASK(25, 24)
+
+/* Global TLB invalidation */
+#define ARM_SMMU_GR0_TLBIVMID		0x64
+#define ARM_SMMU_GR0_TLBIALLNSNH	0x68
+#define ARM_SMMU_GR0_TLBIALLH		0x6c
+#define ARM_SMMU_GR0_sTLBGSYNC		0x70
+
+#define ARM_SMMU_GR0_sTLBGSTATUS	0x74
+#define ARM_SMMU_sTLBGSTATUS_GSACTIVE	BIT(0)
+
+#define TLB_LOOP_TIMEOUT		1000000	/* 1s! */
+#define TLB_SPIN_COUNT			10
 
 enum arm_smmu_s2cr_privcfg {
 	S2CR_PRIVCFG_DEFAULT,
@@ -271,6 +284,26 @@ static int configure_smr_s2cr(struct qcom_smmu_priv *priv, struct mmu_dev *mdev)
 	return 0;
 }
 
+static void qcom_smmu_tlb_sync(struct qcom_smmu_priv *priv, int page,
+				int sync, int status)
+{
+	unsigned int spin_cnt, delay;
+	u32 reg;
+
+	smmu_writel(priv, page, sync, -1);
+	for (delay = 1; delay < TLB_LOOP_TIMEOUT; delay *= 2) {
+		for (spin_cnt = TLB_SPIN_COUNT; spin_cnt > 0; spin_cnt--) {
+			reg = smmu_readl(priv, page, status);
+			if (!(reg & ARM_SMMU_sTLBGSTATUS_GSACTIVE))
+				return;
+			cpu_relax();
+		}
+		udelay(delay);
+	}
+
+	printf("SMMU: TLB sync timed out -- SMMU might be deadlocked\n");
+}
+
 static int qcom_smmu_connect(struct udevice *dev, int sid)
 {
 	struct mmu_dev *mdev;
@@ -323,6 +356,12 @@ static int qcom_smmu_connect(struct udevice *dev, int sid)
 	mb();
 
 	configure_smr_s2cr(priv, mdev);
+
+	/* Flush the SMMU or something?? this probably does nothing */
+	wmb();
+	gr0_writel(priv, ARM_SMMU_GR0_TLBIVMID, FIELD_GET(ARM_SMMU_CBAR_VMID, mdev->cbar));
+	qcom_smmu_tlb_sync(priv, ARM_SMMU_GR0, ARM_SMMU_GR0_sTLBGSYNC,
+			    ARM_SMMU_GR0_sTLBGSTATUS);
 
 	return 0;
 }
