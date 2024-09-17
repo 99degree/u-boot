@@ -226,6 +226,18 @@
 		pinctrl-names = "default";
 		regulator-enable-ramp-delay = <10000>;
 	};
+
+	pcie_downstream: regulator-pcie-downstream {
+		compatible = "regulator-fixed";
+		regulator-name = "pcie_downstream";
+		gpio = <&pm7250b_gpios 1 GPIO_ACTIVE_HIGH>;
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		enable-active-high;
+		pinctrl-0 = <&pcie_downstream_en>;
+		pinctrl-names = "default";
+		regulator-enable-ramp-delay = <10000>;
+	};
 };
 
 &apps_rsc {
@@ -719,8 +731,11 @@
 	pinctrl-0 = <&pcie1_reset_n>, <&pcie1_wake_n>, <&pcie1_clkreq_n>;
 	pinctrl-names = "default";
 
+	vdda-supply = <&pcie_downstream>;
+
 	/* FIXME: will need to be dynamic in the IOMMU/SMMU driver */
-	iommu-map = <0x0 &apps_smmu 0x1c80 0x1>,
+	/*           RID    PHANDLE    SID   SIZE */
+	iommu-map = <0x0   &apps_smmu 0x1c80 0x1>,
 		    <0x100 &apps_smmu 0x1c81 0x1>,
 		    <0x208 &apps_smmu 0x1c84 0x1>,
 		    <0x210 &apps_smmu 0x1c85 0x1>,
@@ -760,6 +775,9 @@
 		qcom,qps615-controller = <&qps615_switch>;
 
 		reset-gpios = <&pm8350c_gpios 1 GPIO_ACTIVE_LOW>;
+
+		pinctrl-0 = <&upd_usb_rst>;
+		pinctrl-names = "default";
 
 		pcie@1,0 {
 			reg = <0x20800 0x0 0x0 0x0 0x0>;
@@ -802,6 +820,18 @@
 				ranges;
 			};
 		};
+
+		pcie@4,0 {
+			reg = <0x40000 0x0 0x0 0x0 0x0>;
+			#address-cells = <3>;
+			#size-cells = <2>;
+			device_type = "pci";
+			ranges;
+
+			reset-gpio = <&pm8350c_gpios 4 GPIO_ACTIVE_LOW>;
+
+			// USB hub 04.00.00 - 1912:0014
+		};
 	};
 };
 
@@ -821,6 +851,17 @@
 		function = "normal";
 
 		bias-disable;
+		input-disable;
+		output-enable;
+		power-source = <0>;
+	};
+
+	upd_usb_rst: upd-usb-rst-state {
+		pins = "gpio4";
+		function = "normal";
+
+		bias-pull-down;
+		drive-strength = <2>;
 		input-disable;
 		output-enable;
 		power-source = <0>;
@@ -884,7 +925,7 @@
 };
 
 &usb_1 {
-	status = "okay";
+	status = "disabled";
 };
 
 &usb_1_dwc3 {
@@ -979,6 +1020,16 @@
 };
 
 &pm7250b_gpios {
+	pcie_downstream_en: ntn-1p8-en-state {
+		pins = "gpio1";
+		function = "normal";
+
+		bias-disable;
+		input-disable;
+		output-enable;
+		power-source = <0>;
+	};
+
 	lt9611_rst_pin: lt9611-rst-state {
 		pins = "gpio2";
 		function = "normal";
