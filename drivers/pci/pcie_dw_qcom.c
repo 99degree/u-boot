@@ -4,6 +4,8 @@
 
 #include <clk.h>
 #include <dm.h>
+#include <dm/device-internal.h>
+#include <dm/lists.h>
 #include <generic-phy.h>
 #include <pci.h>
 #include <u-boot/crc.h>
@@ -239,9 +241,13 @@ static int qcom_pcie_config_sid_1_9_0(struct qcom_pcie *priv)
 	int i, nr_map, size = 0;
 	u32 smmu_sid_base;
 
+	printf("PCIE-%d: Configuring RID->SID mapping\n", dev_seq(priv->dw.dev));
+
 	dev_read_prop(priv->dw.dev, "iommu-map", &size);
-	if (!size)
+	if (!size) {
+		debug("PCIE-%d: No iommu-map property found\n", dev_seq(priv->dw.dev));
 		return 0;
+	}
 
 	map = malloc(size);
 	if (!map)
@@ -282,6 +288,7 @@ static int qcom_pcie_config_sid_1_9_0(struct qcom_pcie *priv)
 		}
 
 		/* BDF [31:16] | SID [15:8] | NEXT [7:0] */
+		printf("PCIE-%d: BDF 0x%04x -> SID 0x%02x\n", dev_seq(priv->dw.dev), map[i].bdf, map[i].smmu_sid);
 		val = map[i].bdf << 16 | (map[i].smmu_sid - smmu_sid_base) << 8 | 0;
 		writel(val, bdf_to_sid_base + hash * sizeof(u32));
 	}
@@ -489,6 +496,29 @@ static int qcom_pcie_parse_dt(struct udevice *dev)
 	return 0;
 }
 
+/* Bind the pcieport to pci_bridge_drv which will then probe the child devices! In theory */
+// FIXME: this is only needed so we can probe the qps615 before the bus and re-parent it
+static int qcom_pcie_bind(struct udevice *dev)
+{
+	int ret;
+	ofnode node;
+	struct udevice *devp;
+
+	ofnode_for_each_subnode(node, dev_ofnode(dev)) {
+		/* FIXME: device_type = "pci" */
+		if (!ofnode_has_property(node, "device_type"))
+			continue;
+
+		ret = device_bind_driver_to_node(dev, "pci_bridge_drv", ofnode_get_name(node), node, &devp);
+		if (ret) {
+			debug("%s: Failed to bind generic driver: %d\n", __func__, ret);
+			return ret;
+		}
+	}
+
+	return 0;
+}
+
 /**
  * qcom_pcie_probe() - Probe the PCIe bus for active link
  *
@@ -504,6 +534,8 @@ static int qcom_pcie_probe(struct udevice *dev)
 	struct qcom_pcie *priv = dev_get_priv(dev);
 	struct udevice *ctlr = pci_get_controller(dev);
 	struct pci_controller *hose = dev_get_uclass_priv(ctlr);
+	ofnode node, subnode;
+	struct udevice *devp, *busp;
 	int ret = 0;
 
 	priv->dw.first_busno = dev_seq(dev);
@@ -513,6 +545,26 @@ static int qcom_pcie_probe(struct udevice *dev)
 	ret = qcom_pcie_parse_dt(dev);
 	if (ret)
 		return ret;
+
+	ofnode_for_each_subnode(node, dev_ofnode(dev)) {
+		// /* Get the bus device */
+		if (device_find_global_by_ofnode(node, &busp))
+			continue;
+		ofnode_for_each_subnode(subnode, node) {
+			if (!device_find_global_by_ofnode(subnode, &devp)) {
+				printf("Probing fixed PCIe bus device %s\n", devp->name);
+				/* Avoid probing the bus by re-parenting the fixed device temporarily */
+				device_reparent(devp, dev);
+				device_probe(devp);
+				//device_reparent(devp, busp);
+			}
+		}
+		/* Unbind the bridge device we bound in our .bind() callback. It was only needed
+		 * so we could nicely bind and re-parent the sub-devices of the bridge. The bridge
+		 * will be bound gain by the PCI subsystem.
+		 */
+		//device_unbind(busp);
+	}
 
 	ret = qcom_pcie_init_port(dev);
 	if (ret) {
@@ -545,8 +597,6 @@ static int qcom_pcie_child_post_bind(struct udevice *child)
 static const struct dm_pci_ops qcom_pcie_ops = {
 	.read_config	= pcie_dw_read_config,
 	.write_config	= pcie_dw_write_config,
-	// .stop_link	= pcie_qcom_stop_link,
-	// .start_link	= pcie_qcom_start_link,
 };
 
 static const struct qcom_pcie_ops ops_1_9_0 = {
@@ -574,6 +624,7 @@ U_BOOT_DRIVER(qcom_dw_pcie) = {
 	.id			= UCLASS_PCI,
 	.of_match		= qcom_pcie_ids,
 	.ops			= &qcom_pcie_ops,
+	.bind			= qcom_pcie_bind,
 	.probe			= qcom_pcie_probe,
 	.child_post_bind	= qcom_pcie_child_post_bind,
 	.priv_auto		= sizeof(struct qcom_pcie),
