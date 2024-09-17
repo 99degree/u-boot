@@ -16,6 +16,7 @@ static char pin_name[MAX_PIN_NAME_LEN] __section(".data");
 static const struct pinctrl_function msm_pinctrl_functions[] = {
 	{"gpio", 0 },
 	{ "pcie1_clkreqn", 3 },
+	{ "qup00", 1 },
 };
 
 static const char *sc7280_get_function_name(struct udevice *dev,
