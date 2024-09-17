@@ -289,6 +289,7 @@ static int qcom_gpio_probe(struct udevice *dev)
 	struct gpio_dev_priv *uc_priv = dev_get_uclass_priv(dev);
 	struct qcom_pmic_gpio_data *plat = dev_get_plat(dev);
 	struct ofnode_phandle_args args;
+	const char *compatible;
 	int val, ret;
 	u64 pid;
 
@@ -336,7 +337,10 @@ static int qcom_gpio_probe(struct udevice *dev)
 	plat->pin_count = args.args[2];
 
 	uc_priv->gpio_count = plat->pin_count;
-	uc_priv->bank_name = "pmic";
+
+	compatible = dev_read_string(dev, "compatible");
+	compatible = strchr(compatible, ',') + 1;
+	uc_priv->bank_name = compatible;
 
 	return 0;
 }
