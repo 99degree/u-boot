@@ -6,6 +6,7 @@
 #define LOG_CATEGORY LOGC_BOARD
 #define pr_fmt(fmt) "QCOM-DRAM: " fmt
 
+#include <asm/io.h>
 #include <asm-generic/unaligned.h>
 #include <dm.h>
 #include <log.h>
@@ -51,6 +52,11 @@ struct smem_ram_ptable {
 
 int dram_init(void)
 {
+	for (int i = 0; i < 540; i++) {
+		for (int j = 0; j < 960; j++) {
+			writel(0xa5a5a5a5, 0x89000000 + i * 960 + j);
+		}
+	}
 	/*
 	 * gd->ram_base / ram_size have been setup already
 	 * in qcom_parse_memory().

@@ -26,7 +26,7 @@ config APPLE_DART
 
 config QCOM_HYP_SMMU
 	bool "Qualcomm quirky SMMU support"
-	depends on IOMMU && ARCH_SNAPDRAGON
+	depends on IOMMU && ARCH_SNAPDRAGON && CONFIG_ARM64
 	help
 	  Enable support for the Qualcomm variant of the Arm System MMU-500.
 	  Qualcomm boards have a non-standard SMMU where some registers are

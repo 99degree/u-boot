@@ -9,7 +9,11 @@
 #define LOG_CATEGORY LOGC_BOARD
 #define pr_fmt(fmt) "Snapdragon: " fmt
 
+#ifdef CONFIG_ARM64
 #include <asm/armv8/mmu.h>
+#else
+#include <cpu_func.h>
+#endif
 #include <asm/gpio.h>
 #include <asm/io.h>
 #include <asm/psci.h>
@@ -39,9 +43,11 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#ifdef CONFIG_ARM64
 static struct mm_region rbx_mem_map[CONFIG_NR_DRAM_BANKS + 2] = { { 0 } };
 
 struct mm_region *mem_map = rbx_mem_map;
+#endif
 
 static void show_psci_version(void)
 {
@@ -52,6 +58,20 @@ static void show_psci_version(void)
 	debug("PSCI:  v%ld.%ld\n",
 	      PSCI_VERSION_MAJOR(res.a0),
 	      PSCI_VERSION_MINOR(res.a0));
+}
+
+ulong get_tbclk(void)
+{
+	return 27000000;
+}
+
+ulong timer_read_counter(void)
+{
+	phys_addr_t timer_base = 0x0200a000;
+#define CPU_OFFSET 0x80000
+#define SOURCE_OFFSET 0x24
+#define TIMER_VAL 0x4
+	return readl(timer_base + CPU_OFFSET + SOURCE_OFFSET + TIMER_VAL);
 }
 
 /* We support booting U-Boot with an internal DT when running as a first-stage bootloader
@@ -73,7 +93,7 @@ void *board_fdt_blob_setup(int *err)
 	 * Bail out while we can still print a useful error message.
 	 */
 	if (!internal_valid && !external_valid)
-		panic("Internal FDT is invalid and no external FDT was provided! (fdt=%#llx)\n",
+		panic("Internal FDT is invalid and no external FDT was provided! (fdt=%#lx)\n",
 		      (phys_addr_t)fdt);
 
 	if (internal_valid) {
@@ -402,6 +422,7 @@ int board_late_init(void)
 	return 0;
 }
 
+#ifdef CONFIG_ARM64
 static void build_mem_map(void)
 {
 	int i, j;
@@ -438,6 +459,7 @@ static void build_mem_map(void)
 		      mem_map[i].phys, mem_map[i].phys + mem_map[i].size, i);
 #endif
 }
+#endif
 
 u64 get_page_table_size(void)
 {
@@ -504,6 +526,7 @@ static void carve_out_reserved_memory(void)
 	count = i;
 	qsort(res, count, sizeof(struct fdt_resource), fdt_cmp_res);
 
+#ifdef CONFIG_ARM64
 	/* Now set the right attributes for them. Often a lot of the regions are tightly packed together
 	 * so we can optimise the number of calls to mmu_change_region_attr() by combining adjacent
 	 * regions.
@@ -533,12 +556,14 @@ static void carve_out_reserved_memory(void)
 			size = ALIGN(res[i].end - start, SZ_2M);
 		}
 	}
+#endif
 }
 
 static void map_framebuffer(void)
 {
 	ofnode node;
-	phys_addr_t addr, size;
+	fdt_addr_t addr;
+	fdt_size_t size;
 
 	node = ofnode_path("/chosen/framebuffer");
 	if (!ofnode_valid(node))
@@ -556,8 +581,10 @@ static void map_framebuffer(void)
 	 */
 	size = ALIGN(size, SZ_2M);
 
+#ifdef CONFIG_ARM64
 	debug("Mapping framebuffer at 0x%llx size 0x%llx\n", addr, size);
 	mmu_map_region(addr, size, true);
+#endif
 }
 
 /* This function open-codes setup_all_pgtables() so that we can
@@ -570,6 +597,10 @@ void enable_caches(void)
 	u64 pt_size;
 	ulong carveout_start;
 
+#ifndef CONFIG_ARM64
+	dcache_enable();
+	return;
+#else
 	gd->arch.tlb_fillptr = tlb_addr;
 
 	build_mem_map();
@@ -602,4 +633,5 @@ void enable_caches(void)
 
 	/* Some boards don't include the splash region in the memory map... */
 	map_framebuffer();
+#endif
 }
