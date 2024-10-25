@@ -25,19 +25,19 @@
 			};
 		};
 
-		// optee {
-		// 	description = "OP-TEE";
-		// 	data = /incbin/("../../.output/bl32.bin");
-		// 	type = "kernel";
-		// 	arch = "arm";
-		// 	os = "arm-trusted-firmware";
-		// 	compression = "none";
-		// 	load = <0x1c00e000>;
-		// 	entry = <0x1c00e000>;
-		// 	hash-1 {
-		// 		algo = "sha256";
-		// 	};
-		// };
+		optee {
+			description = "OP-TEE";
+			data = /incbin/("../../.output/bl32.bin");
+			type = "tee";
+			arch = "arm";
+			os = "tee";
+			compression = "none";
+			load = <0x1c120000>;
+			entry = <0x1c120000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
 
 		/*
 		 * This image clobbers the U-Boot image loaded from the
@@ -46,6 +46,7 @@
 		uboot {
 			description = "U-Boot itself";
 			data = /incbin/("../../.output/u-boot-dtb.bin");
+			// data = /incbin/("/home/cas/git/hvisor/target/aarch64-unknown-none/debug/hvisor.bin");
 			type = "kernel";
 			arch = "arm";
 			os = "u-boot";
@@ -56,17 +57,64 @@
 				algo = "sha256";
 			};
 		};
+
+		linux {
+			description = "Linux kernel";
+			data = /incbin/("../../.output/vmlinuz.efi");
+			type = "kernel";
+			arch = "arm";
+			os = "efi";
+			compression = "none";
+			load = <0x80080000>;
+			entry = <0x80080000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
+
+		initramfs {
+			description = "pmOS Initramfs";
+			data = /incbin/("../../.output/initramfs");
+			type = "ramdisk";
+			arch = "arm";
+			compression = "none";
+			load = <0x100000000>;
+			entry = <0x100000000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		}
+
+		dtb {
+			description = "DTB";
+			// data = /incbin/("../../.output/u-boot-dtb.bin");
+			data = /incbin/("../../.output/dts/upstream/src/arm64/qcom/qcs6490-rb3gen2.dtb");
+			type = "flat_dt";
+			arch = "arm";
+			compression = "none";
+			load = <0x9ec00000>;
+			entry = <0x9ec00000>;
+			hash-1 {
+				algo = "sha256";
+			};
+		};
 	};
 
 	configurations {
-		default = "config-1";
+		default = "load-tfa";
 
-		config-1 {
+		load-tfa {
 			description = "Boot the thing";
 			kernel = "tfa";
 			// U-Boot brings its own FDT
 			// fdt = "fdt-1";
-			loadables = "uboot"; //, "optee";
+			loadables = "uboot", "optee", "dtb";
+		};
+
+		boot-linux {
+			description = "Boot Linux";
+			kernel = "linux";
+			loadables = "initramfs", "dtb";
 		};
 	};
 };

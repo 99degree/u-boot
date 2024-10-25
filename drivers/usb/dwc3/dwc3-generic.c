@@ -183,6 +183,8 @@ static int dwc3_generic_remove(struct udevice *dev,
 {
 	struct dwc3 *dwc3 = &priv->dwc3;
 
+	printf("%s!\n", __func__);
+
 	if (CONFIG_IS_ENABLED(DM_GPIO) &&
 	    device_is_compatible(dev->parent, "xlnx,zynqmp-dwc3") &&
 	    priv->ulpi_reset) {
@@ -263,6 +265,7 @@ U_BOOT_DRIVER(dwc3_generic_peripheral) = {
 	.remove = dwc3_generic_peripheral_remove,
 	.priv_auto	= sizeof(struct dwc3_generic_priv),
 	.plat_auto	= sizeof(struct dwc3_generic_plat),
+	.flags =  DM_FLAG_ACTIVE_DMA,
 };
 #endif
 
@@ -322,7 +325,7 @@ U_BOOT_DRIVER(dwc3_generic_host) = {
 	.priv_auto	= sizeof(struct dwc3_generic_host_priv),
 	.plat_auto	= sizeof(struct dwc3_generic_plat),
 	.ops = &xhci_usb_ops,
-	.flags = DM_FLAG_ALLOC_PRIV_DMA,
+	.flags = DM_FLAG_ALLOC_PRIV_DMA | DM_FLAG_ACTIVE_DMA,
 };
 #endif
 
@@ -780,5 +783,6 @@ U_BOOT_DRIVER(dwc3_generic_wrapper) = {
 	.probe = dwc3_glue_probe,
 	.remove = dwc3_glue_remove,
 	.plat_auto	= sizeof(struct dwc3_glue_data),
+	.flags = DM_FLAG_ACTIVE_DMA,
 
 };

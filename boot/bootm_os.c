@@ -4,6 +4,8 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#include <dm/device.h>
+#include <dm/root.h>
 #include <atf_common.h>
 #include <bootm.h>
 #include <bootstage.h>
@@ -431,7 +433,21 @@ static int do_bootm_atf(int flag, struct bootm_info *bmi)
 	if (node >= 0)
 		bl33_entry = fit_image_get_entry_or_load(blob, node);
 
-	debug("bl31_entry: 0x%lx, bl32_entry: 0x%lx, bl33_entry: 0x%lx\n",
+	printf("Removing devices and cleaning up...\n");
+
+	/*
+	 * Call remove function of all devices with a removal flag set.
+	 * This may be useful for last-stage operations, like cancelling
+	 * of DMA operation or releasing device internal buffers.
+	 */
+	dm_remove_devices_flags(DM_REMOVE_ACTIVE_ALL | DM_REMOVE_NON_VITAL);
+
+	/* Remove all active vital devices next */
+	dm_remove_devices_flags(DM_REMOVE_ACTIVE_ALL);
+
+	cleanup_before_linux();
+
+	printf("bl31_entry: 0x%lx, bl32_entry: 0x%lx, bl33_entry: 0x%lx\n",
 	       atf_addr, bl32_entry, bl33_entry);
 
 	bl31_entry(atf_addr, bl32_entry, bl33_entry, 0);
@@ -603,6 +619,8 @@ int boot_selected_os(int state, struct bootm_info *bmi, boot_os_fn *boot_fn)
 {
 	arch_preboot_os();
 	board_preboot_os();
+
+	printf("Booting OS\n");
 
 	boot_fn(state, bmi);
 

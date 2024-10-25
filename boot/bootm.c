@@ -4,6 +4,7 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#include <symbols.h>
 #ifndef USE_HOSTCC
 #include <bootm.h>
 #include <bootstage.h>
@@ -473,6 +474,8 @@ int bootm_find_images(ulong img_addr, const char *conf_ramdisk,
 	void *buf;
 	int ret;
 
+	printf("%s\n", __func__);
+
 	if (IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE)) {
 		/* Look for an Android boot image */
 		buf = map_sysmem(images.os.start, 0);
@@ -545,7 +548,7 @@ static int bootm_find_other(ulong img_addr, const char *conf_ramdisk,
 	     images.os.type == IH_TYPE_KERNEL_NOLOAD ||
 	     images.os.type == IH_TYPE_MULTI) &&
 	    (images.os.os == IH_OS_LINUX || images.os.os == IH_OS_VXWORKS ||
-	     images.os.os == IH_OS_EFI || images.os.os == IH_OS_TEE)) {
+	     images.os.os == IH_OS_EFI || images.os.os == IH_OS_TEE || images.os.os == IH_OS_ARM_TRUSTED_FIRMWARE)) {
 		return bootm_find_images(img_addr, conf_ramdisk, conf_fdt, 0,
 					 0);
 	}
@@ -967,6 +970,7 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	boot_os_fn *boot_fn;
 	ulong iflag = 0;
 	int ret = 0, need_boot_fn;
+	char boot_fn_name[KSYM_NAME_LEN];
 
 	images->state |= states;
 
@@ -1031,6 +1035,8 @@ int bootm_run_states(struct bootm_info *bmi, int states)
 	if (ret)
 		return ret;
 	boot_fn = bootm_os_get_boot_func(images->os.os);
+	symbols_lookup((phys_addr_t)boot_fn, NULL, NULL, boot_fn_name);
+	printf("got boot_fn %s for os %d\n", boot_fn_name, images->os.os);
 	need_boot_fn = states & (BOOTM_STATE_OS_CMDLINE |
 			BOOTM_STATE_OS_BD_T | BOOTM_STATE_OS_PREP |
 			BOOTM_STATE_OS_FAKE_GO | BOOTM_STATE_OS_GO);

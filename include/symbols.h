@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0+ */
 
+#include <linux/kconfig.h>
 #include <string.h>
 #include <asm/types.h>
 

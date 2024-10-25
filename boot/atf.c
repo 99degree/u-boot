@@ -148,7 +148,7 @@ struct bl_params *bl2_plat_get_bl31_params_v2_default(uintptr_t bl32_entry,
 	bl_params_node->ep_info->args.arg3 = fdt_addr;
 	bl_params_node->ep_info->pc = bl32_entry ? bl32_entry : 0;
 	bl_params_node->ep_info->spsr = SPSR_64(MODE_EL1, MODE_SP_ELX,
-						DISABLE_ALL_EXECPTIONS);
+						0);
 	SET_PARAM_HEAD(bl_params_node->image_info, ATF_PARAM_IMAGE_BINARY,
 		       ATF_VERSION_2, 0);
 

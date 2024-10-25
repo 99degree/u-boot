@@ -8,6 +8,7 @@
  * Wolfgang Denk, DENX Software Engineering, wd@denx.de.
  */
 
+#define LOG_DEBUG
 #include <config.h>
 #include <bootstage.h>
 #include <cpu_func.h>
@@ -754,6 +755,7 @@ int boot_get_loadable(struct bootm_headers *images)
 	 * Check image type. For FIT images get FIT node
 	 * and attempt to locate a generic binary.
 	 */
+	printf("image format: %u\n", genimg_get_format(buf));
 	switch (genimg_get_format(buf)) {
 	case IMAGE_FORMAT_FIT:
 		conf_noffset = fit_conf_get_node(buf, images->fit_uname_cfg);
@@ -776,6 +778,18 @@ int boot_get_loadable(struct bootm_headers *images)
 				return fit_img_result;
 			}
 
+
+
+
+// Why my loadabled not getting loaded?!!! grrrr
+
+
+
+
+
+
+			printf("   Loading Loadable: %s addr %#lx\n", uname, img_data);
+
 			fit_img_result = fit_image_get_node(buf, uname);
 			if (fit_img_result < 0) {
 				/* Something went wrong! */
@@ -796,6 +810,8 @@ int boot_get_loadable(struct bootm_headers *images)
 		printf("The given image format is not supported (corrupt?)\n");
 		return 1;
 	}
+
+	printf("%s done\n", __func__);
 
 	return 0;
 }
