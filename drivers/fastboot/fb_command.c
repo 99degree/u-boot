@@ -323,6 +323,8 @@ void fastboot_data_complete(char *response)
 	env_set_hex("filesize", image_size);
 	fastboot_bytes_expected = 0;
 	fastboot_bytes_received = 0;
+
+	fastboot_boot();
 }
 
 /**
