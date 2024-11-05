@@ -127,25 +127,36 @@
 			no-map;
 		};
 
-		tz_stat_mem: tz-stat@c0000000 {
-			reg = <0x0 0xc0000000 0x0 0x100000>;
+		// tz_stat_mem: tz-stat@c0000000 {
+		// 	reg = <0x0 0xc0000000 0x0 0x100000>;
+		// 	no-map;
+		// };
+
+		// tags_mem: tags@c0100000 {
+		// 	reg = <0x0 0xc0100000 0x0 0x1200000>;
+		// 	no-map;
+		// };
+
+		/* OP-TEE and TF-A live here */
+		pimem: pimem@1c000000 {
+			reg = <0x0 0x1c000000 0x0 0x4000000>;
 			no-map;
 		};
 
-		tags_mem: tags@c0100000 {
-			reg = <0x0 0xc0100000 0x0 0x1200000>;
+		optee_mem: optee@c0000000 {
+			reg = <0x0 0xc0000000 0x0 0x400000>;
 			no-map;
 		};
 
-		qtee_mem: qtee@c1300000 {
-			reg = <0x0 0xc1300000 0x0 0x500000>;
-			no-map;
-		};
+		// qtee_mem: qtee@c1300000 {
+		// 	reg = <0x0 0xc1300000 0x0 0x500000>;
+		// 	no-map;
+		// };
 
-		trusted_apps_mem: trusted-apps@c1800000 {
-			reg = <0x0 0xc1800000 0x0 0x1c00000>;
-			no-map;
-		};
+		// trusted_apps_mem: trusted-apps@c1800000 {
+		// 	reg = <0x0 0xc1800000 0x0 0x1c00000>;
+		// 	no-map;
+		// };
 
 		debug_vm_mem: debug-vm@d0600000 {
 			reg = <0x0 0xd0600000 0x0 0x100000>;
