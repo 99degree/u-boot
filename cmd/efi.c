@@ -221,7 +221,7 @@ static int do_efi_mem(struct cmd_tbl *cmdtp, int flag, int argc,
 		      char *const argv[])
 {
 	struct efi_mem_desc *orig, *desc;
-	uint version, key;
+	uint version, key = 0;
 	int desc_size;
 	int size, ret;
 	bool skip_bs;
