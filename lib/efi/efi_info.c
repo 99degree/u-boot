@@ -10,6 +10,8 @@
 #include <mapmem.h>
 #include <asm/global_data.h>
 
+DECLARE_GLOBAL_DATA_PTR;
+
 int efi_info_get(enum efi_entry_t type, void **datap, int *sizep)
 {
 	struct efi_entry_hdr *entry;
@@ -42,5 +44,5 @@ int efi_info_get(enum efi_entry_t type, void **datap, int *sizep)
 err:
 	unmap_sysmem(info);
 
-	return ret;
+	return -ENOSYS;
 }

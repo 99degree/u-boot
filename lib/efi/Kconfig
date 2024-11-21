@@ -1,9 +1,9 @@
 menu "U-Boot as UEFI application"
-	depends on X86
+	depends on X86 || ARM
 
 config EFI
 	bool "Support running U-Boot from EFI"
-	depends on X86
+	depends on X86 || ARM
 	imply X86_TSC_READ_BASE
 	help
 	  U-Boot can be started from EFI on certain platforms. This allows
@@ -13,10 +13,11 @@ config EFI
 
 choice
 	prompt "Select EFI mode to use"
-	depends on X86 && EFI
+	depends on EFI
 
 config EFI_APP
 	bool "Support running as an EFI application"
+	depends on !ARM
 	select CHARSET
 	help
 	  Build U-Boot as an application which can be started from EFI. This
@@ -26,6 +27,7 @@ config EFI_APP
 	  to EFI.
 
 config EFI_STUB
+	select POSITION_INDEPENDENT if ARM
 	bool "Support running as an EFI payload"
 
 endchoice
@@ -59,6 +61,7 @@ choice
 	  this may produce no error message - it just won't start!
 
 config EFI_STUB_32BIT
+	depends on !ARM
 	bool "Produce a stub for running with 32-bit EFI"
 
 config EFI_STUB_64BIT

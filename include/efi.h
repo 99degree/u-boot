@@ -497,7 +497,7 @@ struct efi_media_plat {
 extern char image_base[];
 
 /* Start and end of U-Boot image (for payload) */
-extern char _binary_u_boot_bin_start[], _binary_u_boot_bin_end[];
+extern char _binary_u_boot_bin_start[], _binary_u_boot_bin_end[], _binary_u_boot_bin_size[];
 
 /*
  * Variable Attributes

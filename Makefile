@@ -1682,19 +1682,30 @@ u-boot.bin.o: u-boot.bin FORCE
 u-boot-payload.lds: $(LDSCRIPT_EFI) FORCE
 	$(call if_changed_dep,cpp_lds)
 
+# Determine the file suffix for the efi stub implementation
+EFI_STUB_ARCH := $(if $(CONFIG_ARM64),arm64,$(if $(CONFIG_X86_64),x86,$(ARCH)))
+
 # Rule to link the EFI payload which contains a stub and a U-Boot binary
 quiet_cmd_u-boot_payload ?= LD      $@
       cmd_u-boot_payload ?= $(LD) $(LDFLAGS_EFI_PAYLOAD) -o $@ \
-      -T u-boot-payload.lds arch/x86/cpu/call32.o \
-      lib/efi/efi.o lib/efi/efi_stub.o u-boot.bin.o \
+      -T u-boot-payload.lds $(if $(CONFIG_X86),arch/x86/cpu/call32.o,) \
+      lib/efi/efi.o lib/efi/efi_stub_$(EFI_STUB_ARCH).o u-boot.bin.o \
       $(addprefix arch/$(ARCH)/lib/,$(EFISTUB))
+
+quiet_cmd_u-boot_payload_arm64.efi ?= OBJCOPY $@
+      cmd_u-boot_payload_arm64.efi ?= $(OBJCOPY) -O binary u-boot-payload $@
 
 u-boot-payload: u-boot.bin.o u-boot-payload.lds FORCE
 	$(call if_changed,u-boot_payload)
 
 OBJCOPYFLAGS_u-boot-payload.efi := $(OBJCOPYFLAGS_EFI)
+ifeq ($(CONFIG_X86),y)
 u-boot-payload.efi: u-boot-payload FORCE
 	$(call if_changed,zobjcopy)
+else
+u-boot-payload.efi: u-boot-payload FORCE
+	$(call if_changed,u-boot_payload_$(EFI_STUB_ARCH).efi)
+endif
 
 u-boot-img.bin: spl/u-boot-spl.bin u-boot.img FORCE
 	$(call if_changed,cat)
