@@ -18,7 +18,7 @@
  * In case of the EFI app the UEFI firmware provides the low-level
  * initialisation.
  */
-#ifdef CONFIG_EFI
+#if defined(CONFIG_EFI) && defined(CONFIG_X86)
 #define ll_boot_init()	false
 #else
 #include <asm/global_data.h>

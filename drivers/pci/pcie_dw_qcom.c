@@ -555,6 +555,7 @@ static const struct udevice_id qcom_pcie_ids[] = {
 	{ .compatible = "qcom,pcie-sm8450-pcie0", .data = (ulong)&ops_1_9_0 },
 	{ .compatible = "qcom,pcie-sm8450-pcie1", .data = (ulong)&ops_1_9_0 },
 	{ .compatible = "qcom,pcie-sm8550", .data = (ulong)&ops_1_9_0 },
+	{ .compatible = "qcom,pcie-x1e80100", .data = (ulong)&ops_1_9_0 },
 	{ }
 };
 
