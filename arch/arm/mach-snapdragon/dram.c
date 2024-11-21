@@ -8,6 +8,7 @@
 
 #include <asm-generic/unaligned.h>
 #include <dm.h>
+#include <efi_stub.h>
 #include <log.h>
 #include <sort.h>
 #include <soc/qcom/smem.h>
@@ -22,6 +23,7 @@ static struct {
 	phys_addr_t start;
 	phys_size_t size;
 } prevbl_ddr_banks[CONFIG_NR_DRAM_BANKS] __section(".data") = { 0 };
+extern struct efi_info_hdr *efi_info;
 
 struct smem_ram_ptable_hdr {
 	u32 magic[2];
@@ -90,7 +92,17 @@ static void qcom_configure_bi_dram(void)
 
 int dram_init_banksize(void)
 {
-	qcom_configure_bi_dram();
+#ifdef CONFIG_EFI_STUB
+	gd->arch.table = (phys_addr_t)efi_info;
+	/* We actually parsed a memory map from SMEM (and used it to
+	 * set ram_base/ram_top), but it's better to respect the table
+	 * from the EFI bootloader.
+	 */
+	if (efi_info)
+		dram_init_banksize_from_efi();
+	else
+#endif
+		qcom_configure_bi_dram();
 
 	return 0;
 }

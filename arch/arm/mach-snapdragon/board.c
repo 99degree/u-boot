@@ -42,6 +42,8 @@ static struct mm_region rbx_mem_map[CONFIG_NR_DRAM_BANKS + 2] = { { 0 } };
 
 struct mm_region *mem_map = rbx_mem_map;
 
+struct efi_info_hdr *efi_info __section(".data") = NULL;
+
 static void show_psci_version(void)
 {
 	struct arm_smccc_res res;
@@ -60,12 +62,25 @@ static void show_psci_version(void)
 void *board_fdt_blob_setup(int *err)
 {
 	struct fdt_header *fdt;
+	struct efi_info_hdr *info = NULL;
 	bool internal_valid, external_valid;
 
 	*err = 0;
 	fdt = (struct fdt_header *)get_prev_bl_fdt_addr();
 	external_valid = fdt && !fdt_check_header(fdt);
 	internal_valid = !fdt_check_header(gd->fdt_blob);
+
+	/*
+	 * If EFI_STUB is enabled, we got handed a pointer and it's NOT
+	 * a valid FDT, then it might be the efi_info table!
+	 */
+	if (CONFIG_IS_ENABLED(EFI_STUB) && fdt && !external_valid)
+		info = (struct efi_info_hdr *)fdt;
+
+	if (info->version == 1) {
+		debug("Got EFI info header!\n");
+		efi_info = info;
+	}
 
 	/*
 	 * There is no point returning an error here, U-Boot can't do anything useful in this situation.
