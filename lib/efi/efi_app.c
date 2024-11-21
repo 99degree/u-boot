@@ -13,6 +13,7 @@
 #include <dm.h>
 #include <efi.h>
 #include <efi_api.h>
+#include <efi_stub.h>
 #include <errno.h>
 #include <init.h>
 #include <malloc.h>

@@ -6,6 +6,7 @@
  */
 
 #include <efi.h>
+#include <efi_stub.h>
 #include <errno.h>
 #include <mapmem.h>
 #include <asm/global_data.h>

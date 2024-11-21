@@ -7,6 +7,7 @@
 #include <cpu_func.h>
 #include <efi.h>
 #include <efi_api.h>
+#include <efi_stub.h>
 #include <errno.h>
 #include <event.h>
 #include <init.h>

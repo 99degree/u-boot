@@ -9,6 +9,7 @@
 
 #include <dm.h>
 #include <efi_api.h>
+#include <efi_stub.h>
 #include <log.h>
 #include <vesa.h>
 #include <video.h>

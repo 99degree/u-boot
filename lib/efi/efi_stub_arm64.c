@@ -12,6 +12,7 @@
 #include <debug_uart.h>
 #include <efi.h>
 #include <efi_api.h>
+#include <efi_stub.h>
 #include <malloc.h>
 #include <asm/io.h>
 #include <linux/err.h>
