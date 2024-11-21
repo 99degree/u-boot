@@ -101,36 +101,7 @@ int dram_init(void)
 
 int dram_init_banksize(void)
 {
-	struct efi_mem_desc *desc, *end;
-	struct efi_entry_memmap *map;
-	int ret, size;
-	int num_banks;
-
-	ret = efi_info_get(EFIET_MEMORY_MAP, (void **)&map, &size);
-	if (ret) {
-		/* We should have stopped in dram_init(), something is wrong */
-		debug("%s: Missing memory map\n", __func__);
-		return -ENXIO;
-	}
-	end = (struct efi_mem_desc *)((ulong)map + size);
-	desc = map->desc;
-	for (num_banks = 0;
-	     desc < end && num_banks < CONFIG_NR_DRAM_BANKS;
-	     desc = efi_get_next_mem_desc(desc, map->desc_size)) {
-		/*
-		 * We only use conventional memory and ignore
-		 * anything less than 1MB.
-		 */
-		if (desc->type != EFI_CONVENTIONAL_MEMORY ||
-		    (desc->num_pages << EFI_PAGE_SHIFT) < 1 << 20)
-			continue;
-		gd->bd->bi_dram[num_banks].start = desc->physical_start;
-		gd->bd->bi_dram[num_banks].size = desc->num_pages <<
-			EFI_PAGE_SHIFT;
-		num_banks++;
-	}
-
-	return 0;
+	return dram_init_banksize_from_efi();
 }
 
 int arch_cpu_init(void)
