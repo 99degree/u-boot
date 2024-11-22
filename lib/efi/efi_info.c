@@ -121,6 +121,27 @@ int of_populate_from_efi(struct device_node *root)
 	return ret;
 }
 
+static bool efi_mem_type_is_usable(u32 type)
+{
+	switch (type) {
+	case EFI_CONVENTIONAL_MEMORY:
+	case EFI_LOADER_DATA:
+	case EFI_LOADER_CODE:
+	case EFI_BOOT_SERVICES_CODE:
+		return true;
+	case EFI_RESERVED_MEMORY_TYPE:
+	case EFI_UNUSABLE_MEMORY:
+	case EFI_UNACCEPTED_MEMORY_TYPE:
+	/* TBD: U-Boot doesn't use EFI runtime services yet(?). Maybe we can re-use this */
+	case EFI_RUNTIME_SERVICES_DATA:
+	case EFI_MMAP_IO:
+	case EFI_MMAP_IO_PORT:
+	case EFI_PERSISTENT_MEMORY_TYPE:
+	default:
+		return false;
+	}
+}
+
 int dram_init_banksize_from_efi(void)
 {
 	struct efi_mem_desc *desc, *end;
@@ -143,8 +164,7 @@ int dram_init_banksize_from_efi(void)
 		 * We only use conventional memory and ignore
 		 * anything less than 1MB.
 		 */
-		if (desc->type != EFI_CONVENTIONAL_MEMORY ||
-		    (desc->num_pages << EFI_PAGE_SHIFT) < 1 << 20)
+		if (!efi_mem_type_is_usable(desc->type) || (desc->num_pages << EFI_PAGE_SHIFT) < 1 << 20)
 			continue;
 		gd->bd->bi_dram[num_banks].start = desc->physical_start;
 		gd->bd->bi_dram[num_banks].size = desc->num_pages <<
