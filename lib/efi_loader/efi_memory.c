@@ -8,6 +8,7 @@
 #define LOG_CATEGORY LOGC_EFI
 
 #include <efi_loader.h>
+#include <efi_stub.h>
 #include <init.h>
 #include <lmb.h>
 #include <log.h>
@@ -834,6 +835,10 @@ static void add_u_boot_and_runtime(void)
 int efi_memory_init(void)
 {
 	efi_add_known_memory();
+
+#ifdef CONFIG_EFI_STUB
+	efi_add_known_memory_from_efi();
+#endif
 
 	add_u_boot_and_runtime();
 

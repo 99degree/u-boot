@@ -58,4 +58,11 @@ int of_populate_from_efi(struct device_node *root);
  */
 int dram_init_banksize_from_efi(void);
 
+/**
+ * efi_add_known_memory_from_efi() - Add known memory pages from the memory map
+ * of the EFI bootloader that booted U-Boot. This is only applicable when running
+ * U-Boot as an EFI payload with CONFIG_EFI_STUB enabled.
+ */
+void efi_add_known_memory_from_efi(void);
+
 #endif /* _EFI_STUB_H */

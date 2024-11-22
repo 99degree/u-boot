@@ -6,6 +6,7 @@
  */
 
 #include <efi.h>
+#include <efi_loader.h>
 #include <efi_stub.h>
 #include <errno.h>
 #include <mapmem.h>
@@ -177,4 +178,34 @@ int dram_init_banksize_from_efi(void)
 	}
 
 	return 0;
+}
+
+/* Called by U-Boot's EFI subsystem to add known memory. In our case
+ * we need to add some specific memory types from the original bootloaders
+ * EFI memory map
+ */
+void efi_add_known_memory_from_efi(void)
+{
+	struct efi_mem_desc *desc, *end;
+	struct efi_entry_memmap *map;
+	int ret, size;
+
+	EFI_PRINT("Adding known memory from previous stage EFI bootloader\n");
+
+	ret = efi_info_get(EFIET_MEMORY_MAP, (void **)&map, &size);
+	if (ret) {
+		EFI_PRINT("%s: Missing memory map\n", __func__);
+		return;
+	}
+	end = (struct efi_mem_desc *)((ulong)map + size);
+
+	for (desc = map->desc; desc < end; desc = efi_get_next_mem_desc(desc, map->desc_size)) {
+		switch (desc->type) {
+		case EFI_RESERVED_MEMORY_TYPE:
+			efi_add_memory_map_pg(desc->physical_start, desc->num_pages, desc->type, false);
+			break; /* Breaks the switch/case not the for loop */
+		default:
+			continue;
+		}
+	}
 }
