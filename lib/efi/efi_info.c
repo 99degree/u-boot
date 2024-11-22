@@ -146,7 +146,7 @@ int dram_init_banksize_from_efi(void)
 {
 	struct efi_mem_desc *desc, *end;
 	struct efi_entry_memmap *map;
-	int ret, size;
+	int ret, size, bank = 0;
 	int num_banks;
 
 	ret = efi_info_get(EFIET_MEMORY_MAP, (void **)&map, &size);
@@ -164,6 +164,10 @@ int dram_init_banksize_from_efi(void)
 		 * We only use conventional memory and ignore
 		 * anything less than 1MB.
 		 */
+		log_debug("EFI bank #%d: start %llx, size %llx type %u\n",
+			bank, desc->physical_start,
+			desc->num_pages << EFI_PAGE_SHIFT, desc->type);
+		bank++;
 		if (!efi_mem_type_is_usable(desc->type) || (desc->num_pages << EFI_PAGE_SHIFT) < 1 << 20)
 			continue;
 		gd->bd->bi_dram[num_banks].start = desc->physical_start;
