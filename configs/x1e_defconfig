@@ -1,8 +1,5 @@
 #include "qcom_defconfig"
 
-# Broken?? Probably an issue with mapping the memory
-CONFIG_QCOM_COMMAND_DB=n
-
 CONFIG_EFI=y
 CONFIG_EFI_STUB=y
 CONFIG_EFI_STUB_64BIT=y
