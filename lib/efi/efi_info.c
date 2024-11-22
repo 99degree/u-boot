@@ -92,7 +92,6 @@ static int of_populate_framebuffer(struct device_node *root)
 	 */
 	of_write_prop(chosen, "ranges", 0, (void *)FDT_ADDR_T_NONE);
 
-	printf("chosen ofnode_read_bool ranges: %d\n", ofnode_read_bool(node, "ranges"));
 	snprintf(fb_node_name, sizeof(fb_node_name), "framebuffer@%llx", mode->fb_base);
 	ret = of_add_subnode(chosen, fb_node_name, -1, &fb);
 	if (ret) {
