@@ -152,6 +152,11 @@
 			reg = <0x0 0xd0600000 0x0 0x100000>;
 			no-map;
 		};
+
+		optee_mem: optee@c0000000 {
+			reg = <0x0 0xc0000000 0x0 0x100000>;
+			no-map;
+		};
 	};
 
 	gpio-keys {
