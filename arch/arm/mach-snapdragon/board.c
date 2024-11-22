@@ -7,7 +7,8 @@
  */
 
 #define LOG_CATEGORY LOGC_BOARD
-#define pr_fmt(fmt) "Snapdragon: " fmt
+#define pr_fmt(fmt) "QCOM: " fmt
+#define LOG_DEBUG
 
 #include <atf_common.h>
 #include <asm/armv8/mmu.h>
@@ -586,7 +587,6 @@ static void map_framebuffer(void)
 void enable_caches(void)
 {
 	u64 tlb_addr = gd->arch.tlb_addr;
-	u64 tlb_size = gd->arch.tlb_size;
 	u64 pt_size;
 	ulong carveout_start;
 
@@ -596,20 +596,25 @@ void enable_caches(void)
 
 	icache_enable();
 
-	/* Create normal system page tables */
+	/* Create emergency pagetable first */
 	setup_pgtables();
+	gd->arch.tlb_emerg = gd->arch.tlb_addr;
 
 	pt_size = (uintptr_t)gd->arch.tlb_fillptr -
 		  (uintptr_t)gd->arch.tlb_addr;
 	debug("Primary pagetable size: %lluKiB\n", pt_size / 1024);
 
-	/* Create emergency page tables */
+	/*
+	 * Create normal system pagetables afterwards so
+	 * we have space for dynamic mappings
+	 */
 	gd->arch.tlb_size -= pt_size;
 	gd->arch.tlb_addr = gd->arch.tlb_fillptr;
 	setup_pgtables();
-	gd->arch.tlb_emerg = gd->arch.tlb_addr;
-	gd->arch.tlb_addr = tlb_addr;
-	gd->arch.tlb_size = tlb_size;
+
+	pt_size += (uintptr_t)gd->arch.tlb_fillptr -
+		   (uintptr_t)gd->arch.tlb_addr;
+	debug("Space left for dynamic mappings: %lluKiB\n", PGTABLE_SIZE / 1024 - pt_size / 1024);
 
 	/*
 	 * There is some kind of issue with dcache when running
