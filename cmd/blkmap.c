@@ -4,6 +4,8 @@
  * Author: Tobias Waldekranz <tobias@waldekranz.com>
  */
 
+#include "bootstage.h"
+#include "image.h"
 #include <blk.h>
 #include <blkmap.h>
 #include <command.h>
@@ -116,6 +118,45 @@ static int do_blkmap_map(struct cmd_tbl *cmdtp, int flag,
 	return CMD_RET_USAGE;
 }
 
+static int do_blkmap_map_fit(struct cmd_tbl *cmdtp, int flag,
+			 int argc, char *const argv[])
+{
+	struct map_ctx ctx;
+	char *endp;
+	const char *image_name = "esp", *config_name = "mount-esp";
+	phys_addr_t addr = hextoul(argv[1], &endp);
+	struct bootm_headers images;
+	ulong loadaddr;
+	size_t len;
+	int ret;
+	char map_args[2][32] = { {"mem"}, { 0 } };
+
+	if (argc < 1)
+		return CMD_RET_USAGE;
+
+	printf("Creating blkmap %s\n", argv[1]);
+	ret = blkmap_create(argv[1], NULL);
+	if (ret) {
+		printf("Unable to create \"%s\": %d\n", argv[1], ret);
+		return CMD_RET_FAILURE;
+	}
+
+	ret = fit_image_load(&images, addr, &image_name, &config_name,
+		       IH_TYPE_LOADABLE, 0, BOOTSTAGE_ID_FIT_LOADABLE_START,
+		       FIT_LOAD_REQUIRED, &loadaddr, &len);
+	if (ret) {
+		printf("Unable to load FIT image at %#llx#%s: %d\n", (unsigned long long)addr, endp, ret);
+		return CMD_RET_FAILURE;
+	}
+
+	ctx.blknr = 0;
+	ctx.blkcnt = (len + 512) / 512;
+	snprintf(&map_args[1][0], sizeof(map_args[1]), "%lx", loadaddr);
+
+	printf("blkmap_map_mem: %lx %lx %s\n", ctx.blknr, ctx.blkcnt, map_args[1]);
+	return do_blkmap_map_mem(&ctx, argc, argv);
+}
+
 static int do_blkmap_create(struct cmd_tbl *cmdtp, int flag,
 			    int argc, char *const argv[])
 {
@@ -221,7 +262,8 @@ U_BOOT_CMD_WITH_SUBCMDS(
 	"blkmap create <label> - create device\n"
 	"blkmap destroy <label> - destroy device\n"
 	"blkmap map <label> <blk#> <cnt> linear <interface> <dev> <blk#> - device mapping\n"
-	"blkmap map <label> <blk#> <cnt> mem <addr> - memory mapping\n",
+	"blkmap map <label> <blk#> <cnt> mem <addr> - memory mapping\n"
+	"blkmap map-fit addr#image - memory mapping\n",
 	U_BOOT_SUBCMD_MKENT(info, 2, 1, do_blkmap_common),
 	U_BOOT_SUBCMD_MKENT(part, 2, 1, do_blkmap_common),
 	U_BOOT_SUBCMD_MKENT(dev, 4, 1, do_blkmap_common),
@@ -230,4 +272,5 @@ U_BOOT_CMD_WITH_SUBCMDS(
 	U_BOOT_SUBCMD_MKENT(get, 5, 1, do_blkmap_get),
 	U_BOOT_SUBCMD_MKENT(create, 2, 1, do_blkmap_create),
 	U_BOOT_SUBCMD_MKENT(destroy, 2, 1, do_blkmap_destroy),
-	U_BOOT_SUBCMD_MKENT(map, 32, 1, do_blkmap_map));
+	U_BOOT_SUBCMD_MKENT(map, 32, 1, do_blkmap_map),
+	U_BOOT_SUBCMD_MKENT(map-fit, 32, 1, do_blkmap_map_fit));
