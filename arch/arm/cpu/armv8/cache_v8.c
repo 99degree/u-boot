@@ -339,7 +339,7 @@ static void map_range(u64 virt, u64 phys, u64 size, int level,
 	}
 }
 
-void mmu_map_region(phys_addr_t addr, u64 size, bool emergency)
+void mmu_map_region(phys_addr_t addr, u64 size)
 {
 	u64 va_bits;
 	int level = 0;
@@ -351,17 +351,10 @@ void mmu_map_region(phys_addr_t addr, u64 size, bool emergency)
 	if (va_bits < 39)
 		level = 1;
 
-	if (emergency)
-		map_range(addr, addr, size, level,
-			  (u64 *)gd->arch.tlb_emerg, attrs);
-
-	/* Switch pagetables while we update the primary one */
-	__asm_switch_ttbr(gd->arch.tlb_emerg);
-
 	map_range(addr, addr, size, level,
 		  (u64 *)gd->arch.tlb_addr, attrs);
 
-	__asm_switch_ttbr(gd->arch.tlb_addr);
+	flush_dcache_range(gd->arch.tlb_addr, gd->arch.tlb_size);
 }
 
 static void add_map(struct mm_region *map)

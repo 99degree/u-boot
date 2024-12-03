@@ -284,9 +284,8 @@ void flush_l3_cache(void);
  *
  * @start: Start address of the region
  * @size: Size of the region
- * @emerg: Also map the region in the emergency table
  */
-void mmu_map_region(phys_addr_t start, u64 size, bool emerg);
+void mmu_map_region(phys_addr_t start, u64 size);
 void mmu_change_region_attr(phys_addr_t start, size_t size, u64 attrs);
 
 /*
