@@ -6,6 +6,7 @@
 
 #define pr_fmt(fmt) "smem: " fmt
 
+#include <asm/system.h>
 #include <dm/device.h>
 #include <dm/device_compat.h>
 #include <dm/ofnode.h>
@@ -88,6 +89,9 @@
 
 /* Max number of processors/hosts in a system */
 #define SMEM_HOST_COUNT		20
+
+/* For simplicitly we only support the case with 1 region */
+#define SMEM_MAX_REGIONS 1
 
 /**
   * struct smem_proc_comm - proc_comm communication struct (legacy)
@@ -277,8 +281,8 @@ struct qcom_smem {
 	struct smem_partition global_partition;
 	struct smem_partition partitions[SMEM_HOST_COUNT];
 
-	unsigned num_regions;
-	struct smem_region regions[];
+	unsigned num_regions; /* Always 1 for now */
+	struct smem_region regions[SMEM_MAX_REGIONS];
 };
 
 static void *
@@ -347,7 +351,7 @@ static void *cached_entry_to_item(struct smem_private_entry *e)
 }
 
 /* Pointer to the one and only smem handle */
-static struct qcom_smem *__smem __section(".data");
+static struct qcom_smem __smem __section(".data") = { 0 };
 
 /**
  * qcom_smem_is_available() - Check if SMEM is available
@@ -356,7 +360,7 @@ static struct qcom_smem *__smem __section(".data");
  */
 bool qcom_smem_is_available(void)
 {
-	return !!__smem;
+	return !!__smem.num_regions;
 }
 EXPORT_SYMBOL_GPL(qcom_smem_is_available);
 
@@ -469,7 +473,7 @@ int qcom_smem_alloc(unsigned host, unsigned item, size_t size)
 	struct smem_partition *part;
 	int ret;
 
-	if (!__smem)
+	if (!qcom_smem_is_available())
 		return -EPROBE_DEFER;
 
 	if (item < SMEM_ITEM_LAST_FIXED) {
@@ -477,17 +481,17 @@ int qcom_smem_alloc(unsigned host, unsigned item, size_t size)
 		return -EINVAL;
 	}
 
-	if (WARN_ON(item >= __smem->item_count))
+	if (WARN_ON(item >= __smem.item_count))
 		return -EINVAL;
 
-	if (host < SMEM_HOST_COUNT && __smem->partitions[host].virt_base) {
-		part = &__smem->partitions[host];
-		ret = qcom_smem_alloc_private(__smem, part, item, size);
-	} else if (__smem->global_partition.virt_base) {
-		part = &__smem->global_partition;
-		ret = qcom_smem_alloc_private(__smem, part, item, size);
+	if (host < SMEM_HOST_COUNT && __smem.partitions[host].virt_base) {
+		part = &__smem.partitions[host];
+		ret = qcom_smem_alloc_private(&__smem, part, item, size);
+	} else if (__smem.global_partition.virt_base) {
+		part = &__smem.global_partition;
+		ret = qcom_smem_alloc_private(&__smem, part, item, size);
 	} else {
-		ret = qcom_smem_alloc_global(__smem, item, size);
+		ret = qcom_smem_alloc_global(&__smem, item, size);
 	}
 
 	return ret;
@@ -637,20 +641,20 @@ void *qcom_smem_get(unsigned host, unsigned item, size_t *size)
 	struct smem_partition *part;
 	void *ptr = ERR_PTR(-EPROBE_DEFER);
 
-	if (!__smem)
+	if (!qcom_smem_is_available())
 		return ptr;
 
-	if (WARN_ON(item >= __smem->item_count))
+	if (WARN_ON(item >= __smem.item_count))
 		return ERR_PTR(-EINVAL);
 
-	if (host < SMEM_HOST_COUNT && __smem->partitions[host].virt_base) {
-		part = &__smem->partitions[host];
-		ptr = qcom_smem_get_private(__smem, part, item, size);
-	} else if (__smem->global_partition.virt_base) {
-		part = &__smem->global_partition;
-		ptr = qcom_smem_get_private(__smem, part, item, size);
+	if (host < SMEM_HOST_COUNT && __smem.partitions[host].virt_base) {
+		part = &__smem.partitions[host];
+		ptr = qcom_smem_get_private(&__smem, part, item, size);
+	} else if (__smem.global_partition.virt_base) {
+		part = &__smem.global_partition;
+		ptr = qcom_smem_get_private(&__smem, part, item, size);
 	} else {
-		ptr = qcom_smem_get_global(__smem, item, size);
+		ptr = qcom_smem_get_global(&__smem, item, size);
 	}
 
 	return ptr;
@@ -671,19 +675,19 @@ int qcom_smem_get_free_space(unsigned host)
 	struct smem_header *header;
 	unsigned ret;
 
-	if (!__smem)
+	if (!qcom_smem_is_available())
 		return -EPROBE_DEFER;
 
-	if (host < SMEM_HOST_COUNT && __smem->partitions[host].virt_base) {
-		part = &__smem->partitions[host];
+	if (host < SMEM_HOST_COUNT && __smem.partitions[host].virt_base) {
+		part = &__smem.partitions[host];
 		phdr = part->virt_base;
 		ret = le32_to_cpu(phdr->offset_free_cached) -
 		      le32_to_cpu(phdr->offset_free_uncached);
 
 		if (ret > le32_to_cpu(part->size))
 			return -EINVAL;
-	} else if (__smem->global_partition.virt_base) {
-		part = &__smem->global_partition;
+	} else if (__smem.global_partition.virt_base) {
+		part = &__smem.global_partition;
 		phdr = part->virt_base;
 		ret = le32_to_cpu(phdr->offset_free_cached) -
 		      le32_to_cpu(phdr->offset_free_uncached);
@@ -691,10 +695,10 @@ int qcom_smem_get_free_space(unsigned host)
 		if (ret > le32_to_cpu(part->size))
 			return -EINVAL;
 	} else {
-		header = __smem->regions[0].virt_base;
+		header = __smem.regions[0].virt_base;
 		ret = le32_to_cpu(header->available);
 
-		if (ret > __smem->regions[0].size)
+		if (ret > __smem.regions[0].size)
 			return -EINVAL;
 	}
 
@@ -722,7 +726,7 @@ phys_addr_t qcom_smem_virt_to_phys(void *p)
 	u32 i;
 
 	for (i = 0; i < SMEM_HOST_COUNT; i++) {
-		part = &__smem->partitions[i];
+		part = &__smem.partitions[i];
 
 		if (addr_in_range(part->virt_base, part->size, p)) {
 			offset = p - part->virt_base;
@@ -731,7 +735,7 @@ phys_addr_t qcom_smem_virt_to_phys(void *p)
 		}
 	}
 
-	part = &__smem->global_partition;
+	part = &__smem.global_partition;
 
 	if (addr_in_range(part->virt_base, part->size, p)) {
 		offset = p - part->virt_base;
@@ -739,8 +743,8 @@ phys_addr_t qcom_smem_virt_to_phys(void *p)
 		return (phys_addr_t)part->phys_base + offset;
 	}
 
-	for (i = 0; i < __smem->num_regions; i++) {
-		area = &__smem->regions[i];
+	for (i = 0; i < __smem.num_regions; i++) {
+		area = &__smem.regions[i];
 
 		if (addr_in_range(area->virt_base, area->size, p)) {
 			offset = p - area->virt_base;
@@ -1021,7 +1025,7 @@ int qcom_smem_init(void)
 	int ret;
 	int i;
 
-	num_regions = 1;
+	num_regions = SMEM_MAX_REGIONS;
 
 	node = ofnode_by_compatible(ofnode_root(), "qcom,smem");
 	if (!ofnode_valid(node)) {
@@ -1034,13 +1038,7 @@ int qcom_smem_init(void)
 		mem_node = node;
 	}
 
-	smem = kzalloc(sizeof(struct smem_region) * num_regions +
-		       sizeof(struct qcom_smem),
-			    GFP_KERNEL);
-	if (!smem) {
-		log_err("Failed to allocate memory for smem\n");
-		return -ENOMEM;
-	}
+	smem = &__smem;
 
 	smem->num_regions = num_regions;
 
@@ -1051,6 +1049,8 @@ int qcom_smem_init(void)
 		return -EINVAL;
 	}
 	smem->regions[0].size = reg_size;
+
+	mmu_map_region(smem->regions[0].aux_base, reg_size);
 
 	ret = qcom_smem_map_toc(smem, &smem->regions[0]);
 	if (ret) {
@@ -1094,8 +1094,6 @@ int qcom_smem_init(void)
 		log_err("Failed to enumerate partitions\n");
 		return ret;
 	}
-
-	__smem = smem;
 
 	return 0;
 }
