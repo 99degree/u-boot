@@ -556,7 +556,7 @@ static void map_framebuffer(void)
 	size = ALIGN(size, SZ_2M);
 
 	debug("Mapping framebuffer at 0x%llx size 0x%llx\n", addr, size);
-	mmu_map_region(addr, size, true);
+	mmu_map_region(addr, size);
 }
 
 /* This function open-codes setup_all_pgtables() so that we can
