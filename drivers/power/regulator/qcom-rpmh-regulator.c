@@ -277,8 +277,14 @@ static int rpmh_regulator_set_enable_state(struct udevice *rdev,
 	debug("%s: set_enable %d (current %d)\n", rdev->name, enable,
 	      vreg->enabled);
 
-	if (vreg->enabled == -EINVAL &&
-	    vreg->uv != -ENOTRECOVERABLE) {
+	if (vreg->enabled == -EINVAL) {
+		if (vreg->uv == -ENOTRECOVERABLE) {
+			struct dm_regulator_uclass_plat *plat_data;
+			plat_data = dev_get_uclass_plat(rdev);
+
+			debug("%s: setting initial uv to %d\n", rdev->name, plat_data->max_uV);
+			vreg->uv = plat_data->max_uV;
+		}
 		ret = _rpmh_regulator_vrm_set_value(rdev,
 						    vreg->uv, true);
 		if (ret < 0)
