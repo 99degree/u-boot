@@ -39,6 +39,25 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	cpus {
+		domain_idle_states: domain-idle-states {
+			cluster_sleep_0: cluster-sleep-0 {
+				compatible = "domain-idle-state";
+				arm,psci-suspend-param = <0x40003444>;
+				entry-latency-us = <2752>;
+				exit-latency-us = <6562>;
+				min-residency-us = <9926>;
+			};
+		};
+	};
+
+	firmware {
+		optee {
+			compatible = "linaro,optee-tz";
+			method = "smc";
+		};
+	};
+
 	dp-connector {
 		compatible = "dp-connector";
 		label = "DP";
@@ -128,8 +147,22 @@
 			no-map;
 		};
 
-		tz_stat_mem: tz-stat@c0000000 {
-			reg = <0x0 0xc0000000 0x0 0x100000>;
+		// tz_stat_mem: tz-stat@c0000000 {
+		// 	reg = <0x0 0xc0000000 0x0 0x100000>;
+		// 	no-map;
+		// };
+
+		// tags_mem: tags@c0100000 {
+		// 	reg = <0x0 0xc0100000 0x0 0x1200000>;
+		// 	no-map;
+		// };
+
+		/* OP-TEE and TF-A live here */
+		pimem: pimem@1c000000 {
+			//         0x1c00e000
+			//         0x1c120000
+			//         0x1c193400
+			reg = <0x0 0x1c000000 0x0 0x4000000>;
 			no-map;
 		};
 
@@ -150,11 +183,6 @@
 
 		debug_vm_mem: debug-vm@d0600000 {
 			reg = <0x0 0xd0600000 0x0 0x100000>;
-			no-map;
-		};
-
-		optee_mem: optee@c0000000 {
-			reg = <0x0 0xc0000000 0x0 0x100000>;
 			no-map;
 		};
 	};
@@ -552,6 +580,10 @@
 	};
 };
 
+&cluster_pd {
+	domain-idle-states = <&cluster_sleep_0>;
+};
+
 &gcc {
 	protected-clocks = <GCC_CFG_NOC_LPASS_CLK>,
 			   <GCC_MSS_CFG_AHB_CLK>,
@@ -739,6 +771,10 @@
 	status = "okay";
 };
 
+&pdc_reset {
+	status = "okay";
+};
+
 &pm7325_gpios {
 	kypd_vol_up_n: kypd-vol-up-n-state {
 		pins = "gpio6";
@@ -773,21 +809,39 @@
 
 &remoteproc_adsp {
 	firmware-name = "qcom/qcs6490/adsp.mbn";
-	status = "okay";
+	status = "disabled";
 };
 
 &remoteproc_cdsp {
 	firmware-name = "qcom/qcs6490/cdsp.mbn";
-	status = "okay";
+	status = "disabled";
 };
 
 &remoteproc_mpss {
 	firmware-name = "qcom/qcs6490/modem.mbn";
-	status = "okay";
+	status = "disabled";
 };
 
 &remoteproc_wpss {
+	compatible = "qcom,sc7280-wpss-pil";
+
+	clocks = <&gcc GCC_WPSS_AHB_BDG_MST_CLK>,
+		 <&gcc GCC_WPSS_AHB_CLK>,
+		 <&gcc GCC_WPSS_RSCP_CLK>,
+		 <&rpmhcc RPMH_CXO_CLK>;
+	clock-names = "ahb_bdg",
+		      "ahb",
+		      "rscp",
+		      "xo";
+
+	resets = <&aoss_reset AOSS_CC_WCSS_RESTART>,
+		 <&pdc_reset PDC_WPSS_SYNC_RESET>;
+	reset-names = "restart", "pdc_sync";
+
+	qcom,halt-regs = <&tcsr_1 0x17000>;
+
 	firmware-name = "qcom/qcs6490/wpss.mbn";
+
 	status = "okay";
 };
 
@@ -801,6 +855,23 @@
 	cd-gpios = <&tlmm 91 GPIO_ACTIVE_LOW>;
 
 	status = "okay";
+};
+
+&scm {
+	/* TF-A firmware maps memory cached so mark dma-coherent to match. */
+	dma-coherent;
+};
+
+&watchdog {
+	status = "okay";
+};
+
+&wifi {
+	status = "okay";
+
+	wifi-firmware {
+		iommus = <&apps_smmu 0x1c02 0x1>;
+	};
 };
 
 &tlmm {
@@ -842,6 +913,22 @@
 	vdda-pll-supply = <&vreg_l1b_0p912>;
 
 	orientation-switch;
+
+	status = "okay";
+};
+
+&usb_2 {
+	status = "okay";
+};
+
+&usb_2_dwc3 {
+	dr_mode = "peripheral";
+};
+
+&usb_2_hsphy {
+	vdda-pll-supply = <&vreg_l10c_0p88>;
+	vdda33-supply = <&vreg_l2b_3p072>;
+	vdda18-supply = <&vreg_l1c_1p8>;
 
 	status = "okay";
 };
