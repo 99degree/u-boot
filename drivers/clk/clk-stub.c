@@ -93,6 +93,11 @@ static const struct udevice_id stub_clk_ids[] = {
 	{ }
 };
 
+static const struct udevice_id stub_pd_ids[] = {
+	{ .compatible = "qcom,sc7280-rpmhpd" },
+	{ }
+};
+
 U_BOOT_DRIVER(clk_stub) = {
 	.name = "clk_stub",
 	.id = UCLASS_CLK,
@@ -105,6 +110,6 @@ U_BOOT_DRIVER(clk_stub) = {
 U_BOOT_DRIVER(pd_stub) = {
 	.name = "pd_stub",
 	.id = UCLASS_POWER_DOMAIN,
+	.of_match = stub_pd_ids,
 	.ops = &stub_pd_ops,
-	.flags = DM_FLAG_DEFAULT_PD_CTRL_OFF,
 };
