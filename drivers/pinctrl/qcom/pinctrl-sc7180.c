@@ -74,7 +74,7 @@ static const char *sc7180_get_pin_name(struct udevice *dev,
 	return pin_name;
 }
 
-static int sc7180_get_function_mux(__maybe_unused unsigned int pin,
+static unsigned int sc7180_get_function_mux(__maybe_unused unsigned int pin,
 					    unsigned int selector)
 {
 	return msm_pinctrl_functions[selector].val;
