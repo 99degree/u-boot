@@ -15,6 +15,28 @@
 		      <0 0xC3400000 0 0x3CC00000>,
 		      <1 0x00000000 1 0x00000000>;
 	};
+
+	usb_otg_vbus: regulator-usb-otg-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "usb_otg_vbus";
+		regulator-always-on;
+		regulator-boot-on;
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		pinctrl-0 = <&usb_otg_vbus_en_pin>;
+		pinctrl-names = "default";
+		gpio = <&tlmm 63 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+	};
+};
+
+&tlmm {
+	usb_otg_vbus_en_pin: usb-otg-vbus-en-state {
+		pins = "gpio63";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
 };
 
 &usb_1_dwc3 {
@@ -25,6 +47,8 @@
 &usb_2_dwc3 {
 	dr_mode = "host";
 	/delete-property/ usb-role-switch;
+
+	vbus-supply = <&usb_otg_vbus>;
 };
 
 // RAM Entry 0 : Base 0x0080000000  Size 0x003A800000
