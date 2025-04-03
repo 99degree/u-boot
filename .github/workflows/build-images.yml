@@ -27,7 +27,7 @@ jobs:
       # mkbootimg in Ubuntu repos is broken, so use the forked C variant
       - name: Build mkbootimg
         run: |
-          git clone https://github.com/osm0sis/mkbootimg
+          git clone https://github.com/osm0sis/mkbootimg --depth=1
           cd mkbootimg
           CFLAGS=-Wstringop-overflow=0 make mkbootimg
           cd ..
@@ -42,9 +42,9 @@ jobs:
 
       - name: Assemble Android boot.img
         run: |
-          gzip .output/u-boot-nodtb.bin -c > .output/u-boot-nodtb.bin.gz
+          #gzip .output/u-boot-nodtb.bin -c > .output/u-boot-nodtb.bin.gz
           #cat .output/u-boot-nodtb.bin.gz .output/dts/upstream/src/arm64/qcom/${{ matrix.device }}.dtb > .output/uboot-dtb
-          ./mkbootimg/mkbootimg --header_version '2' --base '0x0' --kernel_offset '0x00008000' --pagesize '4096' --kernel .output/uboot-dtb --ramdisk .output/fit-dtb.blob --dtb .output/dts/upstream/src/arm64/qcom/qcom-multi-dummy.dtb -o .output/u-boot.img
+          ./mkbootimg/mkbootimg --header_version '2' --base '0x0' --kernel_offset '0x00008000' --pagesize '4096' --kernel .output/u-boot-nodtb.bin --ramdisk .output/fit-dtb.blob --dtb .output/dts/upstream/src/arm64/qcom/qcom-multi-dummy.dtb -o .output/u-boot.img
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
