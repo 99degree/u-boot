@@ -4,36 +4,211 @@
 
 / {
         qcom,msm-id = <443 0x0>;
-        //qcom,board-id = <0x50022 1>;
-	qcom,board-id = <0 0>;
+	qcom,board-id = <0 0>, <0x10022 1>, <0x20022 1>, <0x30022 1>, <0x40022 1>, <0x50022 1>;
 
 	#address-cells = <2>;
 	#size-cells = <2>;
 
 	memory {
+		ddr_device_type = <0x07>;
 		/* We expect the bootloader to fill in the size */
 		reg = <0 0 0 0>;
 	};
 
+        reserved-memory {
+                #address-cells = <0x02>;
+                #size-cells = <0x02>;                                                                                                                           ranges;
+
+                hyp_region@80000000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x80000000 0x00 0x600000>;
+                };
+
+                xbl_aop_mem@80700000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x80700000 0x00 0x140000>;
+                };
+
+                sec_apps_region@808ff000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x808ff000 0x00 0x1000>;
+                };
+
+                smem@80900000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x80900000 0x00 0x200000>;
+                };
+
+                removed_region@80b00000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x80b00000 0x00 0x3900000>;
+                };
+
+                modem_region@86000000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x86000000 0x00 0x8400000>;
+                };
+
+                camera_region@8e400000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x8e400000 0x00 0x500000>;
+                };
+
+                pil_npu_region@8e900000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x8e900000 0x00 0x500000>;
+                };
+
+                pil_video_region@8ee00000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x8ee00000 0x00 0x500000>;
+                };
+
+                cdsp_regions@8f300000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x8f300000 0x00 0x1e00000>;
+                };
+
+                pil_adsp_region@91100000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x91100000 0x00 0x2800000>;
+                };
+
+                wlan_fw_region@93900000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x93900000 0x00 0x200000>;
+                };
+
+                ipa_fw_region@93b00000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x93b00000 0x00 0x10000>;
+                };
+
+                ipa_gsi_region@93b10000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x93b10000 0x00 0x5000>;
+                };
+
+                gpu_region@93b15000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x93b15000 0x00 0x2000>;
+                };
+
+                qseecom_region@9e000000 {
+                        compatible = "shared-dma-pool";
+                        no-map;
+                        reg = <0x00 0x9e000000 0x00 0x1400000>;
+                };
+
+                qseecom_ta_region {
+                        compatible = "shared-dma-pool";
+                        alloc-ranges = <0x00 0x00 0x00 0xffffffff>;
+                        reusable;
+                        alignment = <0x00 0x400000>;
+                        size = <0x00 0x1000000>;
+                };
+
+                cdsp_sec_regions@0x9f400000 {
+                        compatible = "removed-dma-pool";
+                        no-map;
+                        reg = <0x00 0x9f400000 0x00 0x1e00000>;
+                };
+
+                secure_display_region {
+                        compatible = "shared-dma-pool";
+                        alloc-ranges = <0x00 0x00 0x00 0xffffffff>;
+                        reusable;
+                        alignment = <0x00 0x400000>;
+                        size = <0x00 0x8c00000>;
+                };
+
+                cont_splash_region@9c000000 {
+                        reg = <0x00 0x9c000000 0x00 0x1700000>;
+                        label = "cont_splash_region";
+                };
+
+                dfps_data_region@9d700000 {
+                        reg = <0x00 0x9d700000 0x00 0x100000>;
+                        label = "dfps_data_region";
+                };
+
+                adsp_region {
+                        compatible = "shared-dma-pool";
+                        alloc-ranges = <0x00 0x00 0x00 0xffffffff>;
+                        reusable;
+                        alignment = <0x00 0x400000>;
+                        size = <0x00 0x800000>;
+                };
+
+
+                linux,cma {
+                        compatible = "shared-dma-pool";
+                        alloc-ranges = <0x00 0x00 0x00 0xffffffff>;
+                        reusable;
+                        alignment = <0x00 0x400000>;
+                        size = <0x00 0x2000000>;
+                        linux,cma-default;
+                };
+
+                ramoops@9d800000 {
+                        compatible = "ramoops";
+                        reg = <0x00 0x9d800000 0x00 0x400000>;
+                        console-size = <0x100000>;
+                        record-size = <0x80000>;
+                        pmsg-size = <0x200000>;
+                        ecc-size = <0x10>;
+                        max-reason = <0x04>;
+                };
+
+	};
+
 	chosen {
-		fdt_match: match { };
+		pureason = <0x800011>;
+		linux,initrd-end = <0x00 0xa91fead8>;
+		linux,initrd-start = <0x00 0xa9000000>;
+		kaslr-seed = <0x00 0x00>;
+		bootargs = "";
+	};
+
+	mem-offline {
+		compatible = "qcom,mem-offline";
+		offline-sizes = <0x01 0x40000000 0x00 0x40000000 0x01 0xc0000000 0x00 0x80000000 0x02 0xc0000000 0x01 0x40000000>;
+		granule = <0x100>;
+		mboxes = <0x1c 0x00>;
+	};
+
+	firmware {
+		android {
+			compatible = "android,firmware";
+
+			vbmeta {
+				compatible = "android,vbmeta";
+                        };
+
+			fstab {
+				compatible = "android,fstab";
+
+				vendor {
+					compatible = "android,vendor";
+					status = "ok";
+				};
+			};
+		};
 	};
 };
 
-&fdt_match {
-	sm7125-xiaomi-curtana-huaxing {
-		match,bootargs = "msm_drm.dsi_display0=dsi_ft8756_huaxing_vid_display", "androidboot.hwname=curtana";
-	};
-
-	sm7125-xiaomi-curtana-tianma {
-		match,bootargs = "msm_drm.dsi_display0=dsi_nt36675_tianma_vid_display", "androidboot.hwname=curtana";
-	};
-
-	sm7125-xiaomi-joyeuse-huaxing {
-		match,bootargs = "msm_drm.dsi_display0=dsi_ft8756_huaxing_vid_display", "androidboot.hwname=joyeuse";
-	};
-
-	sm7125-xiaomi-joyeuse-tianma {
-		match,bootargs = "msm_drm.dsi_display0=dsi_nt36675_tianma_vid_display", "androidboot.hwname=joyeuse";
-	};
-};
