@@ -43,7 +43,7 @@ jobs:
         run: |
           gzip .output/u-boot-nodtb.bin -c > .output/u-boot-nodtb.bin.gz
           #cat .output/u-boot-nodtb.bin.gz .output/dts/upstream/src/arm64/qcom/${{ matrix.device }}.dtb > .output/uboot-dtb
-          ./mkbootimg/mkbootimg --header_version '2' --base '0x0' --kernel_offset '0x00008000' --pagesize '4096' --kernel .output/uboot-dtb --ramdisk .output/dts/upstream/src/arm64/qcom/qcom-multi-dummy.dtb -o .output/u-boot.img
+          ./mkbootimg/mkbootimg --header_version '2' --base '0x0' --kernel_offset '0x00008000' --pagesize '4096' --kernel .output/uboot-dtb --ramdisk .output/fit-dtb.blob --dtb .output/dts/upstream/src/arm64/qcom/qcom-multi-dummy.dtb -o .output/u-boot.img
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
