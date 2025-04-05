@@ -45,6 +45,9 @@ static struct mm_region rbx_mem_map[CONFIG_NR_DRAM_BANKS + 2] = { { 0 } };
 
 struct mm_region *mem_map = rbx_mem_map;
 
+void __weak lmb_arch_add_memory(void) {
+}
+
 static void show_psci_version(void)
 {
 	struct arm_smccc_res res;
