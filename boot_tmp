@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cd /tmp/output/
+cd /tmp/u-boot-next/
 
 #kernel_src='u-boot.bin'
 #kernel_src='u-boot-nodtb.bin'
@@ -8,7 +8,7 @@ cd /tmp/output/
 kernel_src='u-boot-fit-dtb.bin'
 kernel='Image.gz-dtb-meizu'
 
-ramdisk='ramdisk.img.gz'
+ramdisk='ramdisk.u-boot.img.gz'
 #ramdisk_src='fit-dtb.blob'
 ramdisk_src='dts/upstream/src/arm64/qcom/qcom-multi-dummy.dtb'
 
@@ -48,8 +48,8 @@ echo $cmdline
  ~/bin/fastboot boot $kernel $ramdisk --dtb $dt --dtb-offset $dt_offset  --base $loadBase --kernel-offset $kernel_offset --ramdisk-offset $ramdisk_offset --tags-offset $tag_offset --page-size 4096 --os-version $osVersion --os-patch-level $osPatchLevel --header-version $headerVersion  --cmdline ''
 
 ~/sources/mkbootimg.py/mkbootimg.py --base '0x0' --kernel_offset $kernel_offset --pagesize '4096' \
---kernel /tmp/output/$kernel_src  \
---ramdisk /tmp/output/$ramdisk_src  --ramdisk_offset $ramdisk_offset  \
---dtb /tmp/output/$dt_src --dtb_offset $dt_offset \
+--kernel /tmp/u-boot-next/$kernel_src  \
+--ramdisk /tmp/u-boot-next/$ramdisk_src  --ramdisk_offset $ramdisk_offset  \
+--dtb /tmp/u-boot-next/$dt_src --dtb_offset $dt_offset \
 --header_version $headerVersion  --second_offset '0x0' \
- -o /tmp/output/u-boot-1.img
+ -o /tmp/u-boot-next/u-boot-1.img

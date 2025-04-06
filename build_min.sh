@@ -7,18 +7,18 @@ else
 	echo CONFIG_PANIC_HANG=n > board/qualcomm/misc.config
 fi
 
-if [ -e .output ]
+if [ -e output ]
 then
 	echo ok
 else
-	ln -sf /tmp/output ./.output
+	ln -sf /tmp/u-boot-next ./output
 fi
 
 #rm -rf /tmp/output
 
-#make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- O=/tmp/output/ qcom_defconfig
-make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- O=/tmp/output/ -j$(nproc)
+#make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- O=/tmp/u-boot-next/ qcom_defconfig
+make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- O=/tmp/u-boot-next/ -j$(nproc)
 
-gzip /tmp/output/u-boot-nodtb.bin -c > /tmp/output/u-boot-nodtb.bin.gz
-cat /tmp/output/u-boot-nodtb.bin.gz /tmp/output/dts/upstream/src/arm64/qcom/qcom-multi-dummy.dtb > /tmp/output/uboot-dtb
-./mkbootimg/mkbootimg --base '0x0' --kernel_offset '0x00008000' --pagesize '4096' --kernel /tmp/output/uboot-dtb --ramdisk /tmp/output/fit-dtb.blob -o /tmp/output/u-boot.img
+gzip /tmp/u-boot-next/u-boot-nodtb.bin -c > /tmp/u-boot-next/u-boot-nodtb.bin.gz
+cat /tmp/u-boot-next/u-boot-nodtb.bin.gz /tmp/u-boot-next/dts/upstream/src/arm64/qcom/qcom-multi-dummy.dtb > /tmp/u-boot-next/uboot-dtb
+./mkbootimg/mkbootimg --base '0x0' --kernel_offset '0x00008000' --pagesize '4096' --kernel /tmp/u-boot-next/uboot-dtb --ramdisk /tmp/u-boot-next/fit-dtb.blob -o /tmp/u-boot-next/u-boot.img
