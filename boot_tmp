@@ -1,0 +1,55 @@
+#!/bin/bash
+
+cd /tmp/output/
+
+#kernel_src='u-boot.bin'
+#kernel_src='u-boot-nodtb.bin'
+# currently u-boot only support internal fit image.
+kernel_src='u-boot-fit-dtb.bin'
+kernel='Image.gz-dtb-meizu'
+
+ramdisk='ramdisk.img.gz'
+#ramdisk_src='fit-dtb.blob'
+ramdisk_src='dts/upstream/src/arm64/qcom/qcom-multi-dummy.dtb'
+
+dt='sm7325-idp.dtb'
+
+#dt_src='joyeuse-atoll-ab-idp.dtb'
+dt_src='dts/upstream/src/arm64/qcom/sm7125-xiaomi-joyeuse-cust.dtb'
+# this dtb must have those needed msm-id etc.
+dt_src='dts/upstream/src/arm64/qcom/qcom-multi-dummy.dtb'
+#dt_src='/dev/null'
+
+cat $kernel_src $dt_src > /tmp/$kernel
+cat $dt_src > /tmp/$dt
+
+touch /tmp/$ramdisk
+cat $ramdisk_src > /tmp/$ramdisk
+
+cd /tmp/
+
+
+cmdline=''
+# mustlikely u-boot will relocate itself to
+# higher ram area. so 0x0 to 0x1000000 is free.
+kernel_offset='0x8000'
+#default first u-boot is loaded at 0x1000000
+#now upshift to 0x2000000
+ramdisk_offset='0x3000000'
+#android chainloading ramdisk size:
+#                0xef6c04
+loadBase='0x2000000'
+tag_offset='256'
+dt_offset='0x2f00000'
+osVersion='11.0.0'
+osPatchLevel='2020-06-00'
+headerVersion='2'
+echo $cmdline
+ ~/bin/fastboot boot $kernel $ramdisk --dtb $dt --dtb-offset $dt_offset  --base $loadBase --kernel-offset $kernel_offset --ramdisk-offset $ramdisk_offset --tags-offset $tag_offset --page-size 4096 --os-version $osVersion --os-patch-level $osPatchLevel --header-version $headerVersion  --cmdline ''
+
+~/sources/mkbootimg.py/mkbootimg.py --base '0x0' --kernel_offset $kernel_offset --pagesize '4096' \
+--kernel /tmp/output/$kernel_src  \
+--ramdisk /tmp/output/$ramdisk_src  --ramdisk_offset $ramdisk_offset  \
+--dtb /tmp/output/$dt_src --dtb_offset $dt_offset \
+--header_version $headerVersion  --second_offset '0x0' \
+ -o /tmp/output/u-boot-1.img
