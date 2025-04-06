@@ -25,8 +25,8 @@
 
 /*
  * One needs to define the following:
- * CONFIG_USB_GADGET_VENDOR_NUM
- * CONFIG_USB_GADGET_PRODUCT_NUM
+ * CONFIG_USB_GADGET_FASTBOOT_VENDOR_NUM
+ * CONFIG_USB_GADGET_FASTBOOT_PRODUCT_NUM
  * CONFIG_USB_GADGET_MANUFACTURER
  * at e.g. ./configs/<board>_defconfig
  */
@@ -46,11 +46,24 @@
 static const char product[] = "USB download gadget";
 static char g_dnl_serial[MAX_STRING_SERIAL];
 static const char manufacturer[] = CONFIG_USB_GADGET_MANUFACTURER;
+static struct usb_device_descriptor device_desc;
 
 void g_dnl_set_serialnumber(char *s)
 {
 	memset(g_dnl_serial, 0, MAX_STRING_SERIAL);
 	strncpy(g_dnl_serial, s, MAX_STRING_SERIAL - 1);
+}
+
+void __maybe_unused g_dnl_set_modem(void)
+{
+	device_desc.idVendor = __constant_cpu_to_le16(CONFIG_USB_GADGET_VENDOR_NUM);
+	device_desc.idProduct = __constant_cpu_to_le16(CONFIG_USB_GADGET_PRODUCT_NUM);
+}
+
+void __maybe_unused g_dnl_set_serial(void)
+{
+        device_desc.idVendor = __constant_cpu_to_le16(CONFIG_USB_GADGET_FASTBOOT_VENDOR_NUM);
+        device_desc.idProduct = __constant_cpu_to_le16(CONFIG_USB_GADGET_FASTBOOT_PRODUCT_NUM);
 }
 
 static struct usb_device_descriptor device_desc = {
@@ -59,7 +72,7 @@ static struct usb_device_descriptor device_desc = {
 
 	.bcdUSB = __constant_cpu_to_le16(0x0200),
 	.bDeviceClass = USB_CLASS_PER_INTERFACE,
-	.bDeviceSubClass = 0, /*0x02:CDC-modem , 0x00:CDC-serial*/
+	.bDeviceSubClass = 0x2, /*0x02:CDC-modem , 0x00:CDC-serial*/
 
 	.idVendor = __constant_cpu_to_le16(CONFIG_USB_GADGET_VENDOR_NUM),
 	.idProduct = __constant_cpu_to_le16(CONFIG_USB_GADGET_PRODUCT_NUM),

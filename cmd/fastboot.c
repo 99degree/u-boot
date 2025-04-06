@@ -16,6 +16,8 @@
 #include <linux/printk.h>
 #include <linux/stringify.h>
 
+extern void g_dnl_set_serial(void);
+
 static int do_fastboot_udp(int argc, char *const argv[],
 			   uintptr_t buf_addr, size_t buf_size)
 {
@@ -87,6 +89,9 @@ static int do_fastboot_usb(int argc, char *const argv[],
 	}
 
 	g_dnl_clear_detach();
+
+	/* reset to fastboot serial mode */
+	g_dnl_set_serial();
 	ret = g_dnl_register("usb_dnl_fastboot");
 	if (ret)
 		return ret;
