@@ -620,6 +620,7 @@ static void acm_stdio_puts(struct stdio_dev *dev, const char *str)
 	__acm_tx(f_acm);
 }
 
+extern void g_dnl_set_modem(void);
 static int acm_stdio_start(struct stdio_dev *dev)
 {
 	struct udevice *udc;
@@ -637,6 +638,8 @@ static int acm_stdio_start(struct stdio_dev *dev)
 
 	g_dnl_clear_detach();
 
+	/* reset to fastboot serial mode */
+	g_dnl_set_modem();
 	ret = g_dnl_register("usb_serial_acm");
 	if (ret)
 		return ret;

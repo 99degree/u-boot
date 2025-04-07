@@ -72,7 +72,7 @@ static struct usb_device_descriptor device_desc = {
 
 	.bcdUSB = __constant_cpu_to_le16(0x0200),
 	.bDeviceClass = USB_CLASS_PER_INTERFACE,
-	.bDeviceSubClass = 0x2, /*0x02:CDC-modem , 0x00:CDC-serial*/
+	.bDeviceSubClass = 0x0, /*0x02:CDC-modem , 0x00:CDC-serial*/
 
 	.idVendor = __constant_cpu_to_le16(CONFIG_USB_GADGET_VENDOR_NUM),
 	.idProduct = __constant_cpu_to_le16(CONFIG_USB_GADGET_PRODUCT_NUM),
