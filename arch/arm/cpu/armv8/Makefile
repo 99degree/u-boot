@@ -5,7 +5,7 @@
 
 extra-y	:= start.o
 
-obj-y	+= cpu.o
+obj-y	+= cpu.o entry.o
 ifndef CONFIG_$(PHASE_)TIMER
 obj-$(CONFIG_SYS_ARCH_TIMER) += generic_timer.o
 endif
