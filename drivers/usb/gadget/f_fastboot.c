@@ -525,6 +525,8 @@ static void do_acmd_complete(struct usb_ep *ep, struct usb_request *req)
 		fastboot_acmd_complete();
 }
 
+extern ulong run_time;
+
 static void rx_handler_command(struct usb_ep *ep, struct usb_request *req)
 {
 	char *cmdbuf = req->buf;
@@ -582,6 +584,8 @@ static void rx_handler_command(struct usb_ep *ep, struct usb_request *req)
 	}
 
 	fastboot_tx_write_str(response);
+
+	run_time = get_timer(run_time);
 
 	*cmdbuf = '\0';
 	req->actual = 0;

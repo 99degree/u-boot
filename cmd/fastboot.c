@@ -17,6 +17,7 @@
 #include <linux/stringify.h>
 
 extern void g_dnl_set_serial(void);
+ulong run_time;
 
 static int do_fastboot_udp(int argc, char *const argv[],
 			   uintptr_t buf_addr, size_t buf_size)
@@ -103,11 +104,19 @@ static int do_fastboot_usb(int argc, char *const argv[],
 		goto exit;
 	}
 
+	run_time = get_timer(0);
+
 	while (1) {
 		if (g_dnl_detach())
 			break;
 		if (ctrlc())
 			break;
+
+		if ((get_timer(run_time) / CONFIG_SYS_HZ) > 20) {
+			puts("\rUSB trnsaction staled for 20s exiting\n");
+			break;
+		}
+
 		schedule();
 		dm_usb_gadget_handle_interrupts(udc);
 	}
