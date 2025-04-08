@@ -112,7 +112,7 @@ static int do_fastboot_usb(int argc, char *const argv[],
 		if (ctrlc())
 			break;
 
-		if ((get_timer(run_time) / CONFIG_SYS_HZ) > 20) {
+		if ((get_timer(run_time) / CONFIG_SYS_HZ) > 200) {
 			puts("\rUSB trnsaction staled for 20s exiting\n");
 			break;
 		}
