@@ -688,3 +688,11 @@ int drv_usbacm_init(void)
 
 	return stdio_register(&stdio);
 }
+
+int drv_usbacm_deinit(void)
+{
+	struct stdio_dev *dev = stdio_get_by_name("usbacm");
+	if (dev)
+		return stdio_register(dev);
+	return 0;
+}
