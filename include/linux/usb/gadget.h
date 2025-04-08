@@ -236,7 +236,13 @@ static inline int usb_ep_enable(struct usb_ep *ep,
 	if (ep->enabled)
 		return 0;
 
-	ret = ep->ops->enable(ep, desc);
+        if (ep->ops->disable)
+                ret = ep->ops->enable(ep, desc);
+        else {
+                printf("ep->ops->enable is empty\n");
+		ret = 0;
+	}
+
 	if (ret)
 		return ret;
 
@@ -264,7 +270,12 @@ static inline int usb_ep_disable(struct usb_ep *ep)
 	if (!ep->enabled)
 		return 0;
 
-	ret = ep->ops->disable(ep);
+	if (ep->ops->disable)
+		ret = ep->ops->disable(ep);
+	else {
+		printf("ep->ops->disaable is empty\n");
+		ret = 0;
+	}
 	if (ret)
 		return ret;
 

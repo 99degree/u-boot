@@ -567,7 +567,7 @@ static int __dwc3_gadget_ep_enable(struct dwc3_ep *dep,
 }
 
 static void dwc3_stop_active_transfer(struct dwc3 *dwc, u32 epnum, bool force);
-static void dwc3_remove_requests(struct dwc3 *dwc, struct dwc3_ep *dep)
+static void dwc3_remove_requests(struct dwc3 *dwc, struct dwc3_ep *dep, int status)
 {
 	struct dwc3_request		*req;
 
@@ -578,14 +578,14 @@ static void dwc3_remove_requests(struct dwc3 *dwc, struct dwc3_ep *dep)
 		while (!list_empty(&dep->req_queued)) {
 			req = next_request(&dep->req_queued);
 
-			dwc3_gadget_giveback(dep, req, -ESHUTDOWN);
+			dwc3_gadget_giveback(dep, req, status);
 		}
 	}
 
 	while (!list_empty(&dep->request_list)) {
 		req = next_request(&dep->request_list);
 
-		dwc3_gadget_giveback(dep, req, -ESHUTDOWN);
+		dwc3_gadget_giveback(dep, req, status);
 	}
 }
 
@@ -602,7 +602,7 @@ static int __dwc3_gadget_ep_disable(struct dwc3_ep *dep)
 	struct dwc3		*dwc = dep->dwc;
 	u32			reg;
 
-	dwc3_remove_requests(dwc, dep);
+	dwc3_remove_requests(dwc, dep, -ECONNRESET);
 
 	/* make sure HW endpoint isn't stalled */
 	if (dep->flags & DWC3_EP_STALL)
@@ -2102,7 +2102,7 @@ static void dwc3_stop_active_transfers(struct dwc3 *dwc)
 		if (!(dep->flags & DWC3_EP_ENABLED))
 			continue;
 
-		dwc3_remove_requests(dwc, dep);
+		dwc3_remove_requests(dwc, dep, -ESHUTDOWN);
 	}
 }
 
