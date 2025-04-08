@@ -252,7 +252,7 @@ enum image_comp_t {
 	IH_COMP_LZO,			/* lzo   Compression Used	*/
 	IH_COMP_LZ4,			/* lz4   Compression Used	*/
 	IH_COMP_ZSTD,			/* zstd   Compression Used	*/
-
+	IH_COMP_PLAIN,			/* plain no compress		*/
 	IH_COMP_COUNT,
 };
 

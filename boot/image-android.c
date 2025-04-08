@@ -11,7 +11,11 @@
 #include <errno.h>
 #include <asm/unaligned.h>
 #include <mapmem.h>
+#include <asm/global_data.h>
 #include <linux/libfdt.h>
+#include <lmb.h>
+#include <dm/uclass-internal.h>
+
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 #define ANDROID_IMAGE_DEFAULT_RAMDISK_ADDR	0x11000000
@@ -269,9 +273,12 @@ static ulong android_image_get_kernel_addr(struct andr_image_data *img_data,
 	 * Otherwise, we will return the actual value set by the user.
 	 */
 	if (img_data->kernel_addr == ANDROID_IMAGE_DEFAULT_KERNEL_ADDR ||
-		img_data->kernel_addr == 0) {
-		if (comp == IH_COMP_NONE)
+		img_data->kernel_addr < gd->ram_base) {
+		if (comp == IH_COMP_NONE || comp ==IH_COMP_PLAIN) {
+			printf("use %p as kernel loading/decompress addr\n", img_data->kernel_ptr);
 			return img_data->kernel_ptr;
+		}
+		printf("use %p as kernel loading/decompress addr\n", env_get_ulong("kernel_addr_r", 16, 0));
 		return env_get_ulong("kernel_addr_r", 16, 0);
 	}
 
@@ -465,7 +472,8 @@ int android_image_get_ramdisk(const void *hdr, const void *vendor_boot_img,
 	 */
 	if (img_data.header_version > 2) {
 		/* Ramdisk can't be used in-place, copy it to ramdisk_addr_r */
-		if (img_data.ramdisk_addr == ANDROID_IMAGE_DEFAULT_RAMDISK_ADDR) {
+		if (img_data.ramdisk_addr == ANDROID_IMAGE_DEFAULT_RAMDISK_ADDR ||
+			img_data.ramdisk_addr == gd->ram_base) {
 			ramdisk_ptr = env_get_ulong("ramdisk_addr_r", 16, 0);
 			if (!ramdisk_ptr) {
 				printf("Invalid ramdisk_addr_r to copy ramdisk into\n");
@@ -488,7 +496,7 @@ int android_image_get_ramdisk(const void *hdr, const void *vendor_boot_img,
 		}
 	} else {
 		/* Ramdisk can be used in-place, use current ptr */
-		if (img_data.ramdisk_addr == 0 ||
+		if (img_data.ramdisk_addr == 0 || img_data.ramdisk_addr < gd->ram_base ||
 		    img_data.ramdisk_addr == ANDROID_IMAGE_DEFAULT_RAMDISK_ADDR) {
 			*rd_data = img_data.ramdisk_ptr;
 		} else {

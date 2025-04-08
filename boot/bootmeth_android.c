@@ -530,7 +530,7 @@ static int boot_android_normal(struct bootflow *bflow)
 				     loadaddr);
 	if (ret < 0)
 		return log_msg_ret("read boot", ret);
-
+#ifdef CONFIG_CMD_ABOOTIMG
 	if (priv->header_version >= 3) {
 		ret = read_slotted_partition(desc, "vendor_boot", priv->slot,
 					     priv->vendor_boot_img_size, vloadaddr);
@@ -538,8 +538,9 @@ static int boot_android_normal(struct bootflow *bflow)
 			return log_msg_ret("read vendor_boot", ret);
 		set_avendor_bootimg_addr(vloadaddr);
 	}
-	set_abootimg_addr(loadaddr);
 
+	set_abootimg_addr(loadaddr);
+#endif
 	if (priv->slot)
 		free(priv->slot);
 
