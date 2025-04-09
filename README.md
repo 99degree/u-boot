@@ -7,4 +7,3 @@ This repo is tracking to codelinaro u-boot repo. The development for u-boot unde
 of caleb's public tree with my own compile adjustments. The development under this repo is not aimed to provide full function but barely useble for dual boot only. So interested dev can selectively pick some changes and back merge to caleb's tree if feasible.
 
 Github action manually build with latest 'next' branch for test use, please find it useful.
-
