@@ -91,14 +91,14 @@ void fastboot_okay(const char *reason, char *response)
  */
 int __weak fastboot_set_reboot_flag(enum fastboot_reboot_reason reason)
 {
+	int i = 0, j = CONFIG_FASTBOOT_FLASH_MMC_DEV;
 	int ret;
 	static const char * const boot_cmds[] = {
 		[FASTBOOT_REBOOT_REASON_BOOTLOADER] = "bootonce-bootloader",
 		[FASTBOOT_REBOOT_REASON_FASTBOOTD] = "boot-fastboot",
 		[FASTBOOT_REBOOT_REASON_RECOVERY] = "boot-recovery"
 	};
-	const int mmc_dev = config_opt_enabled(CONFIG_FASTBOOT_FLASH_MMC,
-					       CONFIG_FASTBOOT_FLASH_MMC_DEV, -1);
+	int mmc_dev; /* only support { predef, 0,1,2 }*/
 
 	if (!IS_ENABLED(CONFIG_FASTBOOT_FLASH_MMC))
 		return -EINVAL;
@@ -106,9 +106,22 @@ int __weak fastboot_set_reboot_flag(enum fastboot_reboot_reason reason)
 	if (reason >= FASTBOOT_REBOOT_REASONS_COUNT)
 		return -EINVAL;
 
-	ret = bcb_find_partition_and_load("mmc", mmc_dev, "misc");
-	if (ret)
+	do {
+		/* give privilege to build config preset drive */
+		mmc_dev = config_opt_enabled(CONFIG_FASTBOOT_FLASH_MMC,
+                                               j, -1);
+		/* find first available drive */
+		ret = bcb_find_partition_and_load("mmc", mmc_dev, "misc");
+		if (!ret)
+			break;
+		j = i;
+	} while (++i < 4);
+
+	/* well, if 1 then not found any */
+	if (ret) {
+		printf("couldn't find misc partition on mmc\n ");
 		goto out;
+	}
 
 	ret = bcb_set(BCB_FIELD_COMMAND, boot_cmds[reason]);
 	if (ret)
