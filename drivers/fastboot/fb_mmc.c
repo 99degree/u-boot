@@ -76,19 +76,24 @@ static int do_get_part_info(struct blk_desc **dev_desc, const char *name,
 			    struct disk_partition *info)
 {
 	int ret;
+	int i = 0;
+	int dev_idx = CONFIG_FASTBOOT_FLASH_MMC_DEV;
 
-	/* First try partition names on the default device */
-	*dev_desc = blk_get_dev("mmc", CONFIG_FASTBOOT_FLASH_MMC_DEV);
-	if (*dev_desc) {
-		ret = part_get_info_by_name(*dev_desc, name, info);
-		if (ret >= 0)
+	do {
+		/* First try partition names on the default device */
+		*dev_desc = blk_get_dev("mmc", dev_idx);
+		if (*dev_desc) {
+			ret = part_get_info_by_name(*dev_desc, name, info);
+			if (ret >= 0)
 			return ret;
 
-		/* Then try raw partitions */
-		ret = raw_part_get_info_by_name(*dev_desc, name, info);
-		if (ret >= 0)
-			return ret;
-	}
+			/* Then try raw partitions */
+			ret = raw_part_get_info_by_name(*dev_desc, name, info);
+			if (ret >= 0)
+				return ret;
+		}
+		dev_idx = i;
+	} while (++i < 4);
 
 	/* Then try dev.hwpart:part */
 	ret = part_get_info_by_dev_and_name_or_num("mmc", name, dev_desc,
