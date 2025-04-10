@@ -1,7 +1,9 @@
 #!/bin/bash
 
 cd /tmp/$(basename $(pwd))/
-pwd
+
+build_dir=$(basename $(pwd))
+
 #kernel_src='u-boot.bin'
 #kernel_src='u-boot-nodtb.bin'
 # currently u-boot only support internal fit image.
@@ -47,9 +49,11 @@ headerVersion='2'
 echo $cmdline
  ~/bin/fastboot boot $kernel $ramdisk --dtb $dt --dtb-offset $dt_offset  --base $loadBase --kernel-offset $kernel_offset --ramdisk-offset $ramdisk_offset --tags-offset $tag_offset --page-size 4096 --os-version $osVersion --os-patch-level $osPatchLevel --header-version $headerVersion  --cmdline ''
 
-~/sources/mkbootimg.py/mkbootimg.py --base '0x0' --kernel_offset $kernel_offset --pagesize '4096' \
---kernel /tmp/${build_dir}/$kernel  \
---ramdisk /tmp/${build_dir}/$ramdisk  --ramdisk_offset $ramdisk_offset  \
---dtb /tmp/${build_dir}/$dt --dtb_offset $dt_offset \
+~/sources/mkbootimg/mkbootimg --base '0x0' --kernel_offset $kernel_offset --pagesize '4096' \
+--kernel /tmp/$kernel  \
+--ramdisk /tmp/$ramdisk  --ramdisk_offset $ramdisk_offset  \
+--dtb /tmp/$dt --dtb_offset $dt_offset \
 --header_version $headerVersion  --second_offset '0x0' \
- -o /tmp/${build_dir}/u-boot-1.img
+ -o /tmp/${build_dir}.img
+
+echo  /tmp/${build_dir}.img

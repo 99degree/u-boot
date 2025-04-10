@@ -26,4 +26,4 @@ make ARCH=arm CROSS_COMPILE=aarch64-linux-gnu- O=/tmp/${build_dir}/ -j$(nproc)
 
 gzip /tmp/${build_dir}/u-boot-nodtb.bin -c > /tmp/${build_dir}/u-boot-nodtb.bin.gz
 cat /tmp/${build_dir}/u-boot-nodtb.bin.gz /tmp/${build_dir}/dts/upstream/src/arm64/qcom/qcom-multi-dummy.dtb > /tmp/${build_dir}/uboot-dtb
-./mkbootimg/mkbootimg --base '0x0' --kernel_offset '0x00008000' --pagesize '4096' --kernel /tmp/${build_dir}/uboot-dtb --ramdisk /tmp/${build_dir}/fit-dtb.blob -o /tmp/${build_dir}/u-boot.img
+../mkbootimg/mkbootimg --base '0x0' --kernel_offset '0x00008000' --pagesize '4096' --kernel /tmp/${build_dir}/uboot-dtb --ramdisk /tmp/${build_dir}/fit-dtb.blob -o /tmp/${build_dir}/u-boot.img
