@@ -14,3 +14,12 @@
 	/* required for bootloader to select correct board */
 	qcom,board-id = <0x50022 1>;
 };
+
+/* that can protect ufs partition untouch */
+&ufs_mem_hc {
+        status = "disabled";
+};
+
+&ufs_mem_phy {
+        status = "disabled";
+};
