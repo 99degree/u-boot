@@ -24,6 +24,7 @@ static void panic_finish(void)
 #if defined(CONFIG_PANIC_HANG)
 	hang();
 #else
+	udelay(10000000);
 	flush();  /* flush the panic message before reset */
 
 	do_reset(NULL, 0, 0, NULL);
