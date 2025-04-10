@@ -48,6 +48,103 @@ struct mm_region *mem_map = rbx_mem_map;
 void __weak lmb_arch_add_memory(void) {
 }
 
+/* this is limited to kernel cmdline support, which is 256 to 4096
+ * detain ref to COMMAND_LINE_SIZE of kernel header.
+ * assumed null terminated.
+ *
+ * Test shows that 1024 is working...
+ */
+
+//#define COMMAND_LINE_SIZE_4_14	512 /* search code result*/
+#define COMMAND_LINE_SIZE_4_14		1024 /* ok make it default */
+static char bootargs[COMMAND_LINE_SIZE_4_14] = { 0 };
+
+/* sort by importance to avoid some important value got wiped out */
+const static char *soc_bootargs = \
+" msm_drm.dsi_display0=dsi_nt36675_tianma_vid_display:" \
+" androidboot.lcmtype=dsi_nt36672c_tianma_fhd_video_display" \
+" androidboot.hwname=joyeuse" \
+" androidboot.secureboot=1" \
+" androidboot.keymaster=1"  \
+" androidboot.bootdevice=1d84000.ufshc" \
+" androidboot.boot_devices=soc/1d84000.ufshc" \
+" androidboot.verifiedbootstate=orange" \
+" androidboot.multisim_config=dsds" \
+" androidboot.cpuid=0xdc1467b8 " \
+" androidboot.dp=0x0 androidboot.baseband=msm" \
+" androidboot.fpsensor=fpc" \
+" androidboot.hwc=VDF_TWO" \
+" androidboot.hwlevel=MP" \
+" androidboot.AdcVol1=463 androidboot.AdcVol2=1306" \
+" androidboot.hwversion=4.90.0";
+
+#if 0
+/* provided by devicetree bootargs */
+char adroidboot_bootargs[] = \
+" rcupdate.rcu_expedited=1 rcu_nocbs=0-7" \
+" noirqdebug androidboot.console=ttyMSM0 androidboot.hardware=qcom" \
+" androidboot.memcg=1 androidboot.usbcontroller=a600000.dwc3" \
+" cgroup.memory=nokmem,nosocket console=ttyMSM0,115200n8" \
+" earlycon=msm_geni_serial,0xa88000 loop.max_part=7" \
+" lpm_levels.sleep_disabled=1 msm_rtb.enabled=1 msm_rtb.filter=0x237" \
+" service_locator.enable=1 swiotlb=1 video=vfb:640x400,bpp=32,memsize=3072000";
+#endif
+
+/* fixups are put here:
+ * (1) androidboot.android_dt_dir this is abuse the param to get rid of
+ * old fstab in device tree
+ * (2) in case of fstab.qcom is in use but default boot.img have cmdline but
+ * do not specify the value, it will result expecting "fstab" instead of
+ * "fstab.qcom" and boot fail. so add a default value at last of cmd here.
+ */
+const static char *fix_bootargs = \
+" androidboot.android_dt_dir=/tmp/" \
+" androidboot.fstab_suffix=default" \
+" console=ramoops";
+
+const char *board_fdt_chosen_bootargs(const struct fdt_property *fdt)
+{
+	int j;
+	char *env_prop = env_get("bootargs");
+	const char *soc_prop = soc_bootargs;
+	const char *fix_prop = fix_bootargs;
+	const char *fdt_prop;
+
+	(fdt == NULL) ? (fdt_prop = "") : (fdt_prop = fdt->data);
+
+	if (env_prop == NULL)
+		env_prop = "";
+
+	debug("\n");
+	debug("fdt bootargs: %s\n", fdt_prop);
+	debug("env bootargs: %s\n", env_prop);
+	debug("soc bootargs: %s\n", soc_prop);
+	debug("fix bootargs: %s\n", fix_prop);
+
+	/* since android init parse androidboot property on a
+	 * first-come-first-serve manner so dtb valus com first and
+	 * then u-boot defaults and board specific fixups
+	 */
+	snprintf(bootargs, COMMAND_LINE_SIZE_4_14 - 2, "%s %s %s %s",
+		env_prop , fdt_prop, fix_prop, soc_prop);
+
+	/* remove all carriage return */
+	for (j = 0; j < COMMAND_LINE_SIZE_4_14; j++) {
+		if (bootargs[j] == '\0')
+			break;
+
+		if ((bootargs[j] == '\n') || (bootargs[j] == '\r'))
+			bootargs[j] = ' ';
+	}
+
+	/* trim to max length */
+	bootargs[COMMAND_LINE_SIZE_4_14 - 1] = '\0';
+
+	debug("out bootargs: %s\n", bootargs);
+	debug("total length: %d\n", j);
+	return bootargs;
+}
+
 static void show_psci_version(void)
 {
 	struct arm_smccc_res res;
