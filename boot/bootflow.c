@@ -23,6 +23,19 @@ enum {
 	BF_NO_MORE_DEVICES	= -ENODEV,
 };
 
+/* get from board support */
+__weak const char *get_board_support_bootargs(void)
+{
+	printf("get_board_support_bootargs() Not defined\n ");
+	return NULL;
+}
+
+__weak const char *get_board_support_bootargs_fixup(void)
+{
+	printf("get_board_support_bootargs_fixup() Not defined\n ");
+        return NULL;
+}
+
 static const char *const bootflow_img[BFI_COUNT - BFI_FIRST] = {
 	"extlinux_cfg",
 	"logo",
@@ -963,6 +976,77 @@ int bootflow_cmdline_auto(struct bootflow *bflow, const char *arg)
 		return ret;
 
 	return 0;
+}
+
+#define BOOTARG_VALUE_LENGTH 50
+static char element[BOOTARG_VALUE_LENGTH] = { 0 };
+static int update_cmdline(struct bootflow *bflow, const char *arg, bool update_env)
+{
+	const char *next_pos = arg;
+	const char *pos = arg;
+	const char *break_val[2] = { " ", "=" };
+	char *val;
+        int ret;
+
+        if (arg != NULL) {
+                while (1) {
+			if (*next_pos == '\0' || (next_pos - arg) > 2046)
+				break;
+
+			next_pos = strstr(pos, break_val[0]);
+			if (next_pos == pos) {
+				pos++;
+				continue;
+			}
+
+		        if (next_pos == NULL)
+				break;
+
+			if (1) {
+	                	int size = next_pos - pos;
+
+                		memcpy(element, pos, size);
+	                	element[size] = '\0';
+
+	        	        val = strstr(element, break_val[1]);
+
+				if (val) {
+					*val = '\0';
+					val++;
+				}
+
+        	                ret = bootflow_cmdline_set_arg(bflow, element, val, update_env);
+                	        if (ret)
+                        	        return ret;
+			}
+                        pos = next_pos + 1;
+                }
+        }
+
+	return 0;
+}
+
+#define BOOTARG_VALUE_LENGTH 50
+int bootflow_cmdline_fixup(struct bootflow *bflow, const char *arg)
+{
+	const char *args[3];
+	bool update_env[3] = { true, true, true };
+	int i, ret = 0;
+
+	args[0] = get_board_support_bootargs_fixup();
+	args[1] = get_board_support_bootargs();
+	args[2] = strdup(env_get("bootargs"));
+
+	for (i = 0; i < 3; i++) {
+		ret = update_cmdline(bflow, args[i], update_env[i]);
+
+		if (ret)
+			break;
+	}
+
+	free((char *)args[2]);
+
+	return ret;
 }
 
 const char *bootflow_img_type_name(enum bootflow_img_t type)

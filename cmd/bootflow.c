@@ -572,6 +572,12 @@ static int do_bootflow_cmdline(struct cmd_tbl *cmdtp, int flag, int argc,
 	case 'a':	/* auto */
 		ret = bootflow_cmdline_auto(bflow, arg);
 		break;
+	case 'f':
+		ret = bootflow_cmdline_fixup(bflow, arg);
+		break;
+	case 'p':
+		printf("%s\n", bflow->cmdline);
+		break;
 	}
 	switch (ret) {
 	case -E2BIG:
@@ -606,7 +612,7 @@ U_BOOT_LONGHELP(bootflow,
 	"bootflow read                  - read all current-bootflow files\n"
 	"bootflow boot                  - boot current bootflow\n"
 	"bootflow menu [-t]             - show a menu of available bootflows\n"
-	"bootflow cmdline [set|get|clear|delete|auto] <param> [<value>] - update cmdline"
+	"bootflow cmdline [set|get|clear|delete|auto|fix|print] <param> [<value>] - update cmdline"
 #else
 	"scan - boot first available bootflow\n"
 #endif

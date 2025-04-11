@@ -607,6 +607,32 @@ int bootflow_cmdline_get_arg(struct bootflow *bflow, const char *arg,
 int bootflow_cmdline_auto(struct bootflow *bflow, const char *arg);
 
 /**
+ * bootflow_cmdline_fixup() - Append useful values for provide compatibility
+ *
+ * This append a small number of known arguments, for Android in particular. It
+ * adds suitable kernel parameters automatically, e.g. to set androidboot.*
+ * family of values.
+ *
+ * @bflow: Bootflow to update
+ * @arg: Name of argument to set (e.g. "androidboot.boot_device")
+ * Return: 0 if OK -ve on error
+ */
+int bootflow_cmdline_fixup(struct bootflow *bflow, const char *arg);
+
+/**
+ * bootflow_cmdline_print() - Print useful values for cmdline
+ *
+ * This print all arguments for extend. Currently no used.
+ *
+ * @bflow: Bootflow to update
+ * @arg: Name of argument to carry
+ * @val: Value of argument to carry
+ * Return: 0 if OK -ve on error
+ */
+int bootflow_cmdline_print(struct bootflow *bflow, const char *arg,
+                             const char **val);
+
+/**
  * bootflow_img_type_name() - Get the name for an image type
  *
  * @type: Type to check (either enum bootflow_img_t or enum image_type_t
