@@ -100,7 +100,17 @@ char adroidboot_bootargs[] = \
 const static char *fix_bootargs = \
 " androidboot.android_dt_dir=/tmp/" \
 " androidboot.fstab_suffix=default" \
-" console=ramoops";
+" console=ramoops ";
+
+const char *get_board_support_bootargs(void)
+{
+        return soc_bootargs;
+}
+
+const char *get_board_support_bootargs_fixup(void)
+{
+        return fix_bootargs;
+}
 
 const char *board_fdt_chosen_bootargs(const struct fdt_property *fdt)
 {
