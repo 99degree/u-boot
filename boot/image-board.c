@@ -25,6 +25,7 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#undef CONFIG_CMD_ABOOTIMG
 /**
  * image_get_ramdisk - get and verify ramdisk image
  * @rd_addr: ramdisk image start address

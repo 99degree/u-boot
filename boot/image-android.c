@@ -398,12 +398,26 @@ int android_image_get_kernel(const void *hdr,
 
 bool is_android_vendor_boot_image_header(const void *vendor_boot_img)
 {
-	return !memcmp(VENDOR_BOOT_MAGIC, vendor_boot_img, ANDR_VENDOR_BOOT_MAGIC_SIZE);
+	char *magic = VENDOR_BOOT_MAGIC;
+	int ret = memcmp(VENDOR_BOOT_MAGIC, vendor_boot_img, strlen(magic));
+        if (ret) {
+		debug("found something difference...\n");
+	} else
+		return true;
+
+	return false;
 }
 
 bool is_android_boot_image_header(const void *hdr)
 {
-	return !memcmp(ANDR_BOOT_MAGIC, hdr, ANDR_BOOT_MAGIC_SIZE);
+	char *magic = ANDR_BOOT_MAGIC;
+	int ret = memcmp1(ANDR_BOOT_MAGIC, hdr, strlen(magic));
+	if (ret) {
+		debug("found something difference...\n");
+	} else
+		return true;
+
+	return false;
 }
 
 ulong android_image_get_end(const struct andr_boot_img_hdr_v0 *hdr,

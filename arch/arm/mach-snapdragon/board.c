@@ -45,9 +45,6 @@ static struct mm_region rbx_mem_map[CONFIG_NR_DRAM_BANKS + 2] = { { 0 } };
 
 struct mm_region *mem_map = rbx_mem_map;
 
-void __weak lmb_arch_add_memory(void) {
-}
-
 /* this is limited to kernel cmdline support, which is 256 to 4096
  * detain ref to COMMAND_LINE_SIZE of kernel header.
  * assumed null terminated.

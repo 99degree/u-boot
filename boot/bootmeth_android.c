@@ -517,6 +517,8 @@ static int boot_android_normal(struct bootflow *bflow)
 	ulong loadaddr = env_get_hex("loadaddr", 0);
 	ulong vloadaddr = env_get_hex("vendor_boot_comp_addr_r", 0);
 
+	printf("loadaddr %p\n", loadaddr);
+
 	ret = run_avb_verification(bflow);
 	if (ret < 0)
 		return log_msg_ret("avb", ret);
@@ -543,6 +545,34 @@ static int boot_android_normal(struct bootflow *bflow)
 #endif
 	if (priv->slot)
 		free(priv->slot);
+
+	/* below bootm path is unknown... so borrow fastboot path here */
+	if (1) {
+                static char boot_addr_start[20];
+                static char *const bootm_args[] = {
+                        "bootm", boot_addr_start, NULL
+                };
+
+		ulong fastboot_addr_r = env_get_hex("fastboot_addr_r", 0);
+
+		/* reallocate to $fastboot_addr_r */
+		memcpy (fastboot_addr_r, loadaddr, priv->boot_img_size);
+
+                snprintf(boot_addr_start, sizeof(boot_addr_start) - 1,
+                         "0x%p", fastboot_addr_r);
+                printf("Booting kernel at %s...\n\n\n", boot_addr_start);
+
+                udelay(10000000);
+                do_bootm(NULL, 0, 2, bootm_args);
+		udelay(10000000);
+
+                /*
+                 * This only happens if image is somehow faulty so we start
+                 * over. We deliberately leave this policy to the invocation
+                 * of fastbootcmd if that's what's being run
+                 */
+                do_reset(NULL, 0, 0, NULL);
+	}
 
 	ret = bootm_boot_start(loadaddr, bflow->cmdline);
 

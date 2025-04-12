@@ -43,6 +43,8 @@
 
 DECLARE_GLOBAL_DATA_PTR;
 
+#undef CONFIG_CMD_ABOOTIMG
+
 struct bootm_headers images;		/* pointers to os/initrd/fdt images */
 
 __weak void board_quiesce_devices(void)
@@ -216,6 +218,7 @@ static int boot_get_kernel(const char *addr_fit, struct bootm_headers *images,
 			vendor_boot_img = map_sysmem(get_avendor_bootimg_addr(), 0);
 		}
 		printf("## Booting Android Image at 0x%08lx ...\n", img_addr);
+		invalidate_dcache_range((unsigned long)boot_img, 16384);
 		ret = android_image_get_kernel(boot_img, vendor_boot_img,
 					       images->verify, os_data, os_len);
 		if (IS_ENABLED(CONFIG_CMD_ABOOTIMG)) {

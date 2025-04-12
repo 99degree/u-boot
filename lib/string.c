@@ -23,6 +23,7 @@
 #include <linux/string.h>
 #include <linux/types.h>
 #include <malloc.h>
+#include <stdio.h>
 
 /**
  * strncasecmp - Case insensitive, length-limited string comparison
@@ -634,12 +635,12 @@ __rcode __used void *memmove(void *dest, const void *src, size_t count)
 __used int memcmp(const void * cs,const void * ct,size_t count)
 {
 	const unsigned char *su1, *su2;
-	int res = 0;
 
-	for( su1 = cs, su2 = ct; 0 < count; ++su1, ++su2, count--)
-		if ((res = *su1 - *su2) != 0)
-			break;
-	return res;
+	for( su1 = cs, su2 = ct; 0 < count; ++su1, ++su2, count--) {
+		if (*su1 != *su2)
+			return 1;
+	}
+	return 0;
 }
 #endif
 
