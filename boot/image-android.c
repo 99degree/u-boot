@@ -272,13 +272,9 @@ static ulong android_image_get_kernel_addr(struct andr_image_data *img_data,
 	 *
 	 * Otherwise, we will return the actual value set by the user.
 	 */
-	if (img_data->kernel_addr == ANDROID_IMAGE_DEFAULT_KERNEL_ADDR ||
-		img_data->kernel_addr < gd->ram_base) {
-		if (comp == IH_COMP_NONE || comp ==IH_COMP_PLAIN) {
-			printf("use %p as kernel loading/decompress addr\n", img_data->kernel_ptr);
+	if (img_data->kernel_addr  == ANDROID_IMAGE_DEFAULT_KERNEL_ADDR) {
+		if (comp == IH_COMP_NONE)
 			return img_data->kernel_ptr;
-		}
-		printf("use %p as kernel loading/decompress addr\n", env_get_ulong("kernel_addr_r", 16, 0));
 		return env_get_ulong("kernel_addr_r", 16, 0);
 	}
 
