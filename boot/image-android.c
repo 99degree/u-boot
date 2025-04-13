@@ -411,7 +411,7 @@ bool is_android_vendor_boot_image_header(const void *vendor_boot_img)
 bool is_android_boot_image_header(const void *hdr)
 {
 	char *magic = ANDR_BOOT_MAGIC;
-	int ret = memcmp1(ANDR_BOOT_MAGIC, hdr, strlen(magic));
+	int ret = memcmp(ANDR_BOOT_MAGIC, hdr, strlen(magic));
 	if (ret) {
 		debug("found something difference...\n");
 	} else
