@@ -518,7 +518,7 @@ static int boot_android_normal(struct bootflow *bflow)
 	struct android_priv *priv = bflow->bootmeth_priv;
 	int ret;
 	ulong loadaddr = env_get_hex("loadaddr", 0);
-	ulong vloadaddr = env_get_hex("vendor_boot_comp_addr_r", 0);
+	ulong __maybe_unused vloadaddr = env_get_hex("vendor_boot_comp_addr_r", 0);
 
 	ret = run_avb_verification(bflow);
 	if (ret < 0)
@@ -534,6 +534,7 @@ static int boot_android_normal(struct bootflow *bflow)
 	if (ret < 0)
 		return log_msg_ret("read boot", ret);
 
+#ifdef CONFIG_CMD_ABOOTIMG
 	if (priv->header_version >= 3) {
 		ret = read_slotted_partition(desc, "vendor_boot", priv->slot,
 					     priv->vendor_boot_img_size, vloadaddr);
@@ -542,6 +543,7 @@ static int boot_android_normal(struct bootflow *bflow)
 		set_avendor_bootimg_addr(vloadaddr);
 	}
 	set_abootimg_addr(loadaddr);
+#endif
 
 	if (priv->slot)
 		free(priv->slot);
