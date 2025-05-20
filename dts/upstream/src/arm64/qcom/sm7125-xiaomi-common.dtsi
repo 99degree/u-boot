@@ -342,6 +342,14 @@
 	status = "okay";
 };
 
+&pm6150_vbus {
+	status = "okay";
+};
+
+&pm6150_typec {
+	status = "okay";
+};
+
 &sdhc_2 {
 	cd-gpios = <&tlmm 69 GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default","sleep";

@@ -4,8 +4,7 @@
 
 / {
         qcom,msm-id = <443 0x0>;
-        //qcom,board-id = <0x50022 1>;
-	qcom,board-id = <0 0>;
+	qcom,board-id = <0 0>, <0x10022 1>, <0x20022 1>, <0x30022 1>, <0x40022 1>, <0x50022 1>, <0x60022 1>;
 
 	#address-cells = <2>;
 	#size-cells = <2>;
