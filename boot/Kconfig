@@ -22,6 +22,15 @@ config ANDROID_BOOT_IMAGE_IGNORE_BLOB_ADDR
 	  addr by repacking the boot.img (mainly due to AVB signature mismatch),
 	  we need a way to use kernel_addr_r and ramdisk_addr_r.
 
+config ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS
+	bool "Android Boot Image boot cmd param will prepend to env bootargs"
+	help
+	  This controls how Android boot image embedded cmdline integrates
+	  with U-Boot bootargs environment.
+
+	  By enabling this, the boot.img's cmdline is prepended to the bootargs
+	  environment. By default, when disabled, the cmdline is appended.
+
 config TIMESTAMP
 	bool "Show image date and time when displaying image information"
 	default y if CMD_DATE
