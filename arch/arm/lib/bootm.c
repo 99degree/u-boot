@@ -265,10 +265,6 @@ __weak void update_os_arch_secondary_cores(uint8_t os_arch)
 {
 }
 
-extern void (*kernel_entry)(void *fdt_addr, void *res0, void *res1,
-                            void *res2);
-extern void* dtb_addr;
-
 #ifdef CONFIG_ARMV8_SWITCH_TO_EL1
 static void switch_to_el1(void)
 {
@@ -290,12 +286,12 @@ static void switch_to_el1(void)
 static void boot_jump_linux(struct bootm_headers *images, int flag)
 {
 #ifdef CONFIG_ARM64
+	void (*kernel_entry)(void *fdt_addr, void *res0, void *res1,
+			void *res2);
 	int fake = (flag & BOOTM_STATE_OS_FAKE_GO);
 
 	kernel_entry = (void (*)(void *fdt_addr, void *res0, void *res1,
 				void *res2))images->ep;
-
-	dtb_addr = images->ft_addr;
 
 	debug("## Transferring control to Linux (at address %lx)...\n",
 		(ulong) kernel_entry);
@@ -310,16 +306,6 @@ static void boot_jump_linux(struct bootm_headers *images, int flag)
 		do_nonsec_virt_switch();
 
 		update_os_arch_secondary_cores(images->os.arch);
-
-		/* right now switch_to_el1() is hanging the devlice
-		 * when it is already in EL1 so cant do anything about it.
-		 */
-		if (current_el() == 1) {
-			void purgatory_start(void);
-			purgatory_start();
-			panic("nothing to do...\n");
-			return;
-		}
 
 #ifdef CONFIG_ARMV8_SWITCH_TO_EL1
 		armv8_switch_to_el2((u64)images->ft_addr, 0, 0, 0,
