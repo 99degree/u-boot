@@ -1139,6 +1139,8 @@ int bootm_boot_start(ulong addr, const char *cmdline)
 	struct bootm_info bmi;
 	int states;
 	int ret;
+	char *bootargs;
+	char *newbootargs;
 
 	states = BOOTM_STATE_START | BOOTM_STATE_FINDOS | BOOTM_STATE_PRE_LOAD |
 		BOOTM_STATE_FINDOTHER | BOOTM_STATE_LOADOS |
@@ -1152,11 +1154,36 @@ int bootm_boot_start(ulong addr, const char *cmdline)
 
 	snprintf(addr_str, sizeof(addr_str), "%lx", addr);
 
-	ret = env_set("bootargs", cmdline);
+	if (IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS)) {
+		bootargs = env_get("bootargs");
+		ret = strlen(bootargs) + strlen(cmdline) + 2;
+
+		newbootargs = malloc(ret);
+
+		*newbootargs = '\0';
+
+		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
+			strcat(newbootargs, " ");
+		strcat(newbootargs, cmdline);
+
+		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
+			strcat(newbootargs, " ");
+		strcat(newbootargs, bootargs);
+
+		/* force to terminate the string */
+		memset(newbootargs + MAX_CMDLINE_SIZE - 2, '\0', 1);
+
+		ret = env_set("bootargs", newbootargs);
+
+		free(newbootargs);
+	} else
+		ret = env_set("bootargs", cmdline);
+
 	if (ret) {
 		printf("Failed to set cmdline\n");
 		return ret;
 	}
+
 	bootm_init(&bmi);
 	bmi.addr_img = addr_str;
 	bmi.cmd_name = "bootm";
