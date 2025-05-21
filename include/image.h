@@ -2037,6 +2037,7 @@ ulong get_abootimg_addr(void);
  * Return: no returned results
  */
 void set_abootimg_addr(ulong addr);
+void __weak set_abootimg_addr(ulong addr) {}
 
 /**
  * get_ainit_bootimg_addr() - Get Android init boot image address
@@ -2058,6 +2059,7 @@ ulong get_avendor_bootimg_addr(void);
  * Return: no returned results
  */
 void set_avendor_bootimg_addr(ulong addr);
+void __weak set_avendor_bootimg_addr(ulong addr) {}
 
 /**
  * board_fit_config_name_match() - Check for a matching board name
