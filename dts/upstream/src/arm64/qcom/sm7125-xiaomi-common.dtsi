@@ -442,6 +442,7 @@
 &usb_1_dwc3 {
 	dr_mode = "peripheral";
 	maximum-speed = "high-speed";
+	vbus-supply = <&pm6150_vbus>;
 	status = "okay";
 };
 
