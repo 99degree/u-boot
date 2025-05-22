@@ -670,21 +670,7 @@ exit:
 	return ret;
 }
 
-/**
- * android_image_get_dtb_by_index() - Get address and size of blob in DTB area.
- * @hdr_addr: Boot image header address
- * @vendor_boot_img: Pointer to vendor boot image header, which is at the start of the image.
- * @index: Index of desired DTB in DTB area (starting from 0)
- * @addr: If not NULL, will contain address to specified DTB
- * @size: If not NULL, will contain size of specified DTB
- *
- * Get the address and size of DTB blob by its index in DTB area of Android
- * Boot Image in RAM.
- *
- * Return: true on success or false on error.
- */
-bool android_image_get_dtb_by_index(ulong hdr_addr, ulong vendor_boot_img,
-				    u32 index, ulong *addr, u32 *size)
+bool android_image_parse_dtb_header(ulong hdr_addr, ulong vendor_boot_img, ulong *dtb_img_addr, u32 *dtb_size)
 {
 	struct andr_image_data img_data;
 	const struct andr_boot_img_hdr_v0 *hdr;
@@ -703,14 +689,24 @@ bool android_image_get_dtb_by_index(ulong hdr_addr, ulong vendor_boot_img,
 		unmap_sysmem(vhdr);
 	unmap_sysmem(hdr);
 
-	ulong dtb_img_addr;	/* address of DTB part in boot image */
+	if (!android_image_get_dtb_img_addr(hdr_addr, vendor_boot_img,
+                                            dtb_img_addr))
+		return false;
+
+	*dtb_size = img_data.dtb_size;
+
+	env_set_hex("dtbo_addr_r", *dtb_img_addr);
+	env_set_hex("dtbo_size", img_data.dtb_size);
+
+	return true;
+}
+
+bool android_image_parse_dtb_by_index(ulong dtb_img_addr, u32 dtb_size,
+                                    u32 index, ulong *addr, u32 *size)
+{
 	u32 dtb_img_size;	/* size of DTB payload in boot image */
 	ulong dtb_addr;		/* address of DTB blob with specified index  */
 	u32 i;			/* index iterator */
-
-	if (!android_image_get_dtb_img_addr(hdr_addr, vendor_boot_img,
-					    &dtb_img_addr))
-		return false;
 
 	/* Check if DTB area of boot image is in DTBO format */
 	if (android_dt_check_header(dtb_img_addr)) {
@@ -719,7 +715,7 @@ bool android_image_get_dtb_by_index(ulong hdr_addr, ulong vendor_boot_img,
 	}
 
 	/* Find out the address of DTB with specified index in concat blobs */
-	dtb_img_size = img_data.dtb_size;
+	dtb_img_size = dtb_size;
 	i = 0;
 	dtb_addr = dtb_img_addr;
 	while (dtb_addr < dtb_img_addr + dtb_img_size) {
@@ -750,6 +746,31 @@ bool android_image_get_dtb_by_index(ulong hdr_addr, ulong vendor_boot_img,
 
 	printf("Error: Index is out of bounds (%u/%u)\n", index, i);
 	return false;
+}
+
+/**
+ * android_image_get_dtb_by_index() - Get address and size of blob in DTB area.
+ * @hdr_addr: Boot image header address
+ * @vendor_boot_img: Pointer to vendor boot image header, which is at the start of the image.
+ * @index: Index of desired DTB in DTB area (starting from 0)
+ * @addr: If not NULL, will contain address to specified DTB
+ * @size: If not NULL, will contain size of specified DTB
+ *
+ * Get the address and size of DTB blob by its index in DTB area of Android
+ * Boot Image in RAM.
+ *
+ * Return: true on success or false on error.
+ */
+bool android_image_get_dtb_by_index(ulong hdr_addr, ulong vendor_boot_img,
+                                    u32 index, ulong *addr, u32 *size)
+{
+	ulong dtb_img_addr;
+	u32 dtb_size;
+
+	if (!android_image_parse_dtb_header(hdr_addr, vendor_boot_img, &dtb_img_addr, &dtb_size))
+		return false;
+
+	return android_image_parse_dtb_by_index(dtb_img_addr, dtb_size, index, addr, size);
 }
 
 #if !defined(CONFIG_XPL_BUILD)
