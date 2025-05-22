@@ -567,6 +567,43 @@ __weak int arch_fixup_fdt(void *blob)
 	return 0;
 }
 
+int fdt_apply_overlay(void *blob)
+{
+	u32 msm_id, board_id;
+
+	if (!IS_ENABLED(CONFIG_ANDROID_SUPPORT_DTBO_PART))
+		return 0;
+
+	/* qcom specific quirk to determine apply overlay or not */
+	msm_id = fdt_getprop_u32_default(blob, "/", "qcom,msm-id", 0);
+	board_id = fdt_getprop_u32_default(blob, "/", "qcom,board-id", 0);
+
+	if (msm_id && board_id == 0) {
+		ulong dtbo_addr_r = env_get_hex("dtbo_addr_r", 0);
+		ulong dtbp_ptr;
+		u32 total_sz, sz;
+		int i = 0;
+
+		/* well, need to apply overlay */
+		if (!android_image_get_dtboimg_size((const void*)dtbo_addr_r, &total_sz))
+			return 0;
+
+		if (!android_image_parse_dtb_by_index(dtbo_addr_r, total_sz, i, &dtbp_ptr, &sz))
+			return 0;
+
+		env_set_hex("fdtovaddr", dtbp_ptr);
+
+		if (fdt_shrink_to_minimum(blob, total_sz)) {
+			printf("fail to resize fdt with %d\n", total_sz);
+			return 0;
+		}
+
+		fdt_overlay_apply_verbose(blob, (void *)dtbp_ptr);
+	}
+
+	return 0;
+}
+
 int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 {
 	ulong *initrd_start = &images->initrd_start;
@@ -596,6 +633,12 @@ int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
 		printf("ERROR: /chosen node create failed\n");
 		goto err;
 	}
+
+	if (fdt_apply_overlay(blob) < 0) {
+		printf("ERROR: apply overlay failed\n");
+		goto err;
+	}
+
 	if (arch_fixup_fdt(blob) < 0) {
 		printf("ERROR: arch-specific fdt fixup failed\n");
 		goto err;
