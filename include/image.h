@@ -1885,6 +1885,23 @@ bool android_image_get_dtboimg_size(const void *hdr, u32 *dtbo_img_size);
  */
 bool android_image_get_vendor_bootimg_size(const void *hdr, u32 *vendor_boot_img_size);
 
+
+/**
+ * android_image_parse_dtb_by_index() - Parse dtbo image and return i-th dtbo item
+ *
+ * This is used to parse dtbo image and return i-th dtbo item
+ * from dtbo image.
+ *
+ * @dtb_img_addr: ulong point to dtbo image header, usually get from env_get()
+ * @dtb_size: Specify how long is this dtbo image
+ * @index: parse i-th dtb
+ * @addr: return i-th dtb addr
+ * @size: return i-th dtb size
+ * Return: true if succeeded, false otherwise
+ */
+bool android_image_parse_dtb_by_index(ulong dtb_img_addr, u32 dtb_size,
+                                    u32 index, ulong *addr, u32 *size);
+
 /**
  * android_image_get_data() - Parse Android boot images
  *
