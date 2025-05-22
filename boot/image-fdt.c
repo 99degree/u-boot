@@ -576,7 +576,7 @@ int fdt_apply_overlay(void *blob)
 
 	/* qcom specific quirk to determine apply overlay or not */
 	msm_id = fdt_getprop_u32_default(blob, "/", "qcom,msm-id", 0);
-	board_id = fdt_getprop_u32_default(blob, "/", "qcom,board-id", 0);
+	board_id = fdt_getprop_u32_default(blob, "/", "qcom,board-id", -1);
 
 	if (msm_id && board_id == 0) {
 		ulong dtbo_addr_r = env_get_hex("dtbo_addr_r", 0);
