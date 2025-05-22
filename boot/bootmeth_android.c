@@ -18,6 +18,7 @@
 #include <bootm.h>
 #include <bootmeth.h>
 #include <dm.h>
+#include <dt_table.h>
 #include <image.h>
 #include <malloc.h>
 #include <mapmem.h>
@@ -28,6 +29,7 @@
 #define BCB_FIELD_COMMAND_SZ 32
 #define BCB_PART_NAME "misc"
 #define BOOT_PART_NAME "boot"
+#define DTBO_PART_NAME "dtbo"
 #define VENDOR_BOOT_PART_NAME "vendor_boot"
 #define SLOT_LEN 2
 
@@ -46,6 +48,7 @@ struct android_priv {
 	char *slot;
 	u32 header_version;
 	u32 boot_img_size;
+	u32 dtbo_img_total_size;
 	u32 vendor_boot_img_size;
 };
 
@@ -106,6 +109,51 @@ static int scan_boot_part(struct udevice *blk, struct android_priv *priv)
 	}
 
 	priv->header_version = ((struct andr_boot_img_hdr_v0 *)buf)->header_version;
+
+	free(buf);
+
+	return 0;
+}
+
+static int scan_dtbo_part(struct udevice *blk, struct android_priv *priv)
+{
+	struct blk_desc *desc = dev_get_uclass_plat(blk);
+	struct disk_partition partition;
+	char partname[PART_NAME_LEN];
+	ulong num_blks, bufsz;
+	char *buf;
+	int ret;
+
+	if (priv->slot)
+		sprintf(partname, DTBO_PART_NAME "_%s", priv->slot);
+	else
+		sprintf(partname, DTBO_PART_NAME);
+
+	ret = part_get_info_by_name(desc, partname, &partition);
+	if (ret < 0)
+		return log_msg_ret("part info", ret);
+
+	num_blks = DIV_ROUND_UP(sizeof(struct dt_table_header), desc->blksz);
+	bufsz = num_blks * desc->blksz;
+	buf = malloc(bufsz);
+	if (!buf)
+		return log_msg_ret("buf", -ENOMEM);
+
+	ret = blk_read(blk, partition.start, num_blks, buf);
+	if (ret != num_blks) {
+		free(buf);
+		return log_msg_ret("part read", -EIO);
+	}
+
+	if (!is_android_dtbo_image_header(buf)) {
+		free(buf);
+		return log_msg_ret("header", -ENOENT);
+	}
+
+	if (!android_image_get_dtboimg_size(buf, &priv->dtbo_img_total_size)) {
+		free(buf);
+		return log_msg_ret("get bootimg size", -EINVAL);
+	}
 
 	free(buf);
 
@@ -286,6 +334,14 @@ static int android_read_bootflow(struct udevice *dev, struct bootflow *bflow)
 	if (ret < 0) {
 		log_debug("scan boot failed: err=%d\n", ret);
 		goto free_priv;
+	}
+
+	if (IS_ENABLED(CONFIG_ANDROID_SUPPORT_DTBO_PART)) {
+		ret = scan_dtbo_part(bflow->blk, priv);
+		if (ret < 0) {
+			log_debug("scan dtbo failed: err=%d\n", ret);
+			goto free_priv;
+		}
 	}
 
 	if (priv->header_version >= 3) {
@@ -532,6 +588,18 @@ static int boot_android_normal(struct bootflow *bflow)
 				     loadaddr);
 	if (ret < 0)
 		return log_msg_ret("read boot", ret);
+
+	if (IS_ENABLED(CONFIG_ANDROID_SUPPORT_DTBO_PART)) {
+		ulong dtbo_addr_r = env_get_hex("dtbo_addr_r", 0);
+
+		if (dtbo_addr_r && dtbo_addr_r != -1) {
+			ret = read_slotted_partition(desc, "dtbo", priv->slot, priv->boot_img_size,
+						     dtbo_addr_r);
+			if (ret < 0)
+				return log_msg_ret("read dtbo", ret);
+		} else
+			printf("read dtbo_addr_r fail\n");
+	}
 
 	if (IS_ENABLED(CONFIG_CMD_ABOOTIMG) && priv->header_version >= 3) {
 		ret = read_slotted_partition(desc, "vendor_boot", priv->slot,

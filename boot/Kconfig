@@ -30,6 +30,13 @@ config ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS
 	  env bootargs. By enable this, androidboot boot param will prepend to
 	  head of bootargs env.
 
+config ANDROID_SUPPORT_DTBO_PART
+	bool "Android Boot support dtbo partition"
+	help
+	  This option enable reading emmc/ufs dtbo partition to patch for boot img
+	  dtb. When enabled, bootmeth_android will parse dtbo partition and patch
+	  dtoverlay into boot img main dtb.
+
 config TIMESTAMP
 	bool "Show image date and time when displaying image information"
 	default y if CMD_DATE
