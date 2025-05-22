@@ -514,6 +514,11 @@ int board_late_init(void)
 		 * usually dtbo is in recovery img dtbo section
 		 */
 		status |= env_set_hex("dtbo_addr_r", addr_alloc(SZ_4M));
+
+		/* this env var is de facto standard for fdoverlay
+		 * see: https://docs.u-boot.org/en/latest/usage/fdt_overlays.html
+		 */
+		status |= env_set_hex("ftovaddr", addr_alloc(SZ_4M));
 	}
 
 	if (status)
