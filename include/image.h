@@ -1862,6 +1862,18 @@ struct andr_image_data;
 bool android_image_get_bootimg_size(const void *hdr, u32 *boot_img_size);
 
 /**
+ * android_image_get_dtboimg_size() - Extract size of dtbo image
+ *
+ * This is used to extract the size of an dtbo image
+ * from dtbo image header.
+ *
+ * @hdr: Pointer to dtbo image header
+ * @boot_img_size: On exit returns the size in bytes of the dtbo image
+ * Return: true if succeeded, false otherwise
+ */
+bool android_image_get_dtboimg_size(const void *hdr, u32 *dtbo_img_size);
+
+/**
  * android_image_get_vendor_bootimg_size() - Extract size of Android vendor-boot image
  *
  * This is used to extract the size of an Android vendor-boot image
@@ -2012,6 +2024,17 @@ bool android_image_print_dtb_contents(ulong hdr_addr);
  * Return: non-zero if the magic is correct, zero otherwise
  */
 bool is_android_boot_image_header(const void *hdr);
+
+/**
+ * is_android_dtbo_image_header() - Check the magic of dtbo image
+ *
+ * This checks the header of dtbo image and verifies the
+ * magic is "d7b7ab1e"
+ *
+ * @hdr: Pointer to dtbo image
+ * Return: non-zero if the magic is correct, zero otherwise
+ */
+bool is_android_dtbo_image_header(const void *hdr);
 
 /**
  * is_android_vendor_boot_image_header() - Check the magic of vendor boot image

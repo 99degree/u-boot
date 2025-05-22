@@ -13,6 +13,7 @@
 #include <linux/types.h>
 
 #define DT_TABLE_MAGIC			0xd7b7ab1e
+#define DT_TABLE_MAGIC_SIZE		8
 #define DT_TABLE_DEFAULT_PAGE_SIZE	2048
 #define DT_TABLE_DEFAULT_VERSION	0
 

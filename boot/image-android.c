@@ -12,6 +12,7 @@
 #include <asm/unaligned.h>
 #include <mapmem.h>
 #include <linux/libfdt.h>
+#include <dt_table.h>
 
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 #define ANDROID_IMAGE_DEFAULT_RAMDISK_ADDR	0x11000000
@@ -198,6 +199,25 @@ bool android_image_get_bootimg_size(const void *hdr, u32 *boot_img_size)
 		android_boot_image_v3_v4_parse_hdr(hdr, &data);
 
 	*boot_img_size = data.boot_img_total_size;
+
+	return true;
+}
+
+bool android_image_get_dtboimg_size(const void *hdr, u32 *dtbo_img_size)
+{
+	const struct dt_table_header *data = hdr;
+
+	if (!hdr || !dtbo_img_size) {
+		printf("hdr or dtbo_img_size can't be NULL\n");
+		return false;
+	}
+
+	if (!is_android_dtbo_image_header(hdr)) {
+		printf("Incorrect dtbo image header\n");
+		return false;
+	}
+
+	*dtbo_img_size = data->total_size;
 
 	return true;
 }
@@ -406,6 +426,12 @@ bool is_android_vendor_boot_image_header(const void *vendor_boot_img)
 bool is_android_boot_image_header(const void *hdr)
 {
 	return !memcmp(ANDR_BOOT_MAGIC, hdr, ANDR_BOOT_MAGIC_SIZE);
+}
+
+bool is_android_dtbo_image_header(const void *hdr)
+{
+	const int magic = DT_TABLE_MAGIC;
+	return !memcmp(&magic, hdr, DT_TABLE_MAGIC_SIZE);
 }
 
 ulong android_image_get_end(const struct andr_boot_img_hdr_v0 *hdr,
