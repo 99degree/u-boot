@@ -32,6 +32,7 @@ config ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS
 
 config ANDROID_SUPPORT_DTBO_PART
 	bool "Android Boot support dtbo partition"
+	select OF_LIBFDT_OVERLAY
 	help
 	  This option enable reading emmc/ufs dtbo partition to patch for boot img
 	  dtb. When enabled, bootmeth_android will parse dtbo partition and patch
