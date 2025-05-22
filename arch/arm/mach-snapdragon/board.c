@@ -509,6 +509,12 @@ int board_late_init(void)
 	status |= env_set_hex("pxefile_addr_r", addr_alloc(SZ_4M));
 	addr = addr_alloc(SZ_2M);
 	status |= env_set_hex("fdt_addr_r", addr);
+	if (IS_ENABLED(CONFIG_ANDROID_SUPPORT_DTBO_PART)) {
+		/* if dtbo is a partition then this is a must for normal boot
+		 * usually dtbo is in recovery img dtbo section
+		 */
+		status |= env_set_hex("dtbo_addr_r", addr_alloc(SZ_4M));
+	}
 
 	if (status)
 		log_warning("%s: Failed to set run time variables\n", __func__);
