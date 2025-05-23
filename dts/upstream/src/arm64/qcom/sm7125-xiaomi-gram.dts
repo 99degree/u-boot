@@ -1,0 +1,25 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Copyright (c) 2021, The Linux Foundation. All rights reserved.
+ */
+
+/dts-v1/;
+
+#include "sm7125-xiaomi-common.dtsi"
+
+/ {
+	model = "Xiaomi POCO M2 Pro";
+	compatible = "xiaomi,gram", "qcom,sm7125";
+
+	/* required for bootloader to select correct board */
+	qcom,board-id = <0x60022 1>;
+};
+
+/* that can protect ufs partition untouch */
+&ufs_mem_hc {
+        status = "disabled";
+};
+
+&ufs_mem_phy {
+        status = "disabled";
+};
