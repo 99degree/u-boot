@@ -24,6 +24,8 @@
 #include <asm/io.h>
 #include <dm/ofnode.h>
 #include <tee/optee.h>
+#include <image.h>
+#include <image-android-dt.h>
 
 DECLARE_GLOBAL_DATA_PTR;
 
@@ -570,38 +572,75 @@ __weak int arch_fixup_fdt(void *blob)
 int fdt_apply_overlay(void *blob)
 {
 	u32 msm_id, board_id;
+	int i = 0, ret = -1;
 
 	if (!IS_ENABLED(CONFIG_ANDROID_SUPPORT_DTBO_PART))
 		return 0;
 
 	/* qcom specific quirk to determine apply overlay or not */
 	msm_id = fdt_getprop_u32_default(blob, "/", "qcom,msm-id", 0);
-	board_id = fdt_getprop_u32_default(blob, "/", "qcom,board-id", -1);
+	board_id = fdt_getprop_u32_default(blob, "/", "qcom,board-id", 0);
+
+	/* only apply for qcom old boot.img */
+	if (!(msm_id > 0 && board_id == 0))
+		return 0;
+
+	board_id = env_get_hex("board-id", 0);
+	printf("env board-id: 0x%x \n", board_id);
 
 	if (msm_id && board_id == 0) {
 		ulong dtbo_addr_r = env_get_hex("dtbo_addr_r", 0);
 		ulong dtbp_ptr;
-		u32 total_sz, sz;
-		int i = 0;
+		u32 sz, total_sz;
 
-		/* well, need to apply overlay */
-		if (!android_image_get_dtboimg_size((const void*)dtbo_addr_r, &total_sz))
-			return 0;
+		if (!dtbo_addr_r)
+			goto error;
 
-		if (!android_image_parse_dtb_by_index(dtbo_addr_r, total_sz, i, &dtbp_ptr, &sz))
-			return 0;
+		dtbo_addr_r = map_sysmem(dtbo_addr_r, 0);
+
+		/* aquire first dtb(o) addr and total_size */
+		android_dt_get_fdt_by_index(dtbo_addr_r, 0, &dtbp_ptr, &total_sz);
+
+		do {
+			if (!android_image_parse_dtb_by_index(dtbo_addr_r, total_sz, i,
+							      &dtbp_ptr, &sz)) {
+				board_id = 0;
+                                break;
+			}
+
+			if (board_id == fdt_getprop_u32_default(dtbp_ptr, "/",
+								"qcom,board-id", 0)) {
+				android_image_print_dtb_info(dtbp_ptr, i);
+				break;
+			}
+
+			i++;
+		} while (1);
+
+		if (!board_id) {
+			printf("fail to find matching dtbo\n");
+			goto error;
+		}
 
 		env_set_hex("fdtovaddr", dtbp_ptr);
 
-		if (fdt_shrink_to_minimum(blob, total_sz)) {
-			printf("fail to resize fdt with %d\n", total_sz);
-			return 0;
+		/* resize base dtb, aka blob from upper func */
+		if (!fdt_shrink_to_minimum(blob, CONFIG_SYS_FDT_PAD)) {
+			printf("fail to resize fdt with size %d\n", CONFIG_SYS_FDT_PAD);
+			goto error;
 		}
 
-		fdt_overlay_apply_verbose(blob, (void *)dtbp_ptr);
-	}
+                if (!fdt_valid(dtbp_ptr)) {
+			printf("fail to apply dtbo due to not valid dtbo\n");
+                        goto error;
+		}
 
-	return 0;
+                /* apply method prints messages on error */
+                ret = fdt_overlay_apply_verbose(blob, dtbp_ptr);
+error:
+		unmap_sysmem(dtbo_addr_r);
+	}
+	return ret;
 }
 
 int image_setup_libfdt(struct bootm_headers *images, void *blob, bool lmb)
