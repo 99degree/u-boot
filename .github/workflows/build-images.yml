@@ -43,7 +43,7 @@ jobs:
 
       - name: Assemble Android boot.img
         run: |
-          ./mkbootimg/mkbootimg --base 0x0 --kernel_offset 0x8000 --pagesize 4096 --kernel .output/u-boot-fit-dtb.bin --ramdisk .output/fit-dtb.blob --ramdisk_offset 0x1000000 --dtb .output/dts/upstream/src/arm64/qcom/qcom-multi-dummy.dtb --dtb_offset 0x1f00000 --header_version 2 --second_offset 0x0 -o .output/u-boot.img
+          ./mkbootimg/mkbootimg --base 0x0 --kernel_offset 0x8000 --pagesize 4096 --kernel .output/u-boot-fit-dtb.bin --ramdisk .output/fit-dtb.blob --ramdisk_offset 0x1000000 --dtb .output/dts/dt.dtb --dtb_offset 0x1f00000 --header_version 2 --second_offset 0x0 -o .output/u-boot.img
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
