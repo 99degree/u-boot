@@ -721,8 +721,8 @@ bool android_image_parse_dtb_header(ulong hdr_addr, ulong vendor_boot_img, ulong
 
 	*dtb_size = img_data.dtb_size;
 
-	env_set_hex("dtbo_addr_r", *dtb_img_addr);
-	env_set_hex("dtbo_size", img_data.dtb_size);
+//	env_set_hex("dtbo_addr_r", *dtb_img_addr);
+//	env_set_hex("dtbo_size", img_data.dtb_size);
 
 	return true;
 }
@@ -744,17 +744,15 @@ bool android_image_parse_dtb_by_index(ulong dtb_img_addr, u32 dtb_size,
 	dtb_img_size = dtb_size;
 	i = 0;
 	dtb_addr = dtb_img_addr;
-	while (dtb_addr < dtb_img_addr + dtb_img_size) {
+	while (dtb_addr < (dtb_img_addr + dtb_img_size)) {
 		const struct fdt_header *fdt;
 		u32 dtb_size;
-
 		fdt = map_sysmem(dtb_addr, sizeof(*fdt));
 		if (fdt_check_header(fdt) != 0) {
 			unmap_sysmem(fdt);
 			printf("Error: Invalid FDT header for index %u\n", i);
 			return false;
 		}
-
 		dtb_size = fdt_totalsize(fdt);
 		unmap_sysmem(fdt);
 
@@ -765,7 +763,6 @@ bool android_image_parse_dtb_by_index(ulong dtb_img_addr, u32 dtb_size,
 				*addr = dtb_addr;
 			return true;
 		}
-
 		dtb_addr += dtb_size;
 		++i;
 	}
@@ -862,7 +859,7 @@ void android_print_contents(const struct andr_boot_img_hdr_v0 *hdr)
  *
  * Return: true on success or false on error.
  */
-static bool android_image_print_dtb_info(const struct fdt_header *fdt,
+bool android_image_print_dtb_info(const struct fdt_header *fdt,
 					 u32 index)
 {
 	int root_node_off;
@@ -915,8 +912,10 @@ bool android_image_print_dtb_contents(ulong hdr_addr)
 	u32 i;			/* index iterator */
 
 	res = android_image_get_dtb_img_addr(hdr_addr, 0, &dtb_img_addr);
-	if (!res)
-		return false;
+	if (!res) {
+		dtb_img_addr = hdr_addr;
+	} else
+		goto done;
 
 	/* Check if DTB area of boot image is in DTBO format */
 	if (android_dt_check_header(dtb_img_addr)) {
@@ -924,7 +923,7 @@ bool android_image_print_dtb_contents(ulong hdr_addr)
 		android_dt_print_contents(dtb_img_addr);
 		return true;
 	}
-
+done:
 	printf("## DTB area contents (concat format):\n");
 
 	/* Iterate over concatenated DTB blobs */

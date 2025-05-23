@@ -149,6 +149,38 @@ static int do_fdt(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	if (argc < 2)
 		return CMD_RET_USAGE;
 
+	/*fdt testdtbo: test for dtbo img */
+	if (strncmp(argv[1], "te", 2) == 0) {
+                ulong dtbo_addr_r = env_get_hex("dtbo_addr_r", 0);
+                ulong dtbp_ptr;
+                u32 total_sz, sz;
+		int i;
+
+                argc -= 2;
+                argv += 2;
+
+		if (argc > 0) {
+			char *arg = *argv;
+			dtbo_addr_r = hextoul(arg, NULL);
+		} else
+			printf("using dtbo_addr_r @ 0x%lx\n", dtbo_addr_r);
+
+		map_sysmem(dtbo_addr_r, 0);
+
+                do {
+			if (!android_image_parse_dtb_by_index(dtbo_addr_r, total_sz, i, &dtbp_ptr, &sz))
+                                break;
+
+			android_image_print_dtb_info(dtbp_ptr, i);
+
+                        i++;
+
+                } while (1);
+
+		unmap_sysmem(dtbo_addr_r);
+		return CMD_RET_SUCCESS;
+	}
+
 	/* fdt addr: Set the address of the fdt */
 	if (strncmp(argv[1], "ad", 2) == 0) {
 		unsigned long addr;
@@ -1150,6 +1182,9 @@ U_BOOT_LONGHELP(fdt,
 	"                                      <addr> - address of key blob\n"
 	"                                               default gd->fdt_blob\n"
 #endif
+	"fdt testdtbo <addr>                 - test and parse dtbo image\n"
+	"                                      <addr> - address of key blob\n"
+        "                                               default $dtbo_addr_r\n"
 	"NOTE: Dereference aliases by omitting the leading '/', "
 		"e.g. fdt print ethernet0.");
 
