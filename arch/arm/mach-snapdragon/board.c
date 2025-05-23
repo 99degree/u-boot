@@ -213,6 +213,16 @@ int board_fdt_blob_setup(void **fdtp)
 	external_valid = external_fdt && !fdt_check_header(external_fdt);
 	internal_valid = !fdt_check_header(internal_fdt);
 
+	if (external_valid) {
+		int board_id, msm_id;
+
+		msm_id = fdt_getprop_u32_default(external_fdt, "/", "qcom,msm-id", 0);
+		board_id = fdt_getprop_u32_default(external_fdt, "/", "qcom,board-id", 0);
+
+		env_set_hex("board-id", board_id);
+		env_set_hex("msm-id", msm_id);
+	}
+
 	/*
 	 * There is no point returning an error here, U-Boot can't do anything useful in this situation.
 	 * Bail out while we can still print a useful error message.
