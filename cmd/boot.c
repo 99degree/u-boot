@@ -10,6 +10,9 @@
 #include <command.h>
 #include <net.h>
 #include <vsprintf.h>
+#include <dm/device-internal.h>
+#include <dm/uclass.h>
+#include <reboot-mode/reboot-mode.h>
 
 #ifdef CONFIG_CMD_GO
 
@@ -45,6 +48,33 @@ static int do_go(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	return rcode;
 }
 
+static int do_bootmode(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
+{
+        int mode = 0;
+        int ret;
+        struct udevice *dev;
+
+	if (argc >= 2)
+	        mode = hextoul(argv[1], NULL);
+
+	/* force to 2 atm */
+	mode = 2;
+
+	for (uclass_first_device(UCLASS_REBOOT_MODE, &dev);
+	        dev;
+	        uclass_next_device(&dev)) {
+			printf("%s %d\n", __func__, __LINE__);
+
+			if (!dev)
+				break;
+
+	                ret = dm_reboot_mode_set(dev, mode);
+	                if (ret)
+	                        break;
+	}
+
+	return 0;
+}
 /* -------------------------------------------------------------------- */
 
 U_BOOT_CMD(
@@ -61,6 +91,12 @@ U_BOOT_CMD(
 	"Perform RESET of the CPU",
 	"- cold boot without level specifier\n"
 	"reset -w - warm reset if implemented"
+);
+
+U_BOOT_CMD(
+        bootmode, 2, 0,    do_bootmode,
+        "Perform bootmode of the system\n",
+	""
 );
 
 #ifdef CONFIG_CMD_POWEROFF
