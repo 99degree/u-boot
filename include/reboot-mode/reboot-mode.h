@@ -52,5 +52,6 @@ struct reboot_mode_ops {
  * Return: 0 if OK, -ve on error
  */
 int dm_reboot_mode_update(struct udevice *dev);
+int dm_reboot_mode_set(struct udevice *dev, u32 bootmode);
 
 #endif /* REBOOT_MODE_REBOOT_MODE_H__ */
