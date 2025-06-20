@@ -21,6 +21,7 @@
 #include <linux/delay.h>
 #include <linux/err.h>
 #include <asm/global_data.h>
+#include <reboot-mode/reboot-mode.h>
 
 int sysreset_request(struct udevice *dev, enum sysreset_t type)
 {
@@ -56,6 +57,15 @@ int sysreset_walk(enum sysreset_t type)
 {
 	struct udevice *dev;
 	int ret = -ENOSYS;
+
+	/* notify reboot-mode driver too */
+        for (uclass_first_device(UCLASS_REBOOT_MODE, &dev);
+		dev;
+		uclass_next_device(&dev)) {
+	                ret = dm_reboot_mode_update(dev);
+			if (ret)
+				break;
+        }
 
 	while (ret != -EINPROGRESS && type < SYSRESET_COUNT) {
 		for (uclass_first_device(UCLASS_SYSRESET, &dev);
@@ -130,7 +140,9 @@ int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 	}
 
 	printf("resetting ...\n");
-	mdelay(100);
+	mdelay(1000);
+        printf("resetting ...\n");
+        mdelay(1000);
 
 	sysreset_walk_halt(reset_type);
 
