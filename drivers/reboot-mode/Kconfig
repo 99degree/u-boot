@@ -38,4 +38,12 @@ config REBOOT_MODE_NVMEM
 	  Use any kind of non-volatile memory (EEPROM, RTC, etc) to control the
 	  reboot mode.
 
+config REBOOT_MODE_PMIC_QCOM_PON
+        bool "Use pmic QCOM PON register to store reboot mode"
+        depends on DM_REBOOT_MODE && PMIC_QCOM
+	default y if PMIC_QCOM
+        help
+          Use pmic arbitary register to store reboot mode, once reboot, bootloader
+	  will control the reboot mode.
+
 endmenu
