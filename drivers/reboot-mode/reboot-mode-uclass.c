@@ -9,10 +9,9 @@
 #include <exports.h>
 #include <reboot-mode/reboot-mode.h>
 
-int dm_reboot_mode_update(struct udevice *dev)
+int dm_reboot_mode_set(struct udevice *dev, u32 rebootmode)
 {
 	struct reboot_mode_ops *ops = reboot_mode_get_ops(dev);
-	u32 rebootmode;
 	int ret, i;
 
 	assert(ops);
@@ -42,8 +41,6 @@ int dm_reboot_mode_update(struct udevice *dev)
 	}
 
 	if (ops->set) {
-		/* Clear the value */
-		rebootmode = 0;
 		ret = ops->set(dev, rebootmode);
 		if (ret) {
 			dev_err(dev, "Failed to clear the reboot mode\n");
@@ -52,6 +49,12 @@ int dm_reboot_mode_update(struct udevice *dev)
 	}
 
 	return 0;
+}
+
+int dm_reboot_mode_update(struct udevice *dev)
+{
+	/* clear boot mode */
+	return dm_reboot_mode_set(dev, 0);
 }
 
 int dm_reboot_mode_pre_probe(struct udevice *dev)
