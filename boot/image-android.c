@@ -286,6 +286,65 @@ static ulong android_image_get_kernel_addr(struct andr_image_data *img_data,
 }
 
 /**
+ * android_image_modify_bootargs_env() - helper to set new bootargs
+ *
+ * set boot based on provided cmdline and u-boot pre-set value
+ *
+ * @cmd: usually contain kernel boot command line string
+ * @cmd_extra: usually contain kernel boot command line string from vendor img
+ * return: 0, success; otherwise fail in various problem.
+*/
+int android_image_modify_bootargs_env(const char *cmd, const char *cmd_extra) {
+	char *bootargs = env_get("bootargs");
+	char *newbootargs;
+	int len = 0;
+
+	if (bootargs)
+		len += strlen(bootargs);
+
+	if (cmd && *cmd)
+		len += strlen(cmd) + (len ? 1 : 0); /* +1 for extra space */
+
+	if (cmd_extra && *cmd_extra)
+		len += strlen(cmd_extra) + (len ? 1 : 0); /* +1 for extra space */
+
+	newbootargs = malloc(len + 2); /* +2 for 2x '\0' */
+
+	if (!newbootargs) {
+		puts("Error: malloc in android_image_get_kernel failed!\n");
+		return -ENOMEM;
+	}
+
+	*newbootargs = '\0'; /* set to Null in case no components below are present */
+
+	if (bootargs && !IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS))
+		strcpy(newbootargs, bootargs);
+
+	if (cmd && *cmd) {
+		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
+				strcat(newbootargs, " ");
+		strcat(newbootargs, cmd);
+	}
+
+	if (cmd_extra && *cmd_extra) {
+		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
+				strcat(newbootargs, " ");
+		strcat(newbootargs, cmd_extra);
+	}
+
+	if (bootargs && IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS)) {
+		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
+				strcat(newbootargs, " ");
+		strcat(newbootargs, bootargs);
+	}
+
+	env_set("bootargs", newbootargs);
+	free(newbootargs);
+
+	return 0;
+}
+
+/**
  * android_image_get_kernel() - processes kernel part of Android boot images
  * @hdr:	Pointer to boot image header, which is at the start
  *			of the image.
@@ -310,6 +369,8 @@ int android_image_get_kernel(const void *hdr,
 	ulong kernel_addr;
 	const struct legacy_img_hdr *ihdr;
 	ulong comp;
+	const char *cmd, *cmd_extra;
+	int ret;
 
 	if (!android_image_get_data(hdr, vendor_boot_img, &img_data))
 		return -EINVAL;
@@ -330,54 +391,21 @@ int android_image_get_kernel(const void *hdr,
 		printf("Android's image name: %s\n", andr_tmp_str);
 
 	printf("Kernel load addr 0x%08lx size %u KiB\n",
-	       kernel_addr, DIV_ROUND_UP(img_data.kernel_size, 1024));
-
-	int len = 0;
-	char *bootargs = env_get("bootargs");
-
-	if (bootargs)
-		len += strlen(bootargs);
+		kernel_addr, DIV_ROUND_UP(img_data.kernel_size, 1024));
 
 	if (img_data.kcmdline && *img_data.kcmdline) {
 		printf("Kernel command line: %s\n", img_data.kcmdline);
-		len += strlen(img_data.kcmdline) + (len ? 1 : 0); /* +1 for extra space */
+		cmd = img_data.kcmdline;
 	}
 
 	if (img_data.kcmdline_extra && *img_data.kcmdline_extra) {
 		printf("Kernel extra command line: %s\n", img_data.kcmdline_extra);
-		len += strlen(img_data.kcmdline_extra) + (len ? 1 : 0); /* +1 for extra space */
+		cmd_extra = img_data.kcmdline_extra;
 	}
 
-	char *newbootargs = malloc(len + 2); /* +2 for 2x '\0' */
-	if (!newbootargs) {
-		puts("Error: malloc in android_image_get_kernel failed!\n");
-		return -ENOMEM;
-	}
-	*newbootargs = '\0'; /* set to Null in case no components below are present */
-
-	if (bootargs && !IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS))
-		strcpy(newbootargs, bootargs);
-
-	if (img_data.kcmdline && *img_data.kcmdline) {
-		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
-			strcat(newbootargs, " ");
-		strcat(newbootargs, img_data.kcmdline);
-	}
-
-	if (img_data.kcmdline_extra && *img_data.kcmdline_extra) {
-		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
-			strcat(newbootargs, " ");
-		strcat(newbootargs, img_data.kcmdline_extra);
-	}
-
-	if (bootargs && IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS)) {
-		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
-			strcat(newbootargs, " ");
-		strcat(newbootargs, bootargs);
-	}
-
-	env_set("bootargs", newbootargs);
-	free(newbootargs);
+	ret = android_image_modify_bootargs_env(cmd, cmd_extra);
+	if (ret)
+		return ret;
 
 	if (os_data) {
 		if (image_get_magic(ihdr) == IH_MAGIC) {
