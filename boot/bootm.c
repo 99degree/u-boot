@@ -1165,7 +1165,7 @@ int bootm_boot_start(ulong addr, const char *cmdline)
 
 	snprintf(addr_str, sizeof(addr_str), "%lx", addr);
 
-	ret = env_set("bootargs", cmdline);
+	ret = android_image_modify_bootargs_env(cmdline, NULL);
 	if (ret) {
 		printf("Failed to set cmdline\n");
 		return ret;
