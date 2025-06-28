@@ -299,14 +299,19 @@ int android_image_modify_bootargs_env(const char *cmd, const char *cmd_extra) {
 	char *newbootargs;
 	int len = 0;
 
-	if (bootargs)
-		len += strlen(bootargs);
-
-	if (cmd && *cmd)
+	if (cmd != NULL && cmd && *cmd)
 		len += strlen(cmd) + (len ? 1 : 0); /* +1 for extra space */
 
-	if (cmd_extra && *cmd_extra)
+	if (cmd_extra != NULL && cmd_extra && *cmd_extra)
 		len += strlen(cmd_extra) + (len ? 1 : 0); /* +1 for extra space */
+
+	if (len <=2) {
+		puts("Error: neither bootargs, ccmdline or cmdline_extra found!\n");
+		return 0;
+	}
+
+	if (bootargs != NULL && bootargs && *bootargs)
+		len += strlen(bootargs);
 
 	newbootargs = malloc(len + 2); /* +2 for 2x '\0' */
 
@@ -317,22 +322,24 @@ int android_image_modify_bootargs_env(const char *cmd, const char *cmd_extra) {
 
 	*newbootargs = '\0'; /* set to Null in case no components below are present */
 
-	if (bootargs && !IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS))
-		strcpy(newbootargs, bootargs);
+	if (bootargs != NULL && bootargs && *bootargs
+	    && !IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS))
+		strcat(newbootargs, bootargs);
 
-	if (cmd && *cmd) {
+	if (cmd != NULL && cmd && *cmd) {
 		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
 				strcat(newbootargs, " ");
 		strcat(newbootargs, cmd);
 	}
 
-	if (cmd_extra && *cmd_extra) {
+	if (cmd_extra != NULL && cmd_extra && *cmd_extra) {
 		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
 				strcat(newbootargs, " ");
 		strcat(newbootargs, cmd_extra);
 	}
 
-	if (bootargs && IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS)) {
+	if (bootargs != NULL && bootargs && *bootargs
+	    && IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS)) {
 		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
 				strcat(newbootargs, " ");
 		strcat(newbootargs, bootargs);
