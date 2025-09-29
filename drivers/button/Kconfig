@@ -43,6 +43,7 @@ config BUTTON_QCOM_PMIC
 	bool "Qualcomm power button"
 	depends on BUTTON
 	depends on PMIC_QCOM
+        depends on MFD_QCOM_PON
 	help
 	  Enable support for the power and "resin" (usually volume down) buttons
 	  on Qualcomm SoCs. These will be configured as the Enter and Down keys
