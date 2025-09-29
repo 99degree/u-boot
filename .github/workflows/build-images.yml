@@ -1,6 +1,11 @@
 name: Build images
 
-on: [push]
+on:
+  #schedule:
+  #  - cron: "0 0 1 * *"
+  workflow_dispatch:   # optional manual trigger
+  push:
+    branches: [ next ]
 
 jobs:
   build:
