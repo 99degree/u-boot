@@ -22,6 +22,9 @@
 #include <linux/err.h>
 #include <asm/global_data.h>
 
+#include <env.h>
+#include <reboot-mode/reboot-mode.h>
+
 int sysreset_request(struct udevice *dev, enum sysreset_t type)
 {
 	struct sysreset_ops *ops = sysreset_get_ops(dev);
@@ -131,6 +134,38 @@ int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 
 	printf("resetting ...\n");
 	mdelay(100);
+
+        {
+                struct udevice *dev;
+                const char *mode;
+                u32 mode_id;
+		int ret;
+
+                /* Priority: command arg > env var > fallback */
+                if (argc > 1 && argv[1])
+                        mode = argv[1];
+                else
+                        mode = env_get("reboot_mode");
+
+                if (!mode)
+                        mode = "recovery";
+
+                for (uclass_first_device(UCLASS_REBOOT_MODE, &dev);
+                                 dev;
+ 				uclass_next_device(&dev)) {
+
+			        ret = dm_reboot_mode_lookup(dev, mode, &mode_id);
+		        if (ret) {
+		            printf("reboot-mode: '%s' not found on %s, skipping\n", mode, dev->name);
+		            continue;
+        		}
+
+        		ret = dm_reboot_mode_set(dev, mode_id);
+		        if (ret)
+		            printf("reboot-mode: failed to set %s on %s ret 0x%x\n", mode, dev->name, ret);
+	    }
+        }
+	return 0;
 
 	sysreset_walk_halt(reset_type);
 

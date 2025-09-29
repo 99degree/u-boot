@@ -53,4 +53,39 @@ struct reboot_mode_ops {
  */
 int dm_reboot_mode_update(struct udevice *dev);
 
+/**
+ * dm_reboot_mode_lookup() - Resolve a reboot mode name to its numeric ID
+ * @dev: Reboot-mode device (UCLASS_REBOOT_MODE)
+ * @name: Mode name string (e.g. "bootloader", "recovery")
+ * @mode_id: Pointer to store the resolved numeric mode ID
+ *
+ * This function searches the parsed reboot-mode entries (from DTS `mode-*`
+ * properties) and returns the corresponding numeric mode ID for the given
+ * string name. It allows board code or command handlers to convert user input
+ * or environment variables into a valid reboot mode ID.
+ *
+ * Returns:
+ *   0 if the mode name was found and resolved
+ *  -ENOENT if the name was not found
+ *  -ENODATA if the mode list is missing or empty
+ */
+int dm_reboot_mode_lookup(struct udevice *dev, const char *name, u32 *mode_id);
+
+/**
+ * dm_reboot_mode_set() - Invoke the reboot-mode driver's set callback
+ * @dev: Reboot-mode device (UCLASS_REBOOT_MODE)
+ * @mode_id: Numeric reboot mode ID to set
+ *
+ * This function dispatches the reboot-mode update to the active driver by
+ * calling its `.set()` callback. The mode ID should correspond to one of the
+ * parsed `mode-*` values from the device tree, as resolved by
+ * dm_reboot_mode_lookup().
+ *
+ * Returns:
+ *   0 if the mode was successfully set
+ *  -ENOSYS if the driver does not implement a set callback
+ *  <0 if the driver-specific set operation fails
+ */
+int dm_reboot_mode_set(struct udevice *dev, u32 mode_id);
+
 #endif /* REBOOT_MODE_REBOOT_MODE_H__ */

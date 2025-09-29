@@ -44,7 +44,9 @@
 			compatible = "qcom,pm8998-pon";
 			reg = <0x800>;
 			mode-bootloader = <0x2>;
-			mode-recovery = <0x1>;
+			mode-recovery = <0x2>;
+			mode-system = <0x2>;
+			mode-shutdown = <0x2>;
 
 			pm6150_pwrkey: pwrkey {
 				compatible = "qcom,pm8941-pwrkey";
@@ -142,12 +144,34 @@
 			status = "disabled";
 		};
 
+		pm6150_qgauge: qgauge@4800 {
+			compatible = "qcom,pm6150-qg";
+			reg = <0x4800>;
+
+			io-channels = <&pm6150_adc ADC5_BAT_THERM_100K_PU>,
+				      <&pm6150_adc ADC5_BAT_ID_100K_PU>;
+			io-channel-names = "batt-therm",
+					   "batt-id";
+
+			nvmem = <&pm6150_qg_sdam>;
+
+			status = "disabled";
+		};
+
 		pm6150_rtc: rtc@6000 {
 			compatible = "qcom,pm8941-rtc";
 			reg = <0x6000>, <0x6100>;
 			reg-names = "rtc", "alarm";
 			interrupts = <0x0 0x61 0x1 IRQ_TYPE_EDGE_RISING>;
 			status = "disabled";
+		};
+
+		pm6150_qg_sdam: nvram@b600 {
+			compatible = "qcom,spmi-sdam";
+			reg = <0xb600>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0 0xb600 0x100>;
 		};
 
 		pm6150_gpios: gpio@c000 {

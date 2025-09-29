@@ -38,4 +38,14 @@ config REBOOT_MODE_NVMEM
 	  Use any kind of non-volatile memory (EEPROM, RTC, etc) to control the
 	  reboot mode.
 
+config REBOOT_MODE_QCOM_PON
+	bool "QCOM PON reboot-mode driver"
+	depends on SPMI
+	depends on DM_REBOOT_MODE
+	select REBOOT_MODE
+	default y if ARCH_SNAPDRAGON
+	help
+	  Enable reboot-mode support for QCOM PMIC PON via SPMI.
+	  This sets the reboot reason in PON_SOFT_RB_SPARE before reset.
+
 endmenu
