@@ -165,7 +165,6 @@ int do_reset(struct cmd_tbl *cmdtp, int flag, int argc, char *const argv[])
 		            printf("reboot-mode: failed to set %s on %s ret 0x%x\n", mode, dev->name, ret);
 	    }
         }
-	return 0;
 
 	sysreset_walk_halt(reset_type);
 
