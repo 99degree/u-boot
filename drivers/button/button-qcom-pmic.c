@@ -225,7 +225,6 @@ static const struct udevice_id qcom_pwrkey_ids[] = {
 U_BOOT_DRIVER(qcom_pwrkey) = {
 	.name = "qcom_pwrkey",
 	.id = UCLASS_BUTTON,
-	.of_match = qcom_pwrkey_ids,
 	.bind = button_qcom_pmic_bind,
 	.probe = qcom_pwrkey_probe,
 	.ops = &button_qcom_pmic_ops,
