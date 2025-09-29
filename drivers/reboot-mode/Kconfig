@@ -42,6 +42,7 @@ config REBOOT_MODE_QCOM_PON
 	bool "QCOM PON reboot-mode driver"
 	depends on SPMI
 	depends on DM_REBOOT_MODE
+	depends on MFD_QCOM_PON
 	select REBOOT_MODE
 	default y if ARCH_SNAPDRAGON
 	help

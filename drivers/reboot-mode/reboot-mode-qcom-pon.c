@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0+
 #include <dm.h>
+#include <dm/device-internal.h>  // for driver_find_by_name(), device_bind_with_driver_data()
 #include <reboot-mode/reboot-mode.h>
-#include <spmi/spmi.h>
+#include <power/pmic.h>
 #include <linux/bitops.h>
 #include <linux/delay.h>
 
@@ -10,33 +11,53 @@
 #define GEN2_REASON_SHIFT         1
 #define NO_REASON_SHIFT           0
 
+/*
+ * Private data for reboot-mode driver
+ */
 struct qcom_pon_priv {
-    struct udevice *spmi_dev;
+    struct udevice *pmic;
     u32 baseaddr;
     u32 reason_shift;
 };
 
-static int qcom_pon_set(struct udevice *dev, u32 mode_id_)
+/*
+ * Reboot-mode set: write encoded mode to PON_SOFT_RB_SPARE
+ */
+static int qcom_pon_set(struct udevice *dev, u32 mode_id)
 {
     struct qcom_pon_priv *priv = dev_get_priv(dev);
+    u32 val = (mode_id << priv->reason_shift) & GENMASK(7, priv->reason_shift);
 
-    int mode_id = 1;
-    int usid = dev_read_u32_default(priv->spmi_dev, "reg", 0);
-    int pid = priv->baseaddr;
-    int reg = PON_SOFT_RB_SPARE;
-    int val = (mode_id << priv->reason_shift) & GENMASK(7, priv->reason_shift);
-
-    printf("going to sleep soon, usid %d\n", usid);
-    mdelay(2000);
-
-    return spmi_reg_write(priv->spmi_dev, usid, pid, reg, val);
+//printf("mock writing to pon addr 0x%x 0x%x\n", priv->baseaddr + PON_SOFT_RB_SPARE, val);
+    return pmic_reg_write(priv->pmic,
+                          priv->baseaddr + PON_SOFT_RB_SPARE,
+                          val);
 }
 
+/*
+ * Reboot-mode get: read and decode mode from PON_SOFT_RB_SPARE
+ */
+static int qcom_pon_get(struct udevice *dev, u32 *mode_id)
+{
+    struct qcom_pon_priv *priv = dev_get_priv(dev);
+    int val;
+
+    val = pmic_reg_read(priv->pmic, priv->baseaddr + PON_SOFT_RB_SPARE);
+    if (val < 0)
+        return val;
+
+    *mode_id = (val >> priv->reason_shift) & GENMASK(7 - priv->reason_shift, 0);
+    return 0;
+}
+
+/*
+ * Probe: initialize PMIC and base address
+ */
 static int qcom_pon_probe(struct udevice *dev)
 {
     struct qcom_pon_priv *priv = dev_get_priv(dev);
 
-    priv->spmi_dev = dev->parent;
+    priv->pmic = dev->parent;
     priv->baseaddr = dev_read_u32_default(dev, "reg", 0x800);
     priv->reason_shift = (u32)dev_get_driver_data(dev);
 
@@ -45,23 +66,15 @@ static int qcom_pon_probe(struct udevice *dev)
 
 static const struct reboot_mode_ops qcom_pon_ops = {
     .set = qcom_pon_set,
+    .get = qcom_pon_get,
 };
 
-static const struct udevice_id qcom_pon_ids[] = {
-    { .compatible = "qcom,pm8916-pon",   .data = GEN1_REASON_SHIFT },
-    { .compatible = "qcom,pm8941-pon",   .data = NO_REASON_SHIFT },
-    { .compatible = "qcom,pms405-pon",   .data = GEN1_REASON_SHIFT },
-    { .compatible = "qcom,pm8998-pon",   .data = GEN2_REASON_SHIFT },
-    { .compatible = "qcom,pmk8350-pon",  .data = GEN2_REASON_SHIFT },
-    { .compatible = "qcom,pm6150-pon",   .data = GEN2_REASON_SHIFT },
-    { .compatible = "qcom,pm6150l-pon",  .data = GEN2_REASON_SHIFT },
-    { }
-};
-
+/*
+ * Reboot-mode driver: manually bound child
+ */
 U_BOOT_DRIVER(qcom_pon_reboot_mode) = {
     .name = "qcom_pon_reboot_mode",
     .id = UCLASS_REBOOT_MODE,
-    .of_match = qcom_pon_ids,
     .ops = &qcom_pon_ops,
     .probe = qcom_pon_probe,
     .priv_auto = sizeof(struct qcom_pon_priv),
