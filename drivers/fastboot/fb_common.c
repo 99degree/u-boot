@@ -140,6 +140,9 @@ void (*fastboot_get_progress_callback(void))(const char *)
  * Otherwise execute "bootm <fastboot_buf_addr>", if that fails, reset
  * the board.
  */
+
+static char *bootargs = NULL;
+
 void fastboot_boot(void)
 {
 	char *s;
@@ -152,6 +155,18 @@ void fastboot_boot(void)
 		static char *const bootm_args[] = {
 			"bootm", boot_addr_start, NULL
 		};
+
+		if (IS_ENABLED(CONFIG_USE_DEFAULT_ENV_FILE)) {
+			/* store the preset value of embeded bootargs */
+			if (!bootargs) {
+				const char* bootargs_tmp = env_get("bootargs");
+				bootargs = strndup(bootargs_tmp,
+						   strlen(bootargs_tmp));
+			}
+
+			/* init bootargs to prevent fail-and-retry with modify bootargs */
+			env_set("bootargs", bootargs);
+		}
 
 		snprintf(boot_addr_start, sizeof(boot_addr_start) - 1,
 			 "0x%p", fastboot_buf_addr);

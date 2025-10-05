@@ -1207,8 +1207,6 @@ int bootm_modify_bootargs_env(const char *cmd, const char *cmd_extra) {
         return 0;
 }
 
-static char* bootargs = NULL;
-
 /* bootm_boot_start_ex() : A hub to cater cmdline/extra_cmdline with bootargs
  *
  * With optionally extra cmdline to expend support more cmdline to concat...
@@ -1240,16 +1238,10 @@ static int bootm_boot_start_ex(ulong addr, const char *cmdline, const char *vend
 
 	snprintf(addr_str, sizeof(addr_str), "%lx", addr);
 
-	if (IS_ENABLED(CONFIG_USE_DEFAULT_ENV_FILE) ? false : overrided)
+	if (IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS) ? false : overrided)
 		ret = env_set("bootargs", cmdline);
-	else {
-		/* TODO: Should move this code to as early as possible */
-		if (!bootargs) {
-			const char* bootargs_tmp = env_get("bootargs");
-			bootargs = strndup(bootargs_tmp, strlen(bootargs_tmp));
-		}
-		ret = bootm_modify_bootargs_env(bootargs, cmdline);
-	}
+	else
+		ret = bootm_modify_bootargs_env(cmdline, vendor_cmdline);
 
 	if (ret) {
 		printf("Failed to set cmdline\n");
