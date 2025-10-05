@@ -1146,7 +1146,9 @@ int booti_run(struct bootm_info *bmi)
 	return boot_run(bmi, "booti", 0);
 }
 
-int bootm_boot_start(ulong addr, const char *cmdline)
+static char* bootargs = NULL;
+
+int bootm_boot_start_ex(ulong addr, const char *cmdline, const char *vendor_cmdline, bool overrided)
 {
 	char addr_str[30];
 	struct bootm_info bmi;
@@ -1165,7 +1167,16 @@ int bootm_boot_start(ulong addr, const char *cmdline)
 
 	snprintf(addr_str, sizeof(addr_str), "%lx", addr);
 
-	ret = android_image_modify_bootargs_env(cmdline, NULL);
+	if (IS_ENABLED(CONFIG_USE_DEFAULT_ENV_FILE) ? false : overrided)
+		ret = env_set("bootargs", cmdline);
+	else {
+		if (!bootargs) {
+			const char* bootargs_tmp = env_get("bootargs");
+			bootargs = strndup(bootargs_tmp, strlen(bootargs_tmp));
+		}
+		ret = android_image_modify_bootargs_env(bootargs, cmdline);
+	}
+
 	if (ret) {
 		printf("Failed to set cmdline\n");
 		return ret;
@@ -1176,6 +1187,11 @@ int bootm_boot_start(ulong addr, const char *cmdline)
 	ret = bootm_run_states(&bmi, states);
 
 	return ret;
+}
+
+int bootm_boot_start(ulong addr, const char *cmdline)
+{
+	return bootm_boot_start_ex(addr, cmdline, NULL, true);
 }
 
 void bootm_init(struct bootm_info *bmi)
