@@ -1891,18 +1891,6 @@ bool android_image_get_data(const void *boot_hdr, const void *vendor_boot_hdr,
 struct andr_boot_img_hdr_v0;
 
 /**
- * android_image_modify_bootargs_env() - helper to set new bootargs
- *
- * set boot based on provided cmdline and u-boot pre-set value
- *
- * @cmd: usually contain kernel boot command line string
- * @cmd_extra: usually contain kernel boot command line string from vendor img
- * return: 0, success; otherwise fail in various problem.
-*/
-int android_image_modify_bootargs_env(const char *cmd,
-					 const char *cmd_extra);
-
-/**
  * android_image_get_kernel() - Processes kernel part of Android boot images
  *
  * This function returns the os image's start address and length. Also,

@@ -13,6 +13,8 @@
 #include <mapmem.h>
 #include <linux/libfdt.h>
 
+#include <bootm.h>
+
 #define ANDROID_IMAGE_DEFAULT_KERNEL_ADDR	0x10008000
 #define ANDROID_IMAGE_DEFAULT_RAMDISK_ADDR	0x11000000
 
@@ -286,65 +288,6 @@ static ulong android_image_get_kernel_addr(struct andr_image_data *img_data,
 }
 
 /**
- * android_image_modify_bootargs_env() - helper to set new bootargs
- *
- * set boot based on provided cmdline and u-boot pre-set value
- *
- * @cmd: usually contain kernel boot command line string
- * @cmd_extra: usually contain kernel boot command line string from vendor img
- * return: 0, success; otherwise fail in various problem.
-*/
-int android_image_modify_bootargs_env(const char *cmd, const char *cmd_extra) {
-	char *bootargs = env_get("bootargs");
-	char *newbootargs;
-	int len = 0;
-
-	if (bootargs)
-		len += strlen(bootargs);
-
-	if (cmd && *cmd)
-		len += strlen(cmd) + (len ? 1 : 0); /* +1 for extra space */
-
-	if (cmd_extra && *cmd_extra)
-		len += strlen(cmd_extra) + (len ? 1 : 0); /* +1 for extra space */
-
-	newbootargs = malloc(len + 2); /* +2 for 2x '\0' */
-
-	if (!newbootargs) {
-		puts("Error: malloc in android_image_get_kernel failed!\n");
-		return -ENOMEM;
-	}
-
-	*newbootargs = '\0'; /* set to Null in case no components below are present */
-
-	if (bootargs && !IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS))
-		strcpy(newbootargs, bootargs);
-
-	if (cmd && *cmd) {
-		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
-				strcat(newbootargs, " ");
-		strcat(newbootargs, cmd);
-	}
-
-	if (cmd_extra && *cmd_extra) {
-		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
-				strcat(newbootargs, " ");
-		strcat(newbootargs, cmd_extra);
-	}
-
-	if (bootargs && IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS)) {
-		if (*newbootargs) /* If there is something in newbootargs, a space is needed */
-				strcat(newbootargs, " ");
-		strcat(newbootargs, bootargs);
-	}
-
-	env_set("bootargs", newbootargs);
-	free(newbootargs);
-
-	return 0;
-}
-
-/**
  * android_image_get_kernel() - processes kernel part of Android boot images
  * @hdr:	Pointer to boot image header, which is at the start
  *			of the image.
@@ -403,7 +346,7 @@ int android_image_get_kernel(const void *hdr,
 		cmd_extra = img_data.kcmdline_extra;
 	}
 
-	ret = android_image_modify_bootargs_env(cmd, cmd_extra);
+	ret = bootm_modify_bootargs_env(cmd, cmd_extra);
 	if (ret)
 		return ret;
 

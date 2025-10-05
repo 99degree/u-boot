@@ -96,6 +96,18 @@ int boot_selected_os(int state, struct bootm_info *bmi, boot_os_fn *boot_fn);
 ulong bootm_disable_interrupts(void);
 
 /**
+ * bootm_modify_bootargs_env() - helper to set new bootargs
+ *
+ * set boot based on provided cmdline and u-boot pre-set value
+ *
+ * @cmd: usually contain kernel boot command line string
+ * @cmd_extra: usually contain kernel boot command line string from vendor img
+ * return: 0, success; otherwise fail in various problem.
+*/
+int bootm_modify_bootargs_env(const char *cmd,
+                                         const char *cmd_extra);
+
+/**
  * bootm_find_images() - find and locate various images
  *
  * @img_addr: Address of image being loaded

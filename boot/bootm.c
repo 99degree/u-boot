@@ -1146,9 +1146,82 @@ int booti_run(struct bootm_info *bmi)
 	return boot_run(bmi, "booti", 0);
 }
 
+/**
+ * bootm_modify_bootargs_env() - helper to set new bootargs
+ *
+ * set boot based on provided cmdline and u-boot pre-set value.
+ * Was android_image_modify_bootargs_env() and extracted from
+ * android_image_get_kernel()
+ *
+ * @cmd: usually contain kernel boot command line string
+ * @cmd_extra: usually contain kernel boot command line string from vendor img
+ * return: 0, success; otherwise fail in various problem.
+*/
+int bootm_modify_bootargs_env(const char *cmd, const char *cmd_extra) {
+        char *bootargs = env_get("bootargs");
+        char *newbootargs;
+        int len = 0;
+
+        if (bootargs)
+                len += strlen(bootargs);
+
+        if (cmd && *cmd)
+                len += strlen(cmd) + (len ? 1 : 0); /* +1 for extra space */
+
+        if (cmd_extra && *cmd_extra)
+                len += strlen(cmd_extra) + (len ? 1 : 0); /* +1 for extra space */
+
+        newbootargs = malloc(len + 2); /* +2 for 2x '\0' */
+
+        if (!newbootargs) {
+                puts("Error: malloc in android_image_get_kernel failed!\n");
+                return -ENOMEM;
+        }
+
+        *newbootargs = '\0'; /* set to Null in case no components below are present */
+
+        if (bootargs && !IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS))
+                strcpy(newbootargs, bootargs);
+
+        if (cmd && *cmd) {
+                if (*newbootargs) /* If there is something in newbootargs, a space is needed */
+                                strcat(newbootargs, " ");
+                strcat(newbootargs, cmd);
+        }
+
+        if (cmd_extra && *cmd_extra) {
+                if (*newbootargs) /* If there is something in newbootargs, a space is needed */
+                                strcat(newbootargs, " ");
+                strcat(newbootargs, cmd_extra);
+        }
+
+        if (bootargs && IS_ENABLED(CONFIG_ANDROID_BOOT_IMAGE_PREPEND_ENV_BOOTARGS)) {
+                if (*newbootargs) /* If there is something in newbootargs, a space is needed */
+                                strcat(newbootargs, " ");
+                strcat(newbootargs, bootargs);
+        }
+
+        env_set("bootargs", newbootargs);
+        free(newbootargs);
+
+        return 0;
+}
+
 static char* bootargs = NULL;
 
-int bootm_boot_start_ex(ulong addr, const char *cmdline, const char *vendor_cmdline, bool overrided)
+/* bootm_boot_start_ex() : A hub to cater cmdline/extra_cmdline with bootargs
+ *
+ * With optionally extra cmdline to expend support more cmdline to concat...
+ * Also cater embedded env file bootargs preset value and able to append
+ * prepend to new bootargs
+ *
+ * @addr: boot address
+ * @cmdline: boot cmdline from boot media
+ * @vendor_cmdline: boot cmdline, a kind of extra cmdline (optional)
+ * Return: 0 Success
+ */
+static int bootm_boot_start_ex(ulong addr, const char *cmdline, const char *vendor_cmdline,
+			       bool overrided)
 {
 	char addr_str[30];
 	struct bootm_info bmi;
@@ -1170,11 +1243,12 @@ int bootm_boot_start_ex(ulong addr, const char *cmdline, const char *vendor_cmdl
 	if (IS_ENABLED(CONFIG_USE_DEFAULT_ENV_FILE) ? false : overrided)
 		ret = env_set("bootargs", cmdline);
 	else {
+		/* TODO: Should move this code to as early as possible */
 		if (!bootargs) {
 			const char* bootargs_tmp = env_get("bootargs");
 			bootargs = strndup(bootargs_tmp, strlen(bootargs_tmp));
 		}
-		ret = android_image_modify_bootargs_env(bootargs, cmdline);
+		ret = bootm_modify_bootargs_env(bootargs, cmdline);
 	}
 
 	if (ret) {
